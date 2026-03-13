@@ -1152,7 +1152,6 @@ file_sender() {
           "${HOST}" > "${sftp_output}" \
           && transfer_ok=true
         ;;
-      ;;
     *)
       log_error "Unsupported file transfer tool: ${tool}"
       ;;
