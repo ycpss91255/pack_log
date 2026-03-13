@@ -142,6 +142,14 @@ setup() {
   assert_output --partial "Usage:"
 }
 
+# --- --version ---
+
+@test "option_parser: --version prints version and exits 0" {
+  run option_parser --version
+  assert_success
+  assert_output --partial "${VERSION}"
+}
+
 # --- invalid option ---
 
 @test "option_parser: invalid option exits 1" {
@@ -371,4 +379,22 @@ setup() {
   '
   assert_failure
   assert_output --partial "Invalid start_time format"
+}
+
+# --- start > end validation ---
+
+@test "time_handler: start_time after end_time exits with error" {
+  START_TIME="20260201-000000"
+  END_TIME="20260101-235959"
+  run time_handler
+  assert_failure
+  assert_output --partial "must be before end_time"
+}
+
+@test "time_handler: equal start and end times passes validation" {
+  START_TIME="20260115-120000"
+  END_TIME="20260115-120000"
+  time_handler
+  [[ "${START_TIME}" == "20260115-120000" ]]
+  [[ "${END_TIME}" == "20260115-120000" ]]
 }

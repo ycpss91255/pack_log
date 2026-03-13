@@ -16,7 +16,9 @@
 #
 # Author: Yunchien.chen <yunchien.chen@coretronic-robotics.com>
 # Date: 2026-03-13
-# Version: 1.2.0
+# Version: 1.3.0
+
+declare -r VERSION="1.3.0"
 
 set -euo pipefail
 
@@ -159,6 +161,7 @@ Usage: $(basename "$0") [options]
     -vv, --very-verbose           Enable very verbose output (debug)
     -vvv, --extra-verbose         Enable extra verbose output (set -x)
     -h, --help                    Show this help message and exit
+    --version                     Show version and exit
 EOF
 }
 
@@ -324,8 +327,8 @@ get_remote_value() {
     return 0
   fi
 
-  if [[ "${HOST}" == "local" && "${type}" == "env" && "${str}" == "HOME" ]]; then
-    REPLY="${HOME}"
+  if [[ "${HOST}" == "local" && "${type}" == "env" ]]; then
+    REPLY="${!str}"
     _TOKEN_CACHE["${cache_key}"]="${REPLY}"
     return 0
   fi
@@ -422,7 +425,7 @@ option_parser() {
     "start:"  "end:"
     "output:"
     "verbose" "very-verbose" "extra-verbose"
-    "help"
+    "help" "version"
   )
   # KCOV_EXCL_STOP
 
@@ -459,6 +462,8 @@ option_parser() {
         VERBOSE=3; shift ;; # KCOV_EXCL_LINE
       -h | --help)
         print_help; exit 0 ;;
+      --version)
+        printf "%s\n" "${VERSION}"; exit 0 ;;
       --) shift; break ;;
       *) break ;; # KCOV_EXCL_LINE
     esac
@@ -481,7 +486,6 @@ host_handler() {
 
   if [[ "${HOST}" == "local" ]]; then
     log_debug "Using local machine as host"
-    HOST="local"
     return 0
   fi
 
@@ -567,6 +571,11 @@ time_handler() {
       log_error "Invalid ${t,,} format: ${time}"
     fi
   done
+
+  # Validate start < end
+  if [[ "${START_TIME}" > "${END_TIME}" ]]; then
+    log_error "start_time (${START_TIME}) must be before end_time (${END_TIME})"
+  fi
 }
 
 # Handles the SSH connection.
