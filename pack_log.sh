@@ -431,8 +431,7 @@ option_parser() {
   long_opts=$(IFS=,; echo "${long_opts_arr[@]}")
 
   local parsed
-  parsed=$(getopt -o "${short_opts}" --long "${long_opts}" -n "${FUNCNAME[0]}" -- "$@")
-  if [[ $? -ne 0 ]]; then
+  if ! parsed=$(getopt -o "${short_opts}" --long "${long_opts}" -n "${FUNCNAME[0]}" -- "$@"); then
     print_help; exit 1
   fi
 
@@ -828,9 +827,6 @@ file_finder() {
     format="${REPLY_STR}"
   fi
 
-  local strip_prefix="${file_prefix//\*/}"
-  local strip_suffix="${file_suffix//\*/}"
-
   local find_cmd
   printf -v find_cmd "find %q -maxdepth 1 -type f -name %q 2>/dev/null | sort" \
     "${folder_path}" "${file_prefix}${file_suffix}"
@@ -978,21 +974,24 @@ save_script_data() {
 
   log_info "User Inputs Summary:"
 
+  local escaped_folder="${SAVE_FOLDER//\'/\'\\\'\'}"
+  local script_log="'${escaped_folder}/script.log'"
+
   local remote_cmd=""
-  remote_cmd+="printf '%s\n' 'User Inputs:' >> '${SAVE_FOLDER}/script.log'; "
+  remote_cmd+="printf '%s\n' 'User Inputs:' >> ${script_log}; "
 
   local string escaped
   for string in "${string_array[@]}"; do
     log_info "  ${string}"
     escaped="${string//\'/\'\\\'\'}"
-    remote_cmd+="printf '  %s\n' '${escaped}' >> '${SAVE_FOLDER}/script.log'; "
+    remote_cmd+="printf '  %s\n' '${escaped}' >> ${script_log}; "
   done
 
-    remote_cmd+="printf '\nLOG_PATHS:\n' >> '${SAVE_FOLDER}/script.log'; "
+  remote_cmd+="printf '\nLOG_PATHS:\n' >> ${script_log}; "
 
   for string in "${LOG_PATHS[@]}"; do
     escaped="${string//\'/\'\\\'\'}"
-    remote_cmd+="printf '  %s\n' '${escaped}' >> '${SAVE_FOLDER}/script.log'; "
+    remote_cmd+="printf '  %s\n' '${escaped}' >> ${script_log}; "
   done
 
   log_info "-------------------------------"
@@ -1009,14 +1008,14 @@ save_script_data() {
 # Globals:
 #   SAVE_FOLDER: The path of the folder to be removed.
 file_cleaner() {
-  local rm_cmd
-  printf -v rm_cmd "rm -rf %q" "${SAVE_FOLDER}"
-  readonly rm_cmd
-
   if [[ -z "${SAVE_FOLDER}" ]]; then
     log_debug "No SAVE_FOLDER defined, skipping cleanup."
     return 0
   fi
+
+  local rm_cmd
+  printf -v rm_cmd "rm -rf %q" "${SAVE_FOLDER}"
+  readonly rm_cmd
 
   if ! execute_cmd "${rm_cmd}"; then
     log_warn "Failed to remove remote folder: ${SAVE_FOLDER}" # KCOV_EXCL_LINE
@@ -1213,6 +1212,7 @@ main() {
     get_tools_checker
   else
     log_info "=== Step 3/5: Local mode (skipping SSH) ==="
+    GET_LOG_TOOL="local"
   fi
 
   log_info "=== Step 4/5: Collecting log files ==="
