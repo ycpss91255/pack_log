@@ -1,0 +1,40 @@
+services:
+  ci:
+    image: kcov/kcov
+    security_opt:
+      - seccomp=unconfined
+    volumes:
+      - .:/source
+    working_dir: /source
+    environment:
+      - HOST_UID=${HOST_UID:-1000}
+      - HOST_GID=${HOST_GID:-1000}
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        set -e
+        apt-get update && \
+        apt-get install -y --no-install-recommends \
+            bats \
+            bats-support \
+            bats-assert \
+            bats-file \
+            shellcheck \
+            openssh-client
+
+        echo "--- Running ShellCheck ---"
+        shellcheck -x -S error pack_log.sh
+
+        echo "--- Running Tests & Coverage ---"
+        kcov --include-path=./pack_log.sh \
+            --exclude-region=KCOV_EXCL_START:KCOV_EXCL_STOP \
+            --exclude-line=KCOV_EXCL_LINE \
+            ./coverage \
+            bats test/
+
+        if [ -n "${HOST_UID}" ] && [ -n "${HOST_GID}" ]; then
+            echo "--- Fixing permissions for coverage directory ---"
+            chown -R "${HOST_UID}:${HOST_GID}" coverage/
+            echo "Coverage report generated at: $(pwd)/coverage/index.html"
+        fi

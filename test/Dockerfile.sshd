@@ -1,0 +1,29 @@
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssh-server \
+    rsync \
+    coreutils \
+    findutils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create test user
+RUN useradd -m -s /bin/bash testuser \
+    && mkdir -p /home/testuser/.ssh \
+    && chmod 700 /home/testuser/.ssh \
+    && chown -R testuser:testuser /home/testuser/.ssh
+
+# Generate host keys
+RUN ssh-keygen -A
+
+# Configure sshd
+RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config \
+    && echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config \
+    && echo "StrictModes no" >> /etc/ssh/sshd_config \
+    && echo "testuser:testpass" | chpasswd
+
+# sshd needs /run/sshd
+RUN mkdir -p /run/sshd
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D", "-e"]
