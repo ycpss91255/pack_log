@@ -16,11 +16,10 @@ setup() {
     touch "${TEST_LOG_DIR}/shelf.ini"
     touch "${TEST_LOG_DIR}/other.txt"
 
-    local -a result=()
-    file_finder "${TEST_LOG_DIR}" "node_config.yaml" "" "20260115-000000" "20260115-235959" result
+    file_finder "${TEST_LOG_DIR}" "node_config.yaml" "" "20260115-000000" "20260115-235959"
 
-    assert_equal "${#result[@]}" 1
-    assert_equal "${result[0]}" "${TEST_LOG_DIR}/node_config.yaml"
+    assert_equal "${#REPLY_FILES[@]}" 1
+    assert_equal "${REPLY_FILES[0]}" "${TEST_LOG_DIR}/node_config.yaml"
 }
 
 @test "file_finder: config wildcard matches multiple files" {
@@ -28,10 +27,9 @@ setup() {
     touch "${TEST_LOG_DIR}/config_b.yaml"
     touch "${TEST_LOG_DIR}/unrelated.txt"
 
-    local -a result=()
-    file_finder "${TEST_LOG_DIR}" "config_*" ".yaml" "20260115-000000" "20260115-235959" result
+    file_finder "${TEST_LOG_DIR}" "config_*" ".yaml" "20260115-000000" "20260115-235959"
 
-    assert_equal "${#result[@]}" 2
+    assert_equal "${#REPLY_FILES[@]}" 2
 }
 
 # --- Date-based files with %Y%m%d%H%M%S format ---
@@ -43,16 +41,15 @@ setup() {
     touch "${TEST_LOG_DIR}/detect_shelf_node-DetectShelf_20260115120000.dat"
     touch "${TEST_LOG_DIR}/detect_shelf_node-DetectShelf_20260116080000.dat"
 
-    local -a result=()
     file_finder "${TEST_LOG_DIR}" \
         "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959" result
+        "20260115-000000" "20260115-235959"
 
     # Should include files within range plus boundary expansion
     # Timestamps: 20260114100000, 20260115080000, 20260115103000, 20260115120000, 20260116080000
     # In range (>= 20260115000000 and <= 20260115235959): 080000, 103000, 120000
     # Expansion: s_idx-- includes 20260114100000, e_idx++ includes 20260116080000
-    assert_equal "${#result[@]}" 5
+    assert_equal "${#REPLY_FILES[@]}" 5
 }
 
 # --- Date-based files with %Y%m%d-%H%M%S format ---
@@ -63,15 +60,14 @@ setup() {
     touch "${TEST_LOG_DIR}/corenavi_auto.host.user.log.INFO.20260115-120000.1"
     touch "${TEST_LOG_DIR}/corenavi_auto.host.user.log.INFO.20260116-080000.1"
 
-    local -a result=()
     file_finder "${TEST_LOG_DIR}" \
         "corenavi_auto.host.user.log.INFO.<date:%Y%m%d-%H%M%S>*" "" \
-        "20260115-000000" "20260115-235959" result
+        "20260115-000000" "20260115-235959"
 
     # Timestamps: 20260114-100000, 20260115-080000, 20260115-120000, 20260116-080000
     # In range: 20260115-080000, 20260115-120000
     # Expansion: s_idx-- includes 20260114-100000, e_idx++ includes 20260116-080000
-    assert_equal "${#result[@]}" 4
+    assert_equal "${#REPLY_FILES[@]}" 4
 }
 
 # --- No files found (empty directory) ---
@@ -80,12 +76,11 @@ setup() {
     local empty_dir="${BATS_TEST_TMPDIR}/empty_logs"
     mkdir -p "${empty_dir}"
 
-    local -a result=()
     file_finder "${empty_dir}" \
         "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959" result
+        "20260115-000000" "20260115-235959"
 
-    assert_equal "${#result[@]}" 0
+    assert_equal "${#REPLY_FILES[@]}" 0
 }
 
 # --- No files matching pattern ---
@@ -94,12 +89,11 @@ setup() {
     touch "${TEST_LOG_DIR}/some_other_file_20260115120000.dat"
     touch "${TEST_LOG_DIR}/another_file.log"
 
-    local -a result=()
     file_finder "${TEST_LOG_DIR}" \
         "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959" result
+        "20260115-000000" "20260115-235959"
 
-    assert_equal "${#result[@]}" 0
+    assert_equal "${#REPLY_FILES[@]}" 0
 }
 
 # --- Time range expansion (boundary expansion s_idx--, e_idx++) ---
@@ -111,17 +105,16 @@ setup() {
     touch "${TEST_LOG_DIR}/log_20260116100000.dat"
     touch "${TEST_LOG_DIR}/log_20260117100000.dat"
 
-    local -a result=()
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959" result
+        "20260115-000000" "20260115-235959"
 
     # In range: 20260115100000
     # s_idx=2, e_idx=2, expansion: s_idx=1 (20260114100000), e_idx=3 (20260116100000)
-    assert_equal "${#result[@]}" 3
-    [[ "${result[0]}" == *"20260114100000"* ]]
-    [[ "${result[1]}" == *"20260115100000"* ]]
-    [[ "${result[2]}" == *"20260116100000"* ]]
+    assert_equal "${#REPLY_FILES[@]}" 3
+    [[ "${REPLY_FILES[0]}" == *"20260114100000"* ]]
+    [[ "${REPLY_FILES[1]}" == *"20260115100000"* ]]
+    [[ "${REPLY_FILES[2]}" == *"20260116100000"* ]]
 }
 
 # --- All files older than range (s_idx=-1 case) ---
@@ -131,17 +124,16 @@ setup() {
     touch "${TEST_LOG_DIR}/log_20260111100000.dat"
     touch "${TEST_LOG_DIR}/log_20260112100000.dat"
 
-    local -a result=()
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959" result
+        "20260115-000000" "20260115-235959"
 
     # All files older than start: s_idx=-1
     # e_idx is valid (all files <= end of range? No, all < start)
     # e_idx should be 2 (last file is 20260112 which is < 20260115235959)
     # s_idx=-1 but e_idx!=-1 => s_idx=0
     # Then expansion: s_idx stays 0 (can't go lower), e_idx++ stays 2 (already last)
-    assert_equal "${#result[@]}" 3
+    assert_equal "${#REPLY_FILES[@]}" 3
 }
 
 # --- All files newer than range (e_idx=-1 case) ---
@@ -151,46 +143,31 @@ setup() {
     touch "${TEST_LOG_DIR}/log_20260121100000.dat"
     touch "${TEST_LOG_DIR}/log_20260122100000.dat"
 
-    local -a result=()
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959" result
+        "20260115-000000" "20260115-235959"
 
     # All files newer than end: e_idx=-1
     # s_idx=0 (first file >= start)
     # e_idx=-1 but s_idx!=-1 => e_idx = last index (2)
     # Expansion: s_idx stays 0, e_idx stays 2 (already last)
-    assert_equal "${#result[@]}" 3
+    assert_equal "${#REPLY_FILES[@]}" 3
 }
 
 # --- No overlap (s_idx > e_idx case) ---
 
 @test "file_finder: returns empty when no overlap in range" {
-    # Create files where the timestamps don't overlap with the range in a way
-    # that causes s_idx > e_idx
-    # We need: first file >= start comes AFTER last file <= end
-    # This happens when there's a gap - no files in range and files span across
-    # Actually this case is hard to trigger since expansion fixes it.
-    # The condition is: after Case A/B fixes, if s_idx > e_idx
-    # This occurs when all files are strictly between end and start (impossible if start < end)
-    # But it can happen if formatted_start > formatted_end (unlikely with valid dates)
-    # Let's test with a scenario where expansion can't help:
-    # s_idx=2, e_idx=0 won't happen with sorted unique timestamps...
-    # Per the code: s_idx is first ts >= start, e_idx is last ts <= end
-    # If start > end in the formatted values, s_idx could be > e_idx
-    # We can trigger this by passing reversed time range
     touch "${TEST_LOG_DIR}/log_20260115100000.dat"
     touch "${TEST_LOG_DIR}/log_20260116100000.dat"
 
-    local -a result=()
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260117-000000" "20260114-235959" result
+        "20260117-000000" "20260114-235959"
 
     # start > end: s_idx=-1 (no file >= 20260117000000), e_idx=0..1 (files < 20260114235959? no, they're > end)
     # Actually e_idx=-1 too since no file <= 20260114235959
     # Both -1 => Case C triggers
-    assert_equal "${#result[@]}" 0
+    assert_equal "${#REPLY_FILES[@]}" 0
 }
 
 # --- Single file in range ---
@@ -198,15 +175,14 @@ setup() {
 @test "file_finder: handles single file in range" {
     touch "${TEST_LOG_DIR}/log_20260115120000.dat"
 
-    local -a result=()
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959" result
+        "20260115-000000" "20260115-235959"
 
     # Single file in range, s_idx=0, e_idx=0
     # Expansion: can't expand (already at boundaries)
-    assert_equal "${#result[@]}" 1
-    [[ "${result[0]}" == *"20260115120000"* ]]
+    assert_equal "${#REPLY_FILES[@]}" 1
+    [[ "${REPLY_FILES[0]}" == *"20260115120000"* ]]
 }
 
 # --- Missing arguments ---
@@ -226,11 +202,6 @@ setup() {
     assert_failure
 }
 
-@test "file_finder: errors when output array name is missing" {
-    run file_finder "${TEST_LOG_DIR}" "prefix" "suffix" "20260115-000000" "20260115-235959"
-    assert_failure
-}
-
 # --- Files with epoch timestamp format (%s) ---
 
 @test "file_finder: selects files with epoch timestamp format" {
@@ -244,14 +215,13 @@ setup() {
     touch "${TEST_LOG_DIR}/coreslam_2D_${epoch_in_range}.log"
     touch "${TEST_LOG_DIR}/coreslam_2D_${epoch_after}.log"
 
-    local -a result=()
     file_finder "${TEST_LOG_DIR}" \
         "coreslam_2D_<date:%s>*" ".log" \
-        "20260115-000000" "20260115-235959" result
+        "20260115-000000" "20260115-235959"
 
     # epoch_in_range is within range
     # expansion should include neighbors
-    assert_equal "${#result[@]}" 3
+    assert_equal "${#REPLY_FILES[@]}" 3
 }
 
 # --- Multiple files with same timestamp ---
@@ -261,13 +231,12 @@ setup() {
     touch "${TEST_LOG_DIR}/log_20260115120000_b.dat"
     touch "${TEST_LOG_DIR}/log_20260115150000_c.dat"
 
-    local -a result=()
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959" result
+        "20260115-000000" "20260115-235959"
 
     # Both timestamps in range, no expansion possible (at boundaries)
-    assert_equal "${#result[@]}" 3
+    assert_equal "${#REPLY_FILES[@]}" 3
 }
 
 # --- Suffix in file_suffix parameter ---
@@ -276,13 +245,12 @@ setup() {
     touch "${TEST_LOG_DIR}/detect_shelf_20260115120000_data.pcd"
     touch "${TEST_LOG_DIR}/detect_shelf_20260115120000_data.dat"
 
-    local -a result=()
     file_finder "${TEST_LOG_DIR}" \
         "detect_shelf_<date:%Y%m%d%H%M%S>*" ".pcd" \
-        "20260115-000000" "20260115-235959" result
+        "20260115-000000" "20260115-235959"
 
-    assert_equal "${#result[@]}" 1
-    [[ "${result[0]}" == *".pcd" ]]
+    assert_equal "${#REPLY_FILES[@]}" 1
+    [[ "${REPLY_FILES[0]}" == *".pcd" ]]
 }
 
 # --- Date token in suffix position ---
@@ -291,13 +259,12 @@ setup() {
     touch "${TEST_LOG_DIR}/mylog_data_20260115120000.log"
     touch "${TEST_LOG_DIR}/mylog_data_20260116080000.log"
 
-    local -a result=()
     file_finder "${TEST_LOG_DIR}" \
         "mylog_data_" "<date:%Y%m%d%H%M%S>.log" \
-        "20260115-000000" "20260115-235959" result
+        "20260115-000000" "20260115-235959"
 
     # One file in range, single entry, no expansion possible
-    assert_equal "${#result[@]}" 1
+    assert_equal "${#REPLY_FILES[@]}" 1
 }
 
 # --- mapfile failure path (L851) ---
@@ -310,9 +277,8 @@ setup() {
     # Override execute_cmd to fail
     execute_cmd() { return 1; }
 
-    local -a result=()
-    file_finder "${TEST_LOG_DIR}" "some_prefix" "" "20260115-000000" "20260115-235959" result
-    assert_equal "${#result[@]}" 0
+    file_finder "${TEST_LOG_DIR}" "some_prefix" "" "20260115-000000" "20260115-235959"
+    assert_equal "${#REPLY_FILES[@]}" 0
 
     # Restore original
     eval "${_orig_exec}"
@@ -325,14 +291,11 @@ setup() {
     touch "${TEST_LOG_DIR}/app_20260115-100000.log"
     touch "${TEST_LOG_DIR}/app_20260116-100000.log"
 
-    local -a result=()
-    # <date:> has an empty format — special_string_parser sets format=""
-    # This triggers L878-879: formatted_start_ts="${start_time}" etc.
     file_finder "${TEST_LOG_DIR}" \
         "app_<date:>*" ".log" \
-        "20260115-000000" "20260115-235959" result
+        "20260115-000000" "20260115-235959"
 
     # With empty format, the raw start/end times are used for comparison
     # Files should still be found based on timestamp ordering
-    [[ "${#result[@]}" -ge 0 ]]
+    [[ "${#REPLY_FILES[@]}" -ge 0 ]]
 }

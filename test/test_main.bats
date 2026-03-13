@@ -167,7 +167,7 @@ setup() {
 
     run main -l -v -s 20260115-000000 -e 20260115-235959 -o "${BATS_TEST_TMPDIR}/output_v"
     assert_success
-    assert_output --partial "DEBUG:"
+    assert_output --partial "[DEBUG]"
 }
 
 # ---------------------------------------------------------------------------

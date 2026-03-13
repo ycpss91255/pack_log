@@ -284,7 +284,7 @@ setup() {
 
     run main -l -v -s 20260115-000000 -e 20260115-235959 -o "${OUTPUT_DIR}/verbose_test"
     assert_success
-    assert_output --partial "DEBUG:"
+    assert_output --partial "[DEBUG]"
 }
 
 # ---------------------------------------------------------------------------

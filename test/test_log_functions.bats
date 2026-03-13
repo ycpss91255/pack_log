@@ -48,14 +48,14 @@ setup() {
     VERBOSE=1
     run log_debug "debug msg"
     assert_success
-    assert_output "DEBUG: debug msg"
+    assert_output "[DEBUG] debug msg"
 }
 
 @test "log_debug: prints when VERBOSE >= 2" {
     VERBOSE=2
     run log_debug "debug msg"
     assert_success
-    assert_output "DEBUG: debug msg"
+    assert_output "[DEBUG] debug msg"
 }
 
 # --- log_info ---
@@ -63,7 +63,7 @@ setup() {
 @test "log_info: prints message to stdout" {
     run log_info "info message"
     assert_success
-    assert_output "Info: info message"
+    assert_output "[INFO]  info message"
 }
 
 # --- log_warn ---
@@ -71,7 +71,7 @@ setup() {
 @test "log_warn: prints message to stderr" {
     run log_warn "warning message"
     assert_success
-    assert_output "Warn: warning message"
+    assert_output "[WARN]  warning message"
 }
 
 # --- log_error ---
@@ -79,7 +79,7 @@ setup() {
 @test "log_error: prints message and exits with 1" {
     run log_error "error message"
     assert_failure 1
-    assert_output "Error: error message"
+    assert_output "[ERROR] error message"
 }
 
 # --- print_help ---

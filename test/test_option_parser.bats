@@ -10,7 +10,6 @@ setup() {
   START_TIME=""
   END_TIME=""
   SAVE_FOLDER="log_pack"
-  unset DRY_RUN
 }
 
 # ===========================================================================
@@ -127,14 +126,6 @@ setup() {
   assert_output --partial "VERBOSE=3"
 }
 
-# --- --dry-run ---
-
-@test "option_parser: --dry-run sets VERBOSE=1 and DRY_RUN=1" {
-  option_parser --dry-run
-  [[ "${VERBOSE}" -eq 1 ]]
-  [[ "${DRY_RUN}" -eq 1 ]]
-}
-
 # --- -h / --help ---
 
 @test "option_parser: -h prints help and exits 0" {
@@ -185,15 +176,6 @@ setup() {
   [[ "${END_TIME}" == "20260301-235959" ]]
   [[ "${SAVE_FOLDER}" == "mydir" ]]
   [[ "${VERBOSE}" -eq 2 ]]
-}
-
-@test "option_parser: --dry-run combined with other options" {
-  option_parser --local --start "20260101-000000" --end "20260101-235959" --dry-run
-  [[ "${HOST}" == "local" ]]
-  [[ "${START_TIME}" == "20260101-000000" ]]
-  [[ "${END_TIME}" == "20260101-235959" ]]
-  [[ "${VERBOSE}" -eq 1 ]]
-  [[ "${DRY_RUN}" -eq 1 ]]
 }
 
 @test "option_parser: no arguments leaves defaults unchanged" {

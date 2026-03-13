@@ -121,11 +121,9 @@ setup() {
     echo "content1" > "${src_dir}/file1.log"
     echo "content2" > "${src_dir}/file2.log"
 
-    local -a files=("${src_dir}/file1.log" "${src_dir}/file2.log")
-    file_copier "${src_dir}" files
+    file_copier "${src_dir}" "${src_dir}/file1.log" "${src_dir}/file2.log"
 
     # Files should be copied into SAVE_FOLDER/<stripped_path>/
-    local copied_dir="${SAVE_FOLDER}/${src_dir#*:}"
     [ -d "${SAVE_FOLDER}" ]
     # Verify files were copied somewhere under SAVE_FOLDER
     local found
@@ -137,8 +135,7 @@ setup() {
     SAVE_FOLDER="${TEST_DIR}/copy_empty"
     mkdir -p "${SAVE_FOLDER}"
 
-    local -a files=()
-    run file_copier "${TEST_DIR}/some_path" files
+    run file_copier "${TEST_DIR}/some_path"
 
     assert_success
     assert_output --partial "No files to copy"
@@ -151,9 +148,8 @@ setup() {
     local src_file="${TEST_DIR}/strip_test.log"
     echo "data" > "${src_file}"
 
-    local -a files=("${src_file}")
     local fake_path="/home/testuser/ros-docker/logs"
-    file_copier "${fake_path}" files
+    file_copier "${fake_path}" "${src_file}"
 
     # After stripping /home/testuser/, save_path should be SAVE_FOLDER/ros-docker/logs
     [ -d "${SAVE_FOLDER}/ros-docker/logs" ]
@@ -161,11 +157,6 @@ setup() {
 
 @test "file_copier: errors with missing arguments" {
     run file_copier
-    assert_failure
-}
-
-@test "file_copier: errors when only path provided" {
-    run file_copier "${TEST_DIR}/path"
     assert_failure
 }
 

@@ -239,19 +239,18 @@ pkg_install_handler() {
 # Converts a date string (YYYYmmdd-HHMMSS) to the given strftime format.
 #
 # Arguments:
-#   date:        The date string in YYYYmmdd-HHMMSS format.
-#   format:      The strftime format to convert to (e.g. %Y%m%d%H%M%S, %s).
-#   df_date_ref: Output variable name (nameref) to store the formatted date.
+#   date:   The date string in YYYYmmdd-HHMMSS format.
+#   format: The strftime format to convert to (e.g. %Y%m%d%H%M%S, %s).
+#
+# Sets:
+#   REPLY: The formatted date string.
 date_format() {
   local -r date="${1:?"${FUNCNAME[0]} need date."}"; shift
   local -r format="${1:?"${FUNCNAME[0]} need format."}"; shift
-  local -n df_date_ref="${1:?"${FUNCNAME[0]} need outvar."}"; shift
 
   log_verbose "${FUNCNAME[0]} input is: "
   log_verbose "  date: ${date}"
   log_verbose "  format: ${format}"
-  log_verbose "  df_date_ref name: ${!df_date_ref}"
-  log_verbose "  df_date_ref content: ${df_date_ref}"
 
   if [[ ! "${date}" =~ ^[0-9]{8}-[0-9]{6}$ ]]; then
     log_error "Invalid date format: ${date}"
@@ -261,12 +260,11 @@ date_format() {
   ymd="${date:0:4}-${date:4:2}-${date:6:2}"
   hms="${date:9:2}:${date:11:2}:${date:13:2}"
 
-  if ! df_date_ref=$(date -d "${ymd} ${hms}" "+${format}"); then
+  if ! REPLY=$(date -d "${ymd} ${hms}" "+${format}"); then
     log_error "Failed to format date: ${date}" # KCOV_EXCL_LINE
   fi
 
-  log_verbose "${FUNCNAME[0]} output is: "
-  log_verbose "  df_date_ref after: ${df_date_ref}"
+  log_verbose "${FUNCNAME[0]} output: ${REPLY}"
   log_verbose "--------------------"
 }
 
@@ -304,34 +302,31 @@ execute_cmd() {
 # the same token (e.g. <env:HOME>) appears in multiple LOG_PATHS entries.
 #
 # Arguments:
-#   type:        Token type — "env" (environment variable) or "cmd" (shell command).
-#   str:         The variable name or command to resolve.
-#   grv_str_ref: Output variable name (nameref) to store the resolved value.
+#   type: Token type — "env" (environment variable) or "cmd" (shell command).
+#   str:  The variable name or command to resolve.
+#
+# Sets:
+#   REPLY: The resolved value.
 get_remote_value() {
   local -r type="${1:?"${FUNCNAME[0]} need type."}"; shift
   local -r str="${1:?"${FUNCNAME[0]} need string."}"; shift
-  local -n grv_str_ref="${1:?"${FUNCNAME[0]} need string outvar."}"; shift
 
   log_verbose "${FUNCNAME[0]} input is: "
   log_verbose "  type: ${type}"
   log_verbose "  str: ${str}"
-  log_verbose "  grv_str_ref name: ${!grv_str_ref}"
-  log_verbose "  grv_str_ref content: ${grv_str_ref}"
   log_verbose "  HOST: ${HOST}"
-  log_verbose "  SSH_KEY: ${SSH_KEY}"
-  log_verbose "  SSH_TIMEOUT: ${SSH_TIMEOUT}"
 
   # Check cache first to avoid redundant SSH calls
   local cache_key="${type}:${str}"
   if [[ -n "${_TOKEN_CACHE["${cache_key}"]+set}" ]]; then
-    grv_str_ref="${_TOKEN_CACHE["${cache_key}"]}"
-    log_debug "Cache hit: ${cache_key} = ${grv_str_ref}"
+    REPLY="${_TOKEN_CACHE["${cache_key}"]}"
+    log_debug "Cache hit: ${cache_key} = ${REPLY}"
     return 0
   fi
 
   if [[ "${HOST}" == "local" && "${type}" == "env" && "${str}" == "HOME" ]]; then
-    grv_str_ref="${HOME}"
-    _TOKEN_CACHE["${cache_key}"]="${grv_str_ref}"
+    REPLY="${HOME}"
+    _TOKEN_CACHE["${cache_key}"]="${REPLY}"
     return 0
   fi
 
@@ -346,12 +341,10 @@ get_remote_value() {
 
   log_debug "Executing command: ${get_cmd}"
 
-  local result
-  if ! result=$(execute_cmd "${get_cmd}"); then
+  if ! REPLY=$(execute_cmd "${get_cmd}"); then
     log_error "Command failed: ${get_cmd}" # KCOV_EXCL_LINE
   fi
-  grv_str_ref=$result
-  _TOKEN_CACHE["${cache_key}"]="${grv_str_ref}"
+  _TOKEN_CACHE["${cache_key}"]="${REPLY}"
 
   log_verbose "--------------------"
 }
@@ -382,24 +375,23 @@ create_folder() {
 #
 # Arguments:
 #   inner_cmd: The command to execute (e.g., "xargs ...").
-#   arr_name: Name of the array variable to pipe to stdin.
+#   ...:       Array elements to pipe as null-delimited stdin.
 execute_cmd_from_array() {
   local -r inner_cmd="${1:?"${FUNCNAME[0]} need inner command."}"; shift
-  local -n arr_ref="${1:?"${FUNCNAME[0]} need array name."}"; shift
   local ret=0
 
   log_verbose "${FUNCNAME[0]} input is: "
   log_verbose "  inner_cmd: ${inner_cmd}"
-  log_verbose "  array size: ${#arr_ref[@]} elements"
+  log_verbose "  array size: $# elements"
   log_verbose "  HOST: ${HOST}"
 
   if [[ "${HOST}" == "local" ]]; then
     # Directly pipe formatted array to eval
-    printf "%s\0" "${arr_ref[@]}" | eval "${inner_cmd}"
+    printf "%s\0" "$@" | eval "${inner_cmd}"
     ret=$?
   else
     # Pipe formatted array directly through SSH
-    printf "%s\0" "${arr_ref[@]}" | ssh "${SSH_OPTS[@]}" "${HOST}" "${inner_cmd}"
+    printf "%s\0" "$@" | ssh "${SSH_OPTS[@]}" "${HOST}" "${inner_cmd}"
     ret=$?
   fi
 
@@ -715,30 +707,31 @@ get_tools_checker() {
 #
 # Arguments:
 #   input: The special string to parse.
-#   ssp_type_ref: The name of the variable to store the type of the string.
-#   ssp_str_ref: The name of the variable to store the resolved string.
+#
+# Sets:
+#   REPLY_TYPE: The type of the token (env, cmd, date, suffix).
+#   REPLY_STR:  The resolved string value.
 special_string_parser() {
   local -r input="${1:?"${FUNCNAME[0]} need input string."}"; shift
-  local -n ssp_type_ref="${1:?"${FUNCNAME[0]} need type outvar."}"; shift
-  local -n ssp_str_ref="${1:?"${FUNCNAME[0]} need string outvar."}"; shift
 
   if [[ ! "${input}" == *:* ]]; then
     log_error "Invalid special string format: ${input}"
   fi
 
-  ssp_type_ref="${input%%:*}"
-  local str="${input#${ssp_type_ref}:}"
-  log_debug "Parsed special string - type: ${ssp_type_ref}, string: ${str}"
+  REPLY_TYPE="${input%%:*}"
+  local str="${input#"${REPLY_TYPE}":}"
+  log_debug "Parsed special string - type: ${REPLY_TYPE}, string: ${str}"
 
-  if [[ ${ssp_type_ref} == "env"  || ${ssp_type_ref} == "cmd" ]]; then
-    get_remote_value "${ssp_type_ref}" "${str}" ssp_str_ref
-  elif [[ ${ssp_type_ref} == "date" || ${ssp_type_ref} == "suffix" ]]; then
-    ssp_str_ref="${str}"
+  if [[ ${REPLY_TYPE} == "env"  || ${REPLY_TYPE} == "cmd" ]]; then
+    get_remote_value "${REPLY_TYPE}" "${str}"
+    REPLY_STR="${REPLY}"
+  elif [[ ${REPLY_TYPE} == "date" || ${REPLY_TYPE} == "suffix" ]]; then
+    REPLY_STR="${str}"
   else
-    log_error "Unknown special string type: ${ssp_type_ref}"
+    log_error "Unknown special string type: ${REPLY_TYPE}"
   fi
 
-  log_debug "Resolved string: ${ssp_str_ref}"
+  log_debug "Resolved string: ${REPLY_STR}"
 }
 
 # Handles a string containing special tokens.
@@ -748,18 +741,14 @@ special_string_parser() {
 #
 # Arguments:
 #   str: The string to process.
-#   sh_path_ref: The name of the variable to store the path part of the
-#                 string.
-#   sh_prefix_ref: The name of the variable to store the prefix part of the
-#                   string.
-#   sh_suffix_ref: The name of the variable to store the suffix part of the
-#                   string.
+#
+# Sets:
+#   REPLY_PATH:   The path part of the string (before ::).
+#   REPLY_PREFIX: The prefix part of the string (after ::).
+#   REPLY_SUFFIX: The suffix filter (from <suffix:> token), or empty.
 string_handler() {
   local str="${1:?"${FUNCNAME[0]} need string."}"; shift
-  local -n sh_path_ref="${1:?"${FUNCNAME[0]} need path outvar."}"; shift
-  local -n sh_prefix_ref="${1:?"${FUNCNAME[0]} need prefix outvar."}"; shift
-  local -n sh_suffix_ref="${1:?"${FUNCNAME[0]} need suffix outvar."}"; shift
-  local cmd_type="" string=""
+  REPLY_SUFFIX=""
   local -a date_tokens=()
   local i=0
 
@@ -778,14 +767,14 @@ string_handler() {
 
     # normal case, replace directly
     log_debug "Processing token: ${token}"
-    special_string_parser "${token:1:-1}" cmd_type string
-    if [[ "${cmd_type}" == "suffix" ]]; then
-      sh_suffix_ref="${string}"
-      log_debug "Suffix set to: ${sh_suffix_ref}"
+    special_string_parser "${token:1:-1}"
+    if [[ "${REPLY_TYPE}" == "suffix" ]]; then
+      REPLY_SUFFIX="${REPLY_STR}"
+      log_debug "Suffix set to: ${REPLY_SUFFIX}"
       str="${str//${token}/}"
       continue
     fi
-    str="${str//${token}/${string}}"
+    str="${str//${token}/${REPLY_STR}}"
   done
 
   local j
@@ -793,8 +782,8 @@ string_handler() {
     str="${str/__DATE_TOKEN_${j}__/${date_tokens["${j}"]}}"
   done
 
-  sh_path_ref="${str%%::*}"
-  sh_prefix_ref="${str##*::}"
+  REPLY_PATH="${str%%::*}"
+  REPLY_PREFIX="${str##*::}"
 }
 
 # Finds files matching a name pattern and time range on local or remote host.
@@ -804,19 +793,20 @@ string_handler() {
 # and expands boundaries by +/-1 to catch edge cases.
 #
 # Arguments:
-#   folder_path:  Directory to search in.
-#   file_prefix:  Filename pattern before the date token (may contain <date:>).
-#   file_suffix:  Filename pattern after the date token (may contain <date:>).
-#   start_time:   Range start in YYYYmmdd-HHMMSS format.
-#   end_time:     Range end in YYYYmmdd-HHMMSS format.
-#   ff_files_ref: Output array name (nameref) to store matched file paths.
+#   folder_path: Directory to search in.
+#   file_prefix: Filename pattern before the date token (may contain <date:>).
+#   file_suffix: Filename pattern after the date token (may contain <date:>).
+#   start_time:  Range start in YYYYmmdd-HHMMSS format.
+#   end_time:    Range end in YYYYmmdd-HHMMSS format.
+#
+# Sets:
+#   REPLY_FILES: Array of matched file paths.
 file_finder() {
   local -r folder_path="${1:?"${FUNCNAME[0]} need path."}"; shift
   local file_prefix="${1:-}"; shift
   local file_suffix="${1:-}"; shift
   local start_time="${1:?"${FUNCNAME[0]} need start time."}"; shift
   local end_time="${1:?"${FUNCNAME[0]} need end time."}"; shift
-  local -n ff_files_ref="${1:?"${FUNCNAME[0]} need out files var."}"; shift
 
   log_verbose "${FUNCNAME[0]} input: Path=${folder_path}, Prefix=${file_prefix}"
 
@@ -832,9 +822,10 @@ file_finder() {
   fi
   log_debug "Date token position: ${format_position}, content: ${token}"
 
-  local dummy="" format=""
+  local format=""
   if [[ -n "${token}" ]]; then
-    special_string_parser "${token:1:-1}" dummy format
+    special_string_parser "${token:1:-1}"
+    format="${REPLY_STR}"
   fi
 
   local strip_prefix="${file_prefix//\*/}"
@@ -848,21 +839,23 @@ file_finder() {
   # get file list
   local -a raw_files=()
   if ! mapfile -t raw_files < <(execute_cmd "${find_cmd}"); then
-    ff_files_ref=() # KCOV_EXCL_LINE
+    REPLY_FILES=() # KCOV_EXCL_LINE
     return 0 # KCOV_EXCL_LINE
   fi
 
   # [1] Configuration Files Direct Pass
   if [[ -z "${token}" ]]; then
-    ff_files_ref=("${raw_files[@]}")
+    REPLY_FILES=("${raw_files[@]}")
     return 0
   fi
 
   # [2] Date Format Preparation
   local formatted_start_ts="" formatted_end_ts=""
   if [[ -n "${format}" ]]; then
-    date_format "${start_time}" "${format}" formatted_start_ts
-    date_format "${end_time}" "${format}" formatted_end_ts
+    date_format "${start_time}" "${format}"
+    formatted_start_ts="${REPLY}"
+    date_format "${end_time}" "${format}"
+    formatted_end_ts="${REPLY}"
   else
     formatted_start_ts="${start_time}"
     formatted_end_ts="${end_time}"
@@ -887,7 +880,7 @@ file_finder() {
   done
 
   if [[ ${#all_files[@]} -eq 0 ]]; then
-    ff_files_ref=()
+    REPLY_FILES=()
     return 0
   fi
 
@@ -930,7 +923,7 @@ file_finder() {
   # Case C: Still invalid?
   if [[ $s_idx -eq -1 || $e_idx -eq -1 || $s_idx -gt $e_idx ]]; then
     log_warn "No files found intersecting the time range ${formatted_start_ts} ~ ${formatted_end_ts}."
-    ff_files_ref=()
+    REPLY_FILES=()
     return 0
   fi
 
@@ -954,8 +947,8 @@ file_finder() {
     fi
   done
 
-  ff_files_ref=("${selected[@]}")
-  log_info "Selected ${#ff_files_ref[@]} files from ${#all_files[@]} candidates."
+  REPLY_FILES=("${selected[@]}")
+  log_info "Selected ${#REPLY_FILES[@]} files from ${#all_files[@]} candidates."
 }
 
 # Creates the output folder.
@@ -1038,19 +1031,19 @@ file_cleaner() {
 # Uses xargs with null-delimited input to handle filenames safely.
 #
 # Arguments:
-#   log_path:         The resolved source directory path.
-#   fc_log_files_ref: Array name (nameref) containing file paths to copy.
+#   log_path: The resolved source directory path.
+#   ...:      File paths to copy.
 file_copier() {
   local log_path="${1:?"${FUNCNAME[0]} need log path."}"; shift
-  local -n fc_log_files_ref="${1:?"${FUNCNAME[0]} need log files var."}"; shift
+  local -a fc_log_files=("$@")
 
   log_verbose "${FUNCNAME[0]} input is: "
   log_verbose "  log_path: ${log_path}"
-  log_verbose "  files count: ${#fc_log_files_ref[@]}"
+  log_verbose "  files count: ${#fc_log_files[@]}"
   log_verbose "  SAVE_FOLDER: ${SAVE_FOLDER}"
   log_verbose "  HOST: ${HOST}"
 
-  if [[ ${#fc_log_files_ref[@]} -eq 0 ]]; then
+  if [[ ${#fc_log_files[@]} -eq 0 ]]; then
     log_warn "No files to copy for ${log_path}"
     return 0
   fi
@@ -1072,7 +1065,7 @@ file_copier() {
   printf -v xargs_cmd "xargs -0 -r cp %s -t %q" "${cp_opts[*]}" "${save_path}/"
 
   # Execute by piping the array directly (avoiding variable truncation)
-  if ! execute_cmd_from_array "${xargs_cmd}" fc_log_files_ref; then
+  if ! execute_cmd_from_array "${xargs_cmd}" "${fc_log_files[@]}"; then
     log_error "Failed to copy files to ${save_path}"
   fi
 
@@ -1182,13 +1175,13 @@ get_log() {
 
   for log_path in "${LOG_PATHS[@]}"; do
     (( idx++ ))
-    local path="" prefix="" suffix=""
-    local -a files=()
 
     log_info "[${idx}/${total}] Processing: ${log_path}"
-    string_handler "${log_path}" path prefix suffix
+    string_handler "${log_path}"
+    local path="${REPLY_PATH}" prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
 
-    file_finder "${path}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" files
+    file_finder "${path}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}"
+    local -a files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
 
     if [[ "${#files[@]}" -eq 0 ]]; then
       log_warn "[${idx}/${total}] No files found."
@@ -1196,7 +1189,7 @@ get_log() {
     fi
 
     log_info "[${idx}/${total}] Found ${#files[@]} files, copying..."
-    file_copier "${path}" files
+    file_copier "${path}" "${files[@]}"
   done
 }
 

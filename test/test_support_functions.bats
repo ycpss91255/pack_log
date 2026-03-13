@@ -59,34 +59,29 @@ setup() {
 # --- date_format ---
 
 @test "date_format: formats date correctly with %Y%m%d" {
-    local result=""
-    date_format "20260115-103045" "%Y%m%d" result
-    assert_equal "${result}" "20260115"
+    date_format "20260115-103045" "%Y%m%d"
+    assert_equal "${REPLY}" "20260115"
 }
 
 @test "date_format: formats date correctly with %Y%m%d-%H%M%S" {
-    local result=""
-    date_format "20260115-103045" "%Y%m%d-%H%M%S" result
-    assert_equal "${result}" "20260115-103045"
+    date_format "20260115-103045" "%Y%m%d-%H%M%S"
+    assert_equal "${REPLY}" "20260115-103045"
 }
 
 @test "date_format: formats date correctly with %s (epoch)" {
-    local result=""
-    date_format "20260115-103045" "%s" result
+    date_format "20260115-103045" "%s"
     # Verify it's a number (epoch timestamp)
-    [[ "${result}" =~ ^[0-9]+$ ]]
+    [[ "${REPLY}" =~ ^[0-9]+$ ]]
 }
 
 @test "date_format: errors on invalid date format" {
-    local result=""
-    run date_format "invalid-date" "%Y%m%d" result
+    run date_format "invalid-date" "%Y%m%d"
     assert_failure
     assert_output --partial "Invalid date format"
 }
 
 @test "date_format: errors on short date string" {
-    local result=""
-    run date_format "2026" "%Y%m%d" result
+    run date_format "2026" "%Y%m%d"
     assert_failure
     assert_output --partial "Invalid date format"
 }
@@ -122,30 +117,26 @@ setup() {
 
 @test "get_remote_value: gets HOME env locally" {
     HOST="local"
-    local result=""
-    get_remote_value "env" "HOME" result
-    assert_equal "${result}" "${HOME}"
+    get_remote_value "env" "HOME"
+    assert_equal "${REPLY}" "${HOME}"
 }
 
 @test "get_remote_value: gets env var via execute_cmd" {
     HOST="local"
-    local result=""
     # USER should be available
-    get_remote_value "env" "USER" result
-    [[ -n "${result}" ]]
+    get_remote_value "env" "USER"
+    [[ -n "${REPLY}" ]]
 }
 
 @test "get_remote_value: runs cmd type" {
     HOST="local"
-    local result=""
-    get_remote_value "cmd" "echo testval" result
-    assert_equal "${result}" "testval"
+    get_remote_value "cmd" "echo testval"
+    assert_equal "${REPLY}" "testval"
 }
 
 @test "get_remote_value: errors on unknown type" {
     HOST="local"
-    local result=""
-    run get_remote_value "unknown" "test" result
+    run get_remote_value "unknown" "test"
     assert_failure
     assert_output --partial "Unknown type"
 }
@@ -181,8 +172,7 @@ setup() {
 
 @test "execute_cmd_from_array: pipes array to command locally" {
     HOST="local"
-    local -a test_arr=("file1" "file2" "file3")
-    run execute_cmd_from_array "xargs -0 -r printf '%s\n'" test_arr
+    run execute_cmd_from_array "xargs -0 -r printf '%s\n'" "file1" "file2" "file3"
     assert_success
     assert_output --partial "file1"
     assert_output --partial "file2"
@@ -191,8 +181,7 @@ setup() {
 
 @test "execute_cmd_from_array: returns failure for failing command" {
     HOST="local"
-    local -a test_arr=("item")
-    run execute_cmd_from_array "xargs -0 -r false" test_arr
+    run execute_cmd_from_array "xargs -0 -r false" "item"
     assert_failure
 }
 
@@ -310,8 +299,7 @@ WRAPPER
     export PATH="${bin_dir}:${PATH}"
 
     SSH_OPTS=()
-    local -a test_arr=("a" "b")
-    run execute_cmd_from_array "xargs -0 -r printf '%s\n'" test_arr
+    run execute_cmd_from_array "xargs -0 -r printf '%s\n'" "a" "b"
     assert_success
     assert_output --partial "a"
 }
@@ -355,8 +343,7 @@ WRAPPER
         set +euo pipefail
         VERBOSE=0
         # Valid format but impossible date
-        local result=""
-        date_format "99991399-999999" "%Y%m%d" result
+        date_format "99991399-999999" "%Y%m%d"
     '
     assert_failure
 }
@@ -369,8 +356,7 @@ WRAPPER
         set +euo pipefail
         HOST="local"
         VERBOSE=0
-        local result=""
-        get_remote_value "cmd" "false" result
+        get_remote_value "cmd" "false"
     '
     assert_failure
     assert_output --partial "Command failed"
