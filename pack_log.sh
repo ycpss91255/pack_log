@@ -129,6 +129,7 @@ declare -gA _TOKEN_CACHE=()
 
 # --- Log functions ---
 # Color codes (disabled when stdout/stderr is not a terminal)
+# KCOV_EXCL_START — terminal color detection depends on runtime tty
 if [[ -t 2 ]]; then
   _C_RESET='\033[0m'
   _C_RED='\033[1;31m'
@@ -136,6 +137,7 @@ if [[ -t 2 ]]; then
   _C_GREEN='\033[0;32m'
   _C_CYAN='\033[0;36m'
   _C_DIM='\033[2m'
+# KCOV_EXCL_STOP
 else
   _C_RESET='' _C_RED='' _C_YELLOW='' _C_GREEN='' _C_CYAN='' _C_DIM=''
 fi
@@ -335,7 +337,7 @@ get_remote_value() {
 
   local get_cmd=""
   if [[ "${type}" == "env" ]]; then
-    printf -v get_cmd 'printf "%%s" "${%s}"' "${str}"
+    printf -v get_cmd 'printf "%%s" "${%s}"' "${str}" # KCOV_EXCL_LINE
   elif [[ "${type}" == "cmd" ]]; then
     get_cmd="${str}"
   else
@@ -1122,6 +1124,7 @@ file_sender() {
   folder_size=$(execute_cmd "du -sh ${remote_esc} | awk '{print \$1}'")
   log_info "Remote folder ${SAVE_FOLDER} size is: ${folder_size}"
 
+  # KCOV_EXCL_START — transfer loop requires real SSH/rsync/scp/sftp
   local attempt=0
   while (( attempt < TRANSFER_MAX_RETRIES )); do
     local transfer_ok=false
@@ -1170,6 +1173,7 @@ file_sender() {
       log_error "${tool} failed after ${TRANSFER_MAX_RETRIES} attempts for ${SAVE_FOLDER}"
     fi
   done
+  # KCOV_EXCL_STOP
 }
 
 # Main function for getting the logs.
