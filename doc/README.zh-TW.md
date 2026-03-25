@@ -24,7 +24,10 @@
 - **自動 SSH 金鑰管理**：自動建立 SSH 金鑰、複製到遠端主機、處理 host key 更新。
 - **彈性傳輸方式**：支援 rsync、scp、sftp，自動偵測可用工具並依序嘗試。
 - **本機模式**：不走 SSH，直接在本機收集 log。
-- **100% 測試覆蓋率**：260 個測試，涵蓋單元測試、本機整合測試、遠端整合測試。
+- **i18n 多語言支援**：英文、繁體中文、簡體中文、日文，透過 `--lang` 或 `$LANG` 切換。
+- **Log 檔案輸出**：所有操作記錄寫入 `pack_log.log`。
+- **傳輸重試與保留**：失敗最多重試 3 次，最終失敗保留遠端資料夾。
+- **100% 測試覆蓋率**：268 個測試，涵蓋單元測試、本機整合測試、遠端整合測試。
 
 ## 快速開始
 
@@ -60,7 +63,9 @@
 | `-v, --verbose` | 啟用詳細輸出 |
 | `--very-verbose` | 啟用 debug 輸出 |
 | `--extra-verbose` | 啟用追蹤輸出（`set -x`） |
+| `--lang <code>` | 語言：`en`、`zh-TW`、`zh-CN`、`ja` |
 | `-h, --help` | 顯示說明 |
+| `--version` | 顯示版本 |
 
 ## 架構
 
@@ -138,7 +143,7 @@ declare -a LOG_PATHS=(
 
 ```text
 .
-├── pack_log.sh                          # 主腳本（約 1200 行）
+├── pack_log.sh                          # 主腳本（約 1340 行）
 ├── ci.sh                                # 單元測試 CI 入口
 ├── ci-integration.sh                    # 整合測試 CI 入口
 ├── docker-compose.yaml                  # 單元測試 Docker 環境
@@ -178,10 +183,10 @@ declare -a LOG_PATHS=(
 
 | 類別 | 測試數量 | 說明 |
 |------|------:|------|
-| 單元測試 | 223 | 個別函式測試 |
+| 單元測試 | 231 | 個別函式測試 |
 | 本機整合測試 | 13 | 完整 `main()` 本機模式流程 |
 | 遠端整合測試 | 24 | 完整流程 + 真實 SSH 連線至 Docker sshd |
-| **合計** | **260** | **100% 程式碼覆蓋率** |
+| **合計** | **268** | **100% 程式碼覆蓋率** |
 
 ### 執行測試
 
@@ -198,7 +203,7 @@ declare -a LOG_PATHS=(
 ```mermaid
 graph LR
     S["ci.sh"]:::entry --> SC["ShellCheck\n靜態分析 pack_log.sh"]:::step
-    SC --> BT["Bats + Kcov\n236 個測試 + 覆蓋率"]:::step
+    SC --> BT["Bats + Kcov\n244 個測試 + 覆蓋率"]:::step
     BT --> CC["Codecov\n上傳報告"]:::step
 
     S2["ci-integration.sh"]:::entry --> SSHD["啟動 sshd\nDocker 容器"]:::step

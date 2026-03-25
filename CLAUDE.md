@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 概述
 
-`pack_log.sh` 是一個單檔 Bash 腳本（約 1200 行），用於透過 SSH 連線到遠端主機，依照指定時間範圍尋找 log 檔案，複製到遠端暫存資料夾後，再用 rsync/scp/sftp 傳回本機。
+`pack_log.sh` 是一個單檔 Bash 腳本（約 1340 行），用於透過 SSH 連線到遠端主機，依照指定時間範圍尋找 log 檔案，複製到遠端暫存資料夾後，再用 rsync/scp/sftp 傳回本機。支援 i18n（en/zh-TW/zh-CN/ja）。
 
 ## 執行方式
 
@@ -27,22 +27,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # 本機執行完整 CI（需要 Docker + Docker Compose）
-cd bash_test_helper && ./ci.sh
+./ci.sh
+
+# 遠端整合測試
+./ci-integration.sh
 ```
 
-測試檔案放在 `bash_test_helper/test/` 目錄下，副檔名為 `.bats`。測試輔助模組（`bash_test_helper/src/test_helper.bash`）會自動載入 bats-support、bats-assert、bats-file 和 bats-mock。
+測試檔案放在 `test/` 目錄下，副檔名為 `.bats`。測試輔助模組（`test/test_helper.bash`）會自動載入 bats-support、bats-assert、bats-file 和 bats-mock。
 
 ## 架構
 
 腳本在 `main()` 中依序執行以下流程：
 
-1. **`option_parser`** — 透過 `getopt` 解析命令列參數
-2. **`host_handler`** — 解析目標主機（編號 → HOSTS 陣列查詢、user@host、或 "local"）
-3. **`time_handler`** — 驗證起訖時間格式（`YYYYMMDD-HHMMSS`）
-4. **`ssh_handler`** — 建立 SSH 連線，自動建立/複製金鑰（最多重試 3 次）
-5. **`folder_creator`** — 在遠端建立暫存資料夾（`log_pack_<hostname>_<date>`）
-6. **`get_log`** — 遍歷 `LOG_PATHS`，解析特殊 token，依時間範圍篩選檔案並複製到暫存資料夾
-7. **`file_sender`** — 透過 rsync/scp/sftp 將暫存資料夾傳回本機
+1. **`option_parser`** — 透過 `getopt` 解析命令列參數（含 `--lang`）
+2. **`load_lang`** — 載入 i18n 語言檔（`doc/lang/*.sh`）
+3. **`host_handler`** — 解析目標主機（編號 → HOSTS 陣列查詢、user@host、或 "local"）
+4. **`time_handler`** — 驗證起訖時間格式（`YYYYMMDD-HHMMSS`），確認 START < END
+5. **`ssh_handler`** — 建立 SSH 連線，自動建立/複製金鑰（最多重試 3 次）
+6. **`folder_creator`** — 在遠端建立暫存資料夾（`log_pack_<hostname>_<date>`）
+7. **`init_log_file`** — 開啟 log 檔案寫入（`pack_log.log`）
+8. **`get_log`** — 遍歷 `LOG_PATHS`，解析特殊 token，依時間範圍篩選檔案並複製到暫存資料夾
+9. **`file_sender`** — 透過 rsync/scp/sftp 將暫存資料夾傳回本機（失敗 3 次保留遠端資料夾）
 
 ### LOG_PATHS 特殊 Token 系統
 
@@ -65,6 +70,6 @@ Log 路徑字串支援在執行時對遠端主機解析的 token：
 ## 重要慣例
 
 - 腳本使用 `set -euo pipefail`，所有錯誤皆為致命錯誤
-- 函式大量使用 `local -n`（nameref）作為輸出參數
+- 函式使用 REPLY 慣例作為輸出（`REPLY`, `REPLY_TYPE`, `REPLY_STR` 等）
 - SSH 金鑰路徑固定為 `~/.ssh/get_log`
 - CI 中強制執行 ShellCheck 合規檢查

@@ -6,8 +6,6 @@
 ![Testing](https://img.shields.io/badge/Testing-Bats-orange?style=flat-square)
 ![ShellCheck](https://img.shields.io/badge/ShellCheck-Compliant-brightgreen?style=flat-square)
 
-[English] | [繁體中文](./README.zh-TW.md)
-
 > **TL;DR** — Single-file Bash script that connects to remote hosts via SSH, finds log files by time range, and transfers them back locally via rsync/scp/sftp. 100% test coverage with Bats + Kcov.
 >
 > ```bash
@@ -26,7 +24,10 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 - **Auto SSH Key Management**: Creates SSH keys, copies them to remote hosts, and handles host key rotation automatically.
 - **Flexible Transfer**: Supports rsync, scp, and sftp with automatic tool detection and fallback.
 - **Local Mode**: Run without SSH for local log collection.
-- **100% Test Coverage**: 260 tests across unit, local integration, and remote integration test suites.
+- **i18n Support**: English, Traditional Chinese, Simplified Chinese, and Japanese via `--lang` or `$LANG`.
+- **Log File Output**: All operations logged to `pack_log.log` in the output folder.
+- **Transfer Retry with Preservation**: Retries failed transfers up to 3 times; preserves remote folder on final failure.
+- **100% Test Coverage**: 268 tests across unit, local integration, and remote integration test suites.
 
 ## Quick Start
 
@@ -62,7 +63,9 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 | `-v, --verbose` | Enable verbose output |
 | `--very-verbose` | Enable debug output |
 | `--extra-verbose` | Enable trace output (`set -x`) |
+| `--lang <code>` | Language: `en`, `zh-TW`, `zh-CN`, `ja` |
 | `-h, --help` | Show help message |
+| `--version` | Show version |
 
 ## Architecture
 
@@ -140,7 +143,7 @@ declare -a LOG_PATHS=(
 
 ```text
 .
-├── pack_log.sh                          # Main script (~1200 lines)
+├── pack_log.sh                          # Main script (~1340 lines)
 ├── ci.sh                                # Unit test CI entry point
 ├── ci-integration.sh                    # Integration test CI entry point
 ├── docker-compose.yaml                  # Unit test Docker environment
@@ -154,15 +157,15 @@ declare -a LOG_PATHS=(
 │
 ├── test/
 │   ├── test_helper.bash                 # Shared bats test helper
-│   ├── test_log_functions.bats          # Log function tests (11)
-│   ├── test_support_functions.bats      # Support function tests (31)
-│   ├── test_option_parser.bats          # Option parser tests (36)
+│   ├── test_log_functions.bats          # Log function tests (20)
+│   ├── test_support_functions.bats      # Support function tests (37)
+│   ├── test_option_parser.bats          # Option parser tests (44)
 │   ├── test_host_handler.bats           # Host handler tests (22)
-│   ├── test_string_handler.bats         # String/token handler tests (28)
+│   ├── test_string_handler.bats         # String/token handler tests (27)
 │   ├── test_file_finder.bats            # File finder tests (20)
-│   ├── test_file_ops.bats              # File operation tests (28)
+│   ├── test_file_ops.bats              # File operation tests (31)
 │   ├── test_ssh_handler.bats            # SSH handler tests (13)
-│   ├── test_main.bats                   # Main pipeline tests (21)
+│   ├── test_main.bats                   # Main pipeline tests (17)
 │   ├── test_integration_local.bats      # Local integration tests (13)
 │   ├── Dockerfile.sshd                  # SSH server for remote tests
 │   ├── setup_remote_logs.sh             # Remote test data seeder
@@ -170,6 +173,16 @@ declare -a LOG_PATHS=(
 │   └── integration/
 │       ├── test_helper.bash             # Remote test helper
 │       └── test_remote.bats             # Remote integration tests (24)
+│
+├── doc/
+│   ├── lang/                            # i18n message catalogs
+│   │   ├── en.sh                        # English (default)
+│   │   ├── zh-TW.sh                     # Traditional Chinese
+│   │   ├── zh-CN.sh                     # Simplified Chinese
+│   │   └── ja.sh                        # Japanese
+│   ├── README.zh-TW.md                  # Traditional Chinese README
+│   ├── README.zh-CN.md                  # Simplified Chinese README
+│   └── README.ja.md                     # Japanese README
 │
 └── bash_test_helper/                    # Reference submodule
 ```
@@ -180,10 +193,10 @@ declare -a LOG_PATHS=(
 
 | Category | Tests | Description |
 |----------|------:|-------------|
-| Unit Tests | 223 | Individual function testing |
+| Unit Tests | 231 | Individual function testing |
 | Local Integration | 13 | Full `main()` pipeline with local mode |
 | Remote Integration | 24 | Full pipeline with real SSH to Docker sshd |
-| **Total** | **260** | **100% code coverage** |
+| **Total** | **268** | **100% code coverage** |
 
 ### Run Tests
 
@@ -200,7 +213,7 @@ declare -a LOG_PATHS=(
 ```mermaid
 graph LR
     S["ci.sh"]:::entry --> SC["ShellCheck\nlint pack_log.sh"]:::step
-    SC --> BT["Bats + Kcov\n236 tests + coverage"]:::step
+    SC --> BT["Bats + Kcov\n244 tests + coverage"]:::step
     BT --> CC["Codecov\nupload report"]:::step
 
     S2["ci-integration.sh"]:::entry --> SSHD["Start sshd\nDocker container"]:::step
@@ -240,7 +253,7 @@ The CI containers automatically install:
 ## Conventions
 
 - Script uses `set -euo pipefail` — all errors are fatal
-- Functions use `local -n` (nameref) for output parameters
+- Functions use REPLY convention for output (`REPLY`, `REPLY_TYPE`, `REPLY_STR`, etc.)
 - SSH key path is fixed at `~/.ssh/get_log`
 - ShellCheck compliance enforced in CI (`-S error` level)
 - `BASH_SOURCE` guard pattern for testability:

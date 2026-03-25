@@ -24,7 +24,10 @@
 - **自动 SSH 密钥管理**：自动创建 SSH 密钥、复制到远程主机、处理 host key 更新。
 - **灵活传输方式**：支持 rsync、scp、sftp，自动检测可用工具并依序尝试。
 - **本机模式**：不走 SSH，直接在本机收集 log。
-- **100% 测试覆盖率**：260 个测试，涵盖单元测试、本机集成测试、远程集成测试。
+- **i18n 多语言支持**：英文、繁体中文、简体中文、日文，通过 `--lang` 或 `$LANG` 切换。
+- **Log 文件输出**：所有操作记录写入 `pack_log.log`。
+- **传输重试与保留**：失败最多重试 3 次，最终失败保留远程文件夹。
+- **100% 测试覆盖率**：268 个测试，涵盖单元测试、本机集成测试、远程集成测试。
 
 ## 快速开始
 
@@ -138,7 +141,7 @@ declare -a LOG_PATHS=(
 
 ```text
 .
-├── pack_log.sh                          # 主脚本（约 1200 行）
+├── pack_log.sh                          # 主脚本（约 1340 行）
 ├── ci.sh                                # 单元测试 CI 入口
 ├── ci-integration.sh                    # 集成测试 CI 入口
 ├── docker-compose.yaml                  # 单元测试 Docker 环境
@@ -178,10 +181,10 @@ declare -a LOG_PATHS=(
 
 | 类别 | 测试数量 | 说明 |
 |------|------:|------|
-| 单元测试 | 223 | 各函数独立测试 |
+| 单元测试 | 231 | 各函数独立测试 |
 | 本机集成测试 | 13 | 完整 `main()` 本机模式流程 |
 | 远程集成测试 | 24 | 完整流程 + 真实 SSH 连接至 Docker sshd |
-| **合计** | **260** | **100% 代码覆盖率** |
+| **合计** | **268** | **100% 代码覆盖率** |
 
 ### 运行测试
 
@@ -198,7 +201,7 @@ declare -a LOG_PATHS=(
 ```mermaid
 graph LR
     S["ci.sh"]:::entry --> SC["ShellCheck\n静态分析 pack_log.sh"]:::step
-    SC --> BT["Bats + Kcov\n236 个测试 + 覆盖率"]:::step
+    SC --> BT["Bats + Kcov\n244 个测试 + 覆盖率"]:::step
     BT --> CC["Codecov\n上传报告"]:::step
 
     S2["ci-integration.sh"]:::entry --> SSHD["启动 sshd\nDocker 容器"]:::step
