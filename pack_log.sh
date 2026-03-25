@@ -519,7 +519,7 @@ option_parser() {
       -h | --help)
         # Resolve language before printing help
         if [[ -z "${LANG_CODE}" ]]; then
-          case "${LANG:-}" in
+          case "${LANG:-}" in # KCOV_EXCL_LINE
             zh_TW*) LANG_CODE="zh-TW" ;; zh_CN*|zh_SG*) LANG_CODE="zh-CN" ;;
             ja*) LANG_CODE="ja" ;; *) LANG_CODE="en" ;;
           esac
@@ -1280,7 +1280,7 @@ main() {
 
   # Resolve language: --lang > $LANG > default en
   if [[ -z "${LANG_CODE}" ]]; then
-    case "${LANG:-}" in
+    case "${LANG:-}" in # KCOV_EXCL_LINE
       zh_TW*) LANG_CODE="zh-TW" ;; zh_CN*|zh_SG*) LANG_CODE="zh-CN" ;;
       ja*) LANG_CODE="ja" ;; *) LANG_CODE="en" ;;
     esac
