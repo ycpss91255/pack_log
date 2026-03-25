@@ -150,6 +150,18 @@ setup() {
   assert_output --partial "${VERSION}"
 }
 
+# --- --lang ---
+
+@test "option_parser: --lang sets LANG_CODE" {
+  option_parser --lang zh-TW -l -s 20260101-000000 -e 20260101-235959
+  [[ "${LANG_CODE}" == "zh-TW" ]]
+}
+
+@test "option_parser: --lang ja sets LANG_CODE to ja" {
+  option_parser --lang ja -l -s 20260101-000000 -e 20260101-235959
+  [[ "${LANG_CODE}" == "ja" ]]
+}
+
 # --- invalid option ---
 
 @test "option_parser: invalid option exits 1" {

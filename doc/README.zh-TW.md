@@ -4,7 +4,7 @@
 ![Testing](https://img.shields.io/badge/Testing-Bats-orange?style=flat-square)
 ![ShellCheck](https://img.shields.io/badge/ShellCheck-Compliant-brightgreen?style=flat-square)
 
-[English](./README.md) | [繁體中文]
+> **語言**: [English](../README.md) | 繁體中文 | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
 
 > **TL;DR** — 單檔 Bash 腳本，透過 SSH 連線到遠端主機，依時間範圍尋找 log 檔案，再用 rsync/scp/sftp 傳回本機。100% 測試覆蓋率（Bats + Kcov）。
 >
@@ -238,7 +238,7 @@ CI 容器會自動安裝：
 ## 重要慣例
 
 - 腳本使用 `set -euo pipefail`，所有錯誤皆為致命錯誤
-- 函式大量使用 `local -n`（nameref）作為輸出參數
+- 函式使用 REPLY 慣例作為輸出（`REPLY`, `REPLY_TYPE`, `REPLY_STR` 等）
 - SSH 金鑰路徑固定為 `~/.ssh/get_log`
 - CI 中強制執行 ShellCheck 合規檢查（`-S error` 等級）
 - 使用 `BASH_SOURCE` 守衛模式確保可測試性：
