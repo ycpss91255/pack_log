@@ -144,10 +144,8 @@ declare -a LOG_PATHS=(
 ```text
 .
 ├── pack_log.sh                          # Main script (~1340 lines)
-├── ci.sh                                # Unit test CI entry point
-├── ci-integration.sh                    # Integration test CI entry point
-├── docker-compose.yaml                  # Unit test Docker environment
-├── docker-compose.integration.yaml      # Integration test Docker environment
+├── ci.sh                                # CI entry point (unit / integration / all)
+├── docker-compose.yaml                  # Docker services (ci + sshd + integration)
 ├── .codecov.yaml                        # Codecov configuration
 ├── .gitignore
 │
@@ -201,22 +199,25 @@ declare -a LOG_PATHS=(
 ### Run Tests
 
 ```bash
-# Unit tests + local integration + ShellCheck + coverage (requires Docker)
+# All tests (requires Docker)
 ./ci.sh
 
-# Remote integration tests (requires Docker)
-./ci-integration.sh
+# Unit tests + ShellCheck + coverage only
+./ci.sh unit
+
+# Remote integration tests only
+./ci.sh integration
 ```
 
 ### CI Pipeline
 
 ```mermaid
 graph LR
-    S["ci.sh"]:::entry --> SC["ShellCheck\nlint pack_log.sh"]:::step
+    S["ci.sh unit"]:::entry --> SC["ShellCheck\nlint pack_log.sh"]:::step
     SC --> BT["Bats + Kcov\n244 tests + coverage"]:::step
     BT --> CC["Codecov\nupload report"]:::step
 
-    S2["ci-integration.sh"]:::entry --> SSHD["Start sshd\nDocker container"]:::step
+    S2["ci.sh integration"]:::entry --> SSHD["Start sshd\nDocker container"]:::step
     SSHD --> KEY["SSH Key Setup\ngenerate + copy"]:::step
     KEY --> DATA["Seed Test Data\nlog files on remote"]:::step
     DATA --> IT["Bats\n24 remote tests"]:::step

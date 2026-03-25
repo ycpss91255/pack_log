@@ -142,10 +142,8 @@ declare -a LOG_PATHS=(
 ```text
 .
 ├── pack_log.sh                          # メインスクリプト（約 1340 行）
-├── ci.sh                                # 単体テスト CI エントリポイント
-├── ci-integration.sh                    # 結合テスト CI エントリポイント
-├── docker-compose.yaml                  # 単体テスト Docker 環境
-├── docker-compose.integration.yaml      # 結合テスト Docker 環境
+├── ci.sh                                # CI エントリポイント（unit / integration / all）
+├── docker-compose.yaml                  # Docker サービス（ci + sshd + integration）
 ├── .codecov.yaml                        # Codecov 設定
 ├── .gitignore
 │
@@ -189,22 +187,25 @@ declare -a LOG_PATHS=(
 ### テストの実行
 
 ```bash
-# 単体テスト + ローカル結合テスト + ShellCheck + カバレッジ（Docker が必要）
+# 全テスト（Docker が必要）
 ./ci.sh
 
-# リモート結合テスト（Docker が必要）
-./ci-integration.sh
+# 単体テスト + ShellCheck + カバレッジのみ
+./ci.sh unit
+
+# リモート結合テストのみ
+./ci.sh integration
 ```
 
 ### CI パイプライン
 
 ```mermaid
 graph LR
-    S["ci.sh"]:::entry --> SC["ShellCheck\npack_log.sh の静的解析"]:::step
+    S["ci.sh unit"]:::entry --> SC["ShellCheck\npack_log.sh の静的解析"]:::step
     SC --> BT["Bats + Kcov\n244 テスト + カバレッジ"]:::step
     BT --> CC["Codecov\nレポートアップロード"]:::step
 
-    S2["ci-integration.sh"]:::entry --> SSHD["sshd 起動\nDocker コンテナ"]:::step
+    S2["ci.sh integration"]:::entry --> SSHD["sshd 起動\nDocker コンテナ"]:::step
     SSHD --> KEY["SSH 鍵設定\n生成 + コピー"]:::step
     KEY --> DATA["テストデータ作成\nリモート log ファイル"]:::step
     DATA --> IT["Bats\n24 リモートテスト"]:::step

@@ -26,11 +26,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 測試使用 [Bats](https://github.com/bats-core/bats-core)，透過 `bash_test_helper/` 子模組。CI 流程在 Docker 中執行 ShellCheck、Bats 測試與 Kcov 覆蓋率：
 
 ```bash
-# 本機執行完整 CI（需要 Docker + Docker Compose）
+# 執行全部測試（需要 Docker + Docker Compose）
 ./ci.sh
 
-# 遠端整合測試
-./ci-integration.sh
+# 只跑 unit test + ShellCheck + coverage
+./ci.sh unit
+
+# 只跑遠端整合測試
+./ci.sh integration
 ```
 
 測試檔案放在 `test/` 目錄下，副檔名為 `.bats`。測試輔助模組（`test/test_helper.bash`）會自動載入 bats-support、bats-assert、bats-file 和 bats-mock。

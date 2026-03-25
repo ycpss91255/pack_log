@@ -142,10 +142,8 @@ declare -a LOG_PATHS=(
 ```text
 .
 ├── pack_log.sh                          # 主脚本（约 1340 行）
-├── ci.sh                                # 单元测试 CI 入口
-├── ci-integration.sh                    # 集成测试 CI 入口
-├── docker-compose.yaml                  # 单元测试 Docker 环境
-├── docker-compose.integration.yaml      # 集成测试 Docker 环境
+├── ci.sh                                # CI 入口（unit / integration / all）
+├── docker-compose.yaml                  # Docker 服务（ci + sshd + integration）
 ├── .codecov.yaml                        # Codecov 配置
 ├── .gitignore
 │
@@ -189,22 +187,25 @@ declare -a LOG_PATHS=(
 ### 运行测试
 
 ```bash
-# 单元测试 + 本机集成测试 + ShellCheck + 覆盖率（需要 Docker）
+# 全部测试（需要 Docker）
 ./ci.sh
 
-# 远程集成测试（需要 Docker）
-./ci-integration.sh
+# 只跑单元测试 + ShellCheck + 覆盖率
+./ci.sh unit
+
+# 只跑远程集成测试
+./ci.sh integration
 ```
 
 ### CI 流程
 
 ```mermaid
 graph LR
-    S["ci.sh"]:::entry --> SC["ShellCheck\n静态分析 pack_log.sh"]:::step
+    S["ci.sh unit"]:::entry --> SC["ShellCheck\n静态分析 pack_log.sh"]:::step
     SC --> BT["Bats + Kcov\n244 个测试 + 覆盖率"]:::step
     BT --> CC["Codecov\n上传报告"]:::step
 
-    S2["ci-integration.sh"]:::entry --> SSHD["启动 sshd\nDocker 容器"]:::step
+    S2["ci.sh integration"]:::entry --> SSHD["启动 sshd\nDocker 容器"]:::step
     SSHD --> KEY["SSH 密钥设置\n生成 + 复制"]:::step
     KEY --> DATA["创建测试数据\n远程 log 文件"]:::step
     DATA --> IT["Bats\n24 个远程测试"]:::step

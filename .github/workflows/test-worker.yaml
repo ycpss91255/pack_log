@@ -16,7 +16,7 @@ jobs:
       - name: Run CI (Lint & Test) via Docker
         run: |
           chmod +x ci.sh
-          ./ci.sh
+          ./ci.sh unit
 
       - name: Show Coverage Summary in Log
         run: |
@@ -64,5 +64,5 @@ jobs:
 
       - name: Run Integration Tests via Docker
         run: |
-          chmod +x ci-integration.sh
-          ./ci-integration.sh
+          chmod +x ci.sh
+          ./ci.sh integration
