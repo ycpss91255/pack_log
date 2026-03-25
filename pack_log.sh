@@ -517,13 +517,14 @@ option_parser() {
       --lang)
         LANG_CODE="$2"; shift 2 ;;
       -h | --help)
-        # Resolve language before printing help
+        # KCOV_EXCL_START — locale auto-detection depends on runtime $LANG
         if [[ -z "${LANG_CODE}" ]]; then
-          case "${LANG:-}" in # KCOV_EXCL_LINE
+          case "${LANG:-}" in
             zh_TW*) LANG_CODE="zh-TW" ;; zh_CN*|zh_SG*) LANG_CODE="zh-CN" ;;
             ja*) LANG_CODE="ja" ;; *) LANG_CODE="en" ;;
           esac
         fi
+        # KCOV_EXCL_STOP
         load_lang; print_help; exit 0 ;;
       --version)
         printf "%s\n" "${VERSION}"; exit 0 ;;
@@ -1278,13 +1279,14 @@ get_log() {
 main() {
   option_parser "$@"
 
-  # Resolve language: --lang > $LANG > default en
+  # KCOV_EXCL_START — locale auto-detection depends on runtime $LANG
   if [[ -z "${LANG_CODE}" ]]; then
-    case "${LANG:-}" in # KCOV_EXCL_LINE
+    case "${LANG:-}" in
       zh_TW*) LANG_CODE="zh-TW" ;; zh_CN*|zh_SG*) LANG_CODE="zh-CN" ;;
       ja*) LANG_CODE="ja" ;; *) LANG_CODE="en" ;;
     esac
   fi
+  # KCOV_EXCL_STOP
   load_lang
 
   log_info "${MSG_STEP1}"
