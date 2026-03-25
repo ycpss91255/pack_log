@@ -63,7 +63,9 @@
 | `-v, --verbose` | 詳細出力を有効化 |
 | `--very-verbose` | デバッグ出力を有効化 |
 | `--extra-verbose` | トレース出力を有効化（`set -x`） |
+| `--lang <code>` | 言語：`en`、`zh-TW`、`zh-CN`、`ja` |
 | `-h, --help` | ヘルプメッセージを表示 |
+| `--version` | バージョンを表示 |
 
 ## アーキテクチャ
 
@@ -153,15 +155,15 @@ declare -a LOG_PATHS=(
 │
 ├── test/
 │   ├── test_helper.bash                 # 共通 bats テストヘルパー
-│   ├── test_log_functions.bats          # ログ関数テスト (11)
-│   ├── test_support_functions.bats      # サポート関数テスト (31)
-│   ├── test_option_parser.bats          # オプション解析テスト (36)
+│   ├── test_log_functions.bats          # ログ関数テスト (20)
+│   ├── test_support_functions.bats      # サポート関数テスト (37)
+│   ├── test_option_parser.bats          # オプション解析テスト (44)
 │   ├── test_host_handler.bats           # ホストハンドラテスト (22)
-│   ├── test_string_handler.bats         # 文字列/トークン処理テスト (28)
+│   ├── test_string_handler.bats         # 文字列/トークン処理テスト (27)
 │   ├── test_file_finder.bats            # ファイル検索テスト (20)
-│   ├── test_file_ops.bats              # ファイル操作テスト (28)
+│   ├── test_file_ops.bats              # ファイル操作テスト (31)
 │   ├── test_ssh_handler.bats            # SSH ハンドラテスト (13)
-│   ├── test_main.bats                   # メインパイプラインテスト (21)
+│   ├── test_main.bats                   # メインパイプラインテスト (17)
 │   ├── test_integration_local.bats      # ローカル結合テスト (13)
 │   ├── Dockerfile.sshd                  # リモートテスト用 SSH サーバー
 │   ├── setup_remote_logs.sh             # リモートテストデータ作成スクリプト
@@ -169,6 +171,16 @@ declare -a LOG_PATHS=(
 │   └── integration/
 │       ├── test_helper.bash             # リモートテストヘルパー
 │       └── test_remote.bats             # リモート結合テスト (24)
+│
+├── doc/
+│   ├── lang/                            # i18n メッセージファイル
+│   │   ├── en.sh                        # 英語（デフォルト）
+│   │   ├── zh-TW.sh                     # 繁体字中国語
+│   │   ├── zh-CN.sh                     # 簡体字中国語
+│   │   └── ja.sh                        # 日本語
+│   ├── README.zh-TW.md                  # 繁体字中国語 README
+│   ├── README.zh-CN.md                  # 簡体字中国語 README
+│   └── README.ja.md                     # 日本語 README
 │
 └── bash_test_helper/                    # リファレンスサブモジュール
 ```

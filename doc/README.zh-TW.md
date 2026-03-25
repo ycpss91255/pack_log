@@ -155,15 +155,15 @@ declare -a LOG_PATHS=(
 │
 ├── test/
 │   ├── test_helper.bash                 # 共用 bats 測試 helper
-│   ├── test_log_functions.bats          # 日誌函式測試 (11)
-│   ├── test_support_functions.bats      # 輔助函式測試 (31)
-│   ├── test_option_parser.bats          # 選項解析測試 (36)
+│   ├── test_log_functions.bats          # 日誌函式測試 (20)
+│   ├── test_support_functions.bats      # 輔助函式測試 (37)
+│   ├── test_option_parser.bats          # 選項解析測試 (44)
 │   ├── test_host_handler.bats           # 主機選擇測試 (22)
-│   ├── test_string_handler.bats         # 字串/Token 處理測試 (28)
+│   ├── test_string_handler.bats         # 字串/Token 處理測試 (27)
 │   ├── test_file_finder.bats            # 檔案搜尋測試 (20)
-│   ├── test_file_ops.bats              # 檔案操作測試 (28)
+│   ├── test_file_ops.bats              # 檔案操作測試 (31)
 │   ├── test_ssh_handler.bats            # SSH 處理測試 (13)
-│   ├── test_main.bats                   # Main 流程測試 (21)
+│   ├── test_main.bats                   # Main 流程測試 (17)
 │   ├── test_integration_local.bats      # 本機整合測試 (13)
 │   ├── Dockerfile.sshd                  # 遠端測試用 SSH 伺服器
 │   ├── setup_remote_logs.sh             # 遠端測試資料建立腳本
@@ -171,6 +171,16 @@ declare -a LOG_PATHS=(
 │   └── integration/
 │       ├── test_helper.bash             # 遠端測試 helper
 │       └── test_remote.bats             # 遠端整合測試 (24)
+│
+├── doc/
+│   ├── lang/                            # i18n 訊息檔
+│   │   ├── en.sh                        # 英文（預設）
+│   │   ├── zh-TW.sh                     # 繁體中文
+│   │   ├── zh-CN.sh                     # 簡體中文
+│   │   └── ja.sh                        # 日文
+│   ├── README.zh-TW.md                  # 繁體中文 README
+│   ├── README.zh-CN.md                  # 簡體中文 README
+│   └── README.ja.md                     # 日文 README
 │
 └── bash_test_helper/                    # 參考架構子模組
 ```
