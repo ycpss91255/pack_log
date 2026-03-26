@@ -14,6 +14,21 @@ setup() {
 
 # --- have_sudo_access ---
 
+@test "have_sudo_access: returns 0 when running as root (EUID=0)" {
+    # Run as root via sudo to test the EUID=0 early-return path
+    [[ -x /usr/bin/sudo ]] || skip "sudo not installed"
+    sudo -n true 2>/dev/null || skip "sudo requires password"
+    run sudo env -u LD_PRELOAD -u BASH_ENV bash -c '
+        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
+        set +u +o pipefail
+        unset HAVE_SUDO_ACCESS
+        have_sudo_access
+        echo "rc=$?"
+    '
+    assert_success
+    assert_output --partial "rc=0"
+}
+
 @test "have_sudo_access: returns 0 when cached as success" {
     # Cache check is after /usr/bin/sudo existence check
     [[ -x /usr/bin/sudo ]] || skip "sudo not installed"
@@ -32,14 +47,6 @@ setup() {
     assert_failure
 }
 
-@test "have_sudo_access: caches result in HAVE_SUDO_ACCESS" {
-    # Cache check is after /usr/bin/sudo existence check,
-    # so this only works when sudo binary exists
-    [[ -x /usr/bin/sudo ]] || skip "sudo not installed"
-    HAVE_SUDO_ACCESS=0
-    run have_sudo_access
-    assert_success
-}
 
 @test "have_sudo_access: returns cached failure" {
 
@@ -313,21 +320,6 @@ WRAPPER
     assert_output --partial "a"
 }
 
-# --- have_sudo_access: return cached value (L220) ---
-
-@test "have_sudo_access: returns cached HAVE_SUDO_ACCESS value via return" {
-    run env -u LD_PRELOAD -u BASH_ENV bash -c '
-        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +u +o pipefail
-        unset HAVE_SUDO_ACCESS
-        # If /usr/bin/sudo exists, this will attempt actual sudo check
-        # Either way, HAVE_SUDO_ACCESS gets set and returned
-        rc=0; have_sudo_access || rc=$?
-        echo "exit=${rc}"
-    '
-    # The function should complete and return a value
-    assert_output --partial "exit="
-}
 
 # --- pkg_install_handler: no sudo path (L243) ---
 

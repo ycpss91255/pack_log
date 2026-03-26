@@ -109,10 +109,6 @@ setup() {
     assert_output --partial "Invalid user@host format"
 }
 
-@test "host_handler: HOST empty string with NUM empty falls to interactive (tested separately)" {
-    # This case is covered by the interactive tests below
-    skip "covered by interactive mode tests"
-}
 
 # --- Interactive mode: both NUM and HOST empty ---
 
