@@ -20,15 +20,18 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 
 - **Multi-Host Support**: Pre-configured host list with interactive selection, or direct `user@host` input.
 - **Smart Log Discovery**: Token system for dynamic path resolution — environment variables (`<env:VAR>`), shell commands (`<cmd:command>`), date formats (`<date:%Y%m%d>`), and file extension filters (`<suffix:.ext>`).
-- **Time-Range Filtering**: Finds log files within a specified time window with automatic boundary expansion.
-- **Auto SSH Key Management**: Creates SSH keys, copies them to remote hosts, and handles host key rotation automatically.
-- **Flexible Transfer**: Supports rsync, scp, and sftp with automatic tool detection and fallback.
+- **Time-Range Filtering**: Finds log files within a specified time window with automatic boundary expansion. When no exact matches exist, files within a configurable time tolerance (default 30 minutes) are included.
+- **Auto SSH Key Management**: Creates SSH keys, copies them to remote hosts, and handles host key rotation automatically. Unknown SSH errors trigger retry instead of fatal exit.
+- **Flexible Transfer**: Supports rsync, scp, and sftp with automatic tool detection and fallback. Shows overall transfer progress by default (`--info=progress2`), per-file detail in verbose mode.
+- **Large Transfer Warning**: When remote folder exceeds `TRANSFER_SIZE_WARN_MB` (default 300MB), prompts for confirmation before transferring.
+- **Transfer Failure Recovery**: Automatically retries failed transfers up to 3 times. When all retries fail, interactively prompts to **[R]etry**, **[K]eep** remote data, or **[C]lean** remote data.
+- **Resolved Path Display**: Shows the actual resolved path (with tokens expanded) alongside the original LOG_PATHS entry during processing.
 - **Local Mode**: Run without SSH for local log collection.
 - **i18n Support**: English, Traditional Chinese, Simplified Chinese, and Japanese via `--lang` or `$LANG`.
 - **Log File Output**: All operations logged to `pack_log.log` in the output folder.
 - **Dry-Run Mode**: Preview which files would be collected without any copying or transferring (`--dry-run`).
-- **Transfer Retry with Preservation**: Automatically retries failed file transfers (rsync/scp/sftp) up to 3 times with a 5-second delay between attempts, handling transient errors such as broken pipes or network interruptions. If all retries fail, the remote temporary folder is preserved so files can be retrieved manually.
-- **100% Test Coverage**: 268 tests across unit, local integration, and remote integration test suites.
+- **Dynamic Output Naming**: Output folder is named after the script basename (e.g., `pack_log_<host>_<YYMMDD-HHMMSS>`). Uses HOSTS display name for `-n` mode, hostname for `-l`/`-u` mode.
+- **100% Test Coverage**: 306 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
 
 ## Quick Start
 
@@ -147,11 +150,21 @@ declare -a LOG_PATHS=(
 )
 ```
 
+### Tunable Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `SSH_TIMEOUT` | 3 | SSH connection timeout (seconds) |
+| `TRANSFER_MAX_RETRIES` | 3 | Max transfer retry attempts |
+| `TRANSFER_RETRY_DELAY` | 5 | Delay between retries (seconds) |
+| `TRANSFER_SIZE_WARN_MB` | 300 | Prompt confirmation when folder exceeds this size (MB) |
+| `FILE_TIME_TOLERANCE_MIN` | 30 | Include nearby files within this tolerance when none match the exact range (minutes, 0 to disable) |
+
 ## Project Structure
 
 ```text
 .
-├── pack_log.sh                          # Main script (~1340 lines)
+├── pack_log.sh                          # Main script (~1980 lines)
 ├── ci.sh                                # CI entry point (unit / integration / all)
 ├── docker-compose.yaml                  # Docker services (ci + sshd + integration)
 ├── .codecov.yaml                        # Codecov configuration
@@ -165,13 +178,13 @@ declare -a LOG_PATHS=(
 │   ├── test_helper.bash                 # Shared bats test helper
 │   ├── test_log_functions.bats          # Log function tests (20)
 │   ├── test_support_functions.bats      # Support function tests (37)
-│   ├── test_option_parser.bats          # Option parser tests (44)
-│   ├── test_host_handler.bats           # Host handler tests (22)
-│   ├── test_string_handler.bats         # String/token handler tests (27)
-│   ├── test_file_finder.bats            # File finder tests (20)
-│   ├── test_file_ops.bats              # File operation tests (31)
+│   ├── test_option_parser.bats          # Option parser tests (48)
+│   ├── test_host_handler.bats           # Host handler tests (21)
+│   ├── test_string_handler.bats         # String/token handler tests (36)
+│   ├── test_file_finder.bats            # File finder tests (23)
+│   ├── test_file_ops.bats              # File operation tests (41)
 │   ├── test_ssh_handler.bats            # SSH handler tests (13)
-│   ├── test_main.bats                   # Main pipeline tests (17)
+│   ├── test_main.bats                   # Main pipeline tests (30)
 │   ├── test_integration_local.bats      # Local integration tests (13)
 │   ├── Dockerfile.sshd                  # SSH server for remote tests
 │   ├── setup_remote_logs.sh             # Remote test data seeder
@@ -194,10 +207,10 @@ declare -a LOG_PATHS=(
 
 | Category | Tests | Description |
 |----------|------:|-------------|
-| Unit Tests | 231 | Individual function testing |
+| Unit Tests | 269 | Individual function testing |
 | Local Integration | 13 | Full `main()` pipeline with local mode |
 | Remote Integration | 24 | Full pipeline with real SSH to Docker sshd |
-| **Total** | **268** | **100% code coverage** |
+| **Total** | **306** | **100% code coverage** |
 
 ### Run Tests
 
@@ -217,7 +230,7 @@ declare -a LOG_PATHS=(
 ```mermaid
 graph LR
     S["ci.sh unit"]:::entry --> SC["ShellCheck\nlint pack_log.sh"]:::step
-    SC --> BT["Bats + Kcov\n244 tests + coverage"]:::step
+    SC --> BT["Bats + Kcov\n282 tests + coverage"]:::step
     BT --> CC["Codecov\nupload report"]:::step
 
     S2["ci.sh integration"]:::entry --> SSHD["Start sshd\nDocker container"]:::step
@@ -260,9 +273,6 @@ The CI containers automatically install:
 - Functions use REPLY convention for output (`REPLY`, `REPLY_TYPE`, `REPLY_STR`, etc.)
 - SSH key path is fixed at `~/.ssh/get_log`
 - ShellCheck compliance enforced in CI (`-S error` level)
-- `BASH_SOURCE` guard pattern for testability:
-  ```bash
-  if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
-  fi
-  ```
+- Source guard uses `(return 0 2>/dev/null) || main "$@"` for testability and kcov compatibility
+- CI unit tests run as non-root user (`testrunner`) for realistic permission testing
+- TDD workflow: write tests first, confirm red, implement, confirm green

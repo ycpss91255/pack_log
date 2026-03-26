@@ -62,10 +62,10 @@ bats test/test_option_parser.bats -f "parses -n flag"
 3. **`host_handler`** — 解析目標主機（編號 → HOSTS 陣列查詢、user@host、或 "local"）
 4. **`time_handler`** — 驗證起訖時間格式（`YYMMDD-HHMM`），確認 START < END
 5. **`ssh_handler`** — 建立 SSH 連線，自動建立/複製金鑰（最多重試 3 次）
-6. **`folder_creator`** — 在遠端建立暫存資料夾（`log_pack_<hostname>_<date>`）
+6. **`folder_creator`** — 建立暫存資料夾（`<script_name>_<host_label>_<YYMMDD-HHMMSS>`，`-n` 用 HOSTS 顯示名，其他用 hostname）
 7. **`init_log_file`** — 開啟 log 檔案寫入（`pack_log.log`）
 8. **`get_log`** — 遍歷 `LOG_PATHS`，解析特殊 token，依時間範圍篩選檔案並複製到暫存資料夾
-9. **`file_sender`** — 透過 rsync/scp/sftp 將暫存資料夾傳回本機（失敗 3 次保留遠端資料夾）
+9. **`file_sender`** — 透過 rsync/scp/sftp 將暫存資料夾傳回本機（失敗後互動式選擇 retry/keep/clean）
 
 ### LOG_PATHS 特殊 Token 系統
 
@@ -85,7 +85,7 @@ Log 路徑字串支援在執行時對遠端主機解析的 token：
 
 `pack_log.sh` 頂部的 `HOSTS` 和 `LOG_PATHS` 陣列是主要設定點，目前寫死為特定部署站點（Panasonic AMR 車隊）。如需變更目標主機或 log 路徑，直接編輯這兩個陣列。
 
-可調參數也在腳本頂部：`SSH_KEY`、`SSH_TIMEOUT`、`TRANSFER_MAX_RETRIES`、`TRANSFER_RETRY_DELAY`。
+可調參數也在腳本頂部：`SSH_KEY`、`SSH_TIMEOUT`、`TRANSFER_MAX_RETRIES`、`TRANSFER_RETRY_DELAY`、`TRANSFER_SIZE_WARN_MB`、`FILE_TIME_TOLERANCE_MIN`。
 
 ## 開發流程
 

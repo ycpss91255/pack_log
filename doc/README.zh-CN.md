@@ -151,7 +151,7 @@ declare -a LOG_PATHS=(
 
 ```text
 .
-├── pack_log.sh                          # 主脚本（约 1340 行）
+├── pack_log.sh                          # 主脚本（约 1980 行）
 ├── ci.sh                                # CI 入口（unit / integration / all）
 ├── docker-compose.yaml                  # Docker 服务（ci + sshd + integration）
 ├── .codecov.yaml                        # Codecov 配置
@@ -194,10 +194,10 @@ declare -a LOG_PATHS=(
 
 | 类别 | 测试数量 | 说明 |
 |------|------:|------|
-| 单元测试 | 231 | 各函数独立测试 |
+| 单元测试 | 269 | 各函数独立测试 |
 | 本机集成测试 | 13 | 完整 `main()` 本机模式流程 |
 | 远程集成测试 | 24 | 完整流程 + 真实 SSH 连接至 Docker sshd |
-| **合计** | **268** | **100% 代码覆盖率** |
+| **合计** | **306** | **100% 代码覆盖率** |
 
 ### 运行测试
 
