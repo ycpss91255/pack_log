@@ -518,20 +518,23 @@ setup() {
     [[ -d "${SAVE_FOLDER}" ]]
 }
 
-@test "folder_creator: <num> warns when NUM is empty" {
+@test "folder_creator: <num> warns and strips token when NUM is empty" {
     NUM=""
     START_TIME="260309-0000"
     SAVE_FOLDER="${TEST_DIR}/out_<num>"
     run folder_creator
     assert_output --partial "requires -n"
+    # Token should be stripped, not left in the path
+    [[ "${output}" != *"<num>"* ]] || [[ -d "${TEST_DIR}/out_" ]]
 }
 
-@test "folder_creator: <name> warns when NUM is empty" {
+@test "folder_creator: <name> warns and strips token when NUM is empty" {
     NUM=""
     START_TIME="260309-0000"
     SAVE_FOLDER="${TEST_DIR}/out_<name>"
     run folder_creator
     assert_output --partial "requires -n"
+    [[ "${output}" != *"<name>"* ]] || [[ -d "${TEST_DIR}/out_" ]]
 }
 
 # =============================================================================

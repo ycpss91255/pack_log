@@ -700,7 +700,7 @@ pkg_install_handler() {
   # We separate the logic to ensure 'return 1' only runs on failure.
   if ! { sudo apt-get update && sudo apt-get install -y "${pkg_name}"; }; then
     log_warn "$(printf "${MSG_PKG_INSTALL_FAILED}" "${pkg_name}")"
-    return 0
+    return 1
   fi
 
   log_verbose "--------------------" # KCOV_EXCL_LINE
@@ -1100,7 +1100,7 @@ ssh_handler() {
           need_remove_host="true"
           ;;
         *)
-          log_error "$(printf "${MSG_SSH_FAILED}" "${err_msg}")"
+          log_warn "$(printf "${MSG_SSH_FAILED}" "${err_msg}")"
           ;;
       esac
     else
@@ -1490,6 +1490,7 @@ folder_creator() {
         SAVE_FOLDER="${SAVE_FOLDER//<num>/${NUM}}"
       else
         log_warn "$(printf "${MSG_TOKEN_NUM_NO_HOST}" "<num>")"
+        SAVE_FOLDER="${SAVE_FOLDER//<num>/}"
       fi
     fi
 
@@ -1499,15 +1500,16 @@ folder_creator() {
         SAVE_FOLDER="${SAVE_FOLDER//<name>/${HOSTS[${NUM}-1]%%::*}}"
       else
         log_warn "$(printf "${MSG_TOKEN_NUM_NO_HOST}" "<name>")"
+        SAVE_FOLDER="${SAVE_FOLDER//<name>/}"
       fi
     fi
 
     # Resolve <date:format> tokens
+    local token="" fmt="" resolved=""
     while [[ "${SAVE_FOLDER}" =~ (\<date:[^\<\>]*\>) ]]; do
-      local token="${BASH_REMATCH[1]}"
-      local fmt="${token#<date:}"
+      token="${BASH_REMATCH[1]}"
+      fmt="${token#<date:}"
       fmt="${fmt%>}"
-      local resolved=""
       date_format "${START_TIME}" "${fmt}"
       resolved="${REPLY}"
       SAVE_FOLDER="${SAVE_FOLDER//${token}/${resolved}}"

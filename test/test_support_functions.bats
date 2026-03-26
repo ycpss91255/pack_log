@@ -266,7 +266,7 @@ setup() {
     mkdir -p "${bin_dir}"
     cat > "${bin_dir}/sudo" << 'WRAPPER'
 #!/bin/bash
-shift; "$@"
+"$@"
 WRAPPER
     chmod +x "${bin_dir}/sudo"
     cat > "${bin_dir}/apt-get" << 'WRAPPER'
