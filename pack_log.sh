@@ -244,6 +244,7 @@ load_lang() {
       MSG_EMPTY_PATH='[%d/%d] 解析後路徑為空，跳過。'
       MSG_PROCESSING='[%d/%d] 處理中: %s'
       MSG_NO_FILES_FOUND='[%d/%d] 找不到檔案。'
+      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s::%s%s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 個檔案，複製中...'
       MSG_STEP1='=== 步驟 1/5: 解析目標主機 ==='
       MSG_STEP2='=== 步驟 2/5: 驗證時間範圍 ==='
@@ -342,6 +343,7 @@ load_lang() {
       MSG_EMPTY_PATH='[%d/%d] 解析后路径为空，跳过。'
       MSG_PROCESSING='[%d/%d] 处理中: %s'
       MSG_NO_FILES_FOUND='[%d/%d] 未找到文件。'
+      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s::%s%s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 个文件，复制中...'
       MSG_STEP1='=== 步骤 1/5: 解析目标主机 ==='
       MSG_STEP2='=== 步骤 2/5: 验证时间范围 ==='
@@ -440,6 +442,7 @@ load_lang() {
       MSG_EMPTY_PATH='[%d/%d] 解決済みパスが空です。スキップします。'
       MSG_PROCESSING='[%d/%d] 処理中: %s'
       MSG_NO_FILES_FOUND='[%d/%d] ファイルが見つかりません。'
+      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s::%s%s'
       MSG_FOUND_COPYING='[%d/%d] %d 個のファイルが見つかりました。コピー中...'
       MSG_STEP1='=== ステップ 1/5: ターゲットホストの解決 ==='
       MSG_STEP2='=== ステップ 2/5: 時間範囲の検証 ==='
@@ -538,6 +541,7 @@ load_lang() {
       MSG_EMPTY_PATH='[%d/%d] Resolved path is empty, skipping.'
       MSG_PROCESSING='[%d/%d] Processing: %s'
       MSG_NO_FILES_FOUND='[%d/%d] No files found.'
+      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s::%s%s'
       MSG_FOUND_COPYING='[%d/%d] Found %d files, copying...'
       MSG_STEP1='=== Step 1/5: Resolving target host ==='
       MSG_STEP2='=== Step 2/5: Validating time range ==='
@@ -1771,6 +1775,7 @@ get_log_dry_run() {
     string_handler "${log_path}"
     resolve_path_dates
     local path="${REPLY_PATH}" prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
+    log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${path}" "${prefix}" "${suffix}")"
 
     if [[ -z "${path}" ]]; then
       log_warn "$(printf "${MSG_EMPTY_PATH}" "${idx}" "${total}")"
@@ -1820,6 +1825,7 @@ get_log() {
     string_handler "${log_path}"
     resolve_path_dates
     local path="${REPLY_PATH}" prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
+    log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${path}" "${prefix}" "${suffix}")"
 
     if [[ -z "${path}" ]]; then
       log_warn "$(printf "${MSG_EMPTY_PATH}" "${idx}" "${total}")"

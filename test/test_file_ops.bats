@@ -352,6 +352,25 @@ setup() {
     assert_output --partial "No files found"
 }
 
+@test "get_log: shows resolved path after processing" {
+    SAVE_FOLDER="${TEST_DIR}/get_log_resolved"
+    mkdir -p "${SAVE_FOLDER}"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
+
+    local log_dir="${TEST_DIR}/resolved_logs"
+    mkdir -p "${log_dir}"
+    touch "${log_dir}/app.conf"
+
+    LOG_PATHS=("${log_dir}::app.conf")
+
+    run get_log
+    # Should show the resolved path::prefix after the "Processing" line
+    assert_output --partial "${log_dir}"
+    assert_output --partial "app.conf"
+    assert_output --partial "Resolved"
+}
+
 @test "get_log: copies files when found" {
     SAVE_FOLDER="${TEST_DIR}/get_log_copy"
     mkdir -p "${SAVE_FOLDER}"
