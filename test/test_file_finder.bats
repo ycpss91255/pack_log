@@ -119,39 +119,34 @@ setup() {
 
 # --- All files older than range (s_idx=-1 case) ---
 
-@test "file_finder: handles all files older than range" {
+@test "file_finder: excludes all files older than range beyond tolerance" {
     touch "${TEST_LOG_DIR}/log_20260110100000.dat"
     touch "${TEST_LOG_DIR}/log_20260111100000.dat"
     touch "${TEST_LOG_DIR}/log_20260112100000.dat"
 
+    FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
         "260115-0000" "260115-2359"
 
-    # All files older than start: s_idx=-1
-    # e_idx is valid (all files <= end of range? No, all < start)
-    # e_idx should be 2 (last file is 20260112 which is < 20260115235959)
-    # s_idx=-1 but e_idx!=-1 => s_idx=0
-    # Then expansion: s_idx stays 0 (can't go lower), e_idx++ stays 2 (already last)
-    assert_equal "${#REPLY_FILES[@]}" 3
+    # All files are 3+ days older than range → beyond 30 min tolerance
+    assert_equal "${#REPLY_FILES[@]}" 0
 }
 
-# --- All files newer than range (e_idx=-1 case) ---
+# --- All files newer than range ---
 
-@test "file_finder: handles all files newer than range" {
+@test "file_finder: excludes all files newer than range beyond tolerance" {
     touch "${TEST_LOG_DIR}/log_20260120100000.dat"
     touch "${TEST_LOG_DIR}/log_20260121100000.dat"
     touch "${TEST_LOG_DIR}/log_20260122100000.dat"
 
+    FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
         "260115-0000" "260115-2359"
 
-    # All files newer than end: e_idx=-1
-    # s_idx=0 (first file >= start)
-    # e_idx=-1 but s_idx!=-1 => e_idx = last index (2)
-    # Expansion: s_idx stays 0, e_idx stays 2 (already last)
-    assert_equal "${#REPLY_FILES[@]}" 3
+    # All files are 5+ days newer than range → beyond 30 min tolerance
+    assert_equal "${#REPLY_FILES[@]}" 0
 }
 
 # --- No overlap (s_idx > e_idx case) ---
@@ -298,4 +293,43 @@ setup() {
     # With empty format, the raw start/end times are used for comparison
     # Files should still be found based on timestamp ordering
     [[ "${#REPLY_FILES[@]}" -ge 0 ]]
+}
+
+# --- Time tolerance: nearby files within threshold ---
+
+@test "file_finder: includes nearby file within tolerance when none in range" {
+    # File at Jan 16, search range Jan 17 00:00-23:59 → ~24h before start
+    # But file at Jan 16 23:40 → 20 min before range start → within 30 min
+    touch "${TEST_LOG_DIR}/near_20260116234000.log"
+
+    FILE_TIME_TOLERANCE_MIN=30
+    file_finder "${TEST_LOG_DIR}" \
+        "near_<date:%Y%m%d%H%M%S>*" ".log" \
+        "260117-0000" "260117-2359"
+
+    assert_equal "${#REPLY_FILES[@]}" 1
+}
+
+@test "file_finder: excludes nearby file beyond tolerance" {
+    # File at Jan 16 12:00, search range Jan 17 → >12h gap, beyond 30 min
+    touch "${TEST_LOG_DIR}/far_20260116120000.log"
+
+    FILE_TIME_TOLERANCE_MIN=30
+    file_finder "${TEST_LOG_DIR}" \
+        "far_<date:%Y%m%d%H%M%S>*" ".log" \
+        "260117-0000" "260117-2359"
+
+    assert_equal "${#REPLY_FILES[@]}" 0
+}
+
+@test "file_finder: tolerance 0 disables nearby file inclusion" {
+    # File 20 min before range, but tolerance is 0
+    touch "${TEST_LOG_DIR}/zero_20260116234000.log"
+
+    FILE_TIME_TOLERANCE_MIN=0
+    file_finder "${TEST_LOG_DIR}" \
+        "zero_<date:%Y%m%d%H%M%S>*" ".log" \
+        "260117-0000" "260117-2359"
+
+    assert_equal "${#REPLY_FILES[@]}" 0
 }

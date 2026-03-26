@@ -123,6 +123,7 @@ declare SSH_TIMEOUT=3
 declare TRANSFER_MAX_RETRIES=3
 declare TRANSFER_RETRY_DELAY=5
 declare TRANSFER_SIZE_WARN_MB=300
+declare FILE_TIME_TOLERANCE_MIN=30
 
 # ==============================================================================
 # Internal Variables (do not modify)
@@ -1425,50 +1426,93 @@ file_finder() {
     fi
   done
 
-  # [5] Robust Range Expansion logic
-  # Case A: Found no start point? (All files are older than range)
-  if [[ $s_idx -eq -1 ]]; then
-     # Try to see if we can pick up from the end? No, means everything is outside.
-     # But if e_idx is valid, it means we have files OLDER than end_time.
-     # So start from index 0.
-     if [[ $e_idx -ne -1 ]]; then s_idx=0; fi
-  fi
-
-  # Case B: Found no end point? (All files are newer than range, or start point is very late)
-  if [[ $e_idx -eq -1 ]]; then
-     # If we have a start point, it means files exist NEWER than start_time.
-     # So end at the last file.
-     if [[ $s_idx -ne -1 ]]; then e_idx=$(( ${#uniq_ts[@]} - 1 )); fi
-  fi
-
-  # Case C: Still invalid?
-  if [[ $s_idx -eq -1 || $e_idx -eq -1 || $s_idx -gt $e_idx ]]; then
-    log_warn "$(printf "${MSG_NO_FILES_IN_RANGE}" "${formatted_start_ts}" "${formatted_end_ts}")"
-    REPLY_FILES=()
-    return 0
-  fi
-
-  # Apply Expansion (Safely)
-  if [[ $s_idx -gt 0 ]]; then (( s_idx-- )); fi
-  if [[ $e_idx -lt $(( ${#uniq_ts[@]} - 1 )) ]]; then (( ++e_idx )); fi
-
-  local final_start_val="${uniq_ts[s_idx]}"
-  local final_end_val="${uniq_ts[e_idx]}"
-
-  log_debug "Expanded Index Range: ${s_idx} to ${e_idx} (Values: ${final_start_val} ~ ${final_end_val})"
-
-  # [6] Final Selection
-  local -a selected=()
-  for i in "${!all_files[@]}"; do
-    ts="${file_timestamps[i]}"
-    # Use simple string comparison for selection
-    if [[ "$ts" > "$final_start_val" || "$ts" == "$final_start_val" ]] && \
-       [[ "$ts" < "$final_end_val"   || "$ts" == "$final_end_val" ]]; then
-      selected+=( "${all_files[${i}]}" )
+  # [5] Check if any file falls strictly within the requested range
+  local has_exact_match=false
+  for ts in "${uniq_ts[@]}"; do
+    if [[ ! "$ts" < "${formatted_start_ts}" && ! "$ts" > "${formatted_end_ts}" ]]; then
+      has_exact_match=true
+      break
     fi
   done
 
-  REPLY_FILES=("${selected[@]}")
+  if [[ "${has_exact_match}" == "true" ]]; then
+    # --- Normal path: files exist in range → apply expansion ---
+    # Case A: Found no start point? (All files are older than range)
+    if [[ $s_idx -eq -1 ]]; then
+       if [[ $e_idx -ne -1 ]]; then s_idx=0; fi
+    fi
+    # Case B: Found no end point?
+    if [[ $e_idx -eq -1 ]]; then
+       if [[ $s_idx -ne -1 ]]; then e_idx=$(( ${#uniq_ts[@]} - 1 )); fi
+    fi
+
+    # Apply Expansion (Safely)
+    if [[ $s_idx -gt 0 ]]; then (( s_idx-- )); fi
+    if [[ $e_idx -lt $(( ${#uniq_ts[@]} - 1 )) ]]; then (( ++e_idx )); fi
+
+    local final_start_val="${uniq_ts[s_idx]}"
+    local final_end_val="${uniq_ts[e_idx]}"
+    log_debug "Expanded Index Range: ${s_idx} to ${e_idx} (Values: ${final_start_val} ~ ${final_end_val})"
+
+    local -a selected=()
+    for i in "${!all_files[@]}"; do
+      ts="${file_timestamps[i]}"
+      if [[ ! "$ts" < "$final_start_val" && ! "$ts" > "$final_end_val" ]]; then
+        selected+=( "${all_files[${i}]}" )
+      fi
+    done
+    REPLY_FILES=("${selected[@]}")
+  else
+    # --- Tolerance path: no exact match → check nearby files ---
+    if [[ "${FILE_TIME_TOLERANCE_MIN:-0}" -le 0 ]]; then
+      log_warn "$(printf "${MSG_NO_FILES_IN_RANGE}" "${formatted_start_ts}" "${formatted_end_ts}")"
+      REPLY_FILES=()
+      return 0
+    fi
+
+    local tolerance_sec=$(( FILE_TIME_TOLERANCE_MIN * 60 ))
+    local start_epoch end_epoch
+    date_format "${start_time}" "%s"; start_epoch="${REPLY}"
+    date_format "${end_time}" "%s"; end_epoch="${REPLY}"
+
+    local -a selected=()
+    for i in "${!all_files[@]}"; do
+      ts="${file_timestamps[i]}"
+      # Convert file timestamp to epoch using the same date format
+      local file_epoch
+      file_epoch=$(date -d "$(
+        # Reconstruct date string from formatted timestamp using format pattern
+        local y="${ts:0:4}" m="${ts:4:2}" d="${ts:6:2}"
+        local rest="${ts:8}"
+        local H="${rest:0:2}" M="${rest:2:2}" S="${rest:4:2}"
+        printf '%s-%s-%s %s:%s:%s' "$y" "$m" "$d" "$H" "$M" "${S:-00}"
+      )" '+%s' 2>/dev/null) || continue
+
+      local diff_start diff_end min_diff
+      diff_start=$(( start_epoch - file_epoch ))
+      diff_end=$(( file_epoch - end_epoch ))
+      # Distance = max(0, distance before start) or max(0, distance after end)
+      if [[ $diff_start -gt 0 ]]; then
+        min_diff=$diff_start
+      elif [[ $diff_end -gt 0 ]]; then
+        min_diff=$diff_end
+      else
+        min_diff=0  # within range (shouldn't happen since has_exact_match=false)
+      fi
+
+      if [[ $min_diff -le $tolerance_sec ]]; then
+        selected+=( "${all_files[${i}]}" )
+      fi
+    done
+
+    if [[ ${#selected[@]} -eq 0 ]]; then
+      log_warn "$(printf "${MSG_NO_FILES_IN_RANGE}" "${formatted_start_ts}" "${formatted_end_ts}")"
+      REPLY_FILES=()
+      return 0
+    fi
+    REPLY_FILES=("${selected[@]}")
+  fi
+
   log_info "$(printf "${MSG_FILES_SELECTED}" "${#REPLY_FILES[@]}" "${#all_files[@]}")"
 }
 
