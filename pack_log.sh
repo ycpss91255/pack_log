@@ -146,6 +146,7 @@ declare -gA _TOKEN_CACHE=()
 # shellcheck disable=SC2034
 load_lang() {
   case "${LANG_CODE}" in
+    # KCOV_EXCL_START — non-English translations only used at runtime
     zh-TW)
       MSG_HELP_USAGE='用法: %s [選項]'
       MSG_HELP_OPTIONS='  選項:'
@@ -431,6 +432,7 @@ load_lang() {
       MSG_DRY_RUN_TOTAL='[ドライラン] 収集予定の合計ファイル数：%d'
       MSG_DRY_RUN_COMPLETE='*** ドライラン完了 — 変更は行われていません ***'
       ;;
+    # KCOV_EXCL_STOP
     *) # English (default)
       MSG_HELP_USAGE='Usage: %s [options]'
       MSG_HELP_OPTIONS='  Options:'
