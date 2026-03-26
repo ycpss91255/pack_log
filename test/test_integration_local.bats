@@ -72,7 +72,7 @@ setup() {
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
     )
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${OUTPUT_DIR}/env_test"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/env_test"
     assert_success
     assert_output --partial "Packaging log completed successfully"
 
@@ -97,7 +97,7 @@ setup() {
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"
     )
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${OUTPUT_DIR}/cmd_test"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/cmd_test"
     assert_success
     assert_output --partial "Packaging log completed successfully"
 
@@ -116,7 +116,7 @@ setup() {
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"
     )
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${OUTPUT_DIR}/date_test"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/date_test"
     assert_success
 
     local -a out_dirs=("${OUTPUT_DIR}"/date_test_*)
@@ -135,7 +135,7 @@ setup() {
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam::coreslam_2D_<date:%s>*<suffix:.log>"
     )
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${OUTPUT_DIR}/epoch_test"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/epoch_test"
     assert_success
 
     local -a out_dirs=("${OUTPUT_DIR}"/epoch_test_*)
@@ -153,7 +153,7 @@ setup() {
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"
     )
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${OUTPUT_DIR}/suffix_test"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/suffix_test"
     assert_success
 
     local -a out_dirs=("${OUTPUT_DIR}"/suffix_test_*)
@@ -177,7 +177,7 @@ setup() {
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog::detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"
     )
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${OUTPUT_DIR}/mixed_test"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/mixed_test"
     assert_success
     assert_output --partial "Packaging log completed successfully"
 
@@ -220,7 +220,7 @@ setup() {
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
     )
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${OUTPUT_DIR}/structure_test"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/structure_test"
     assert_success
 
     local hostname_val
@@ -240,7 +240,7 @@ setup() {
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
     )
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${OUTPUT_DIR}/scriptlog_test"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/scriptlog_test"
     assert_success
 
     local -a out_dirs=("${OUTPUT_DIR}"/scriptlog_test_*)
@@ -250,8 +250,8 @@ setup() {
     local content
     content=$(cat "${script_log}")
     [[ "${content}" == *"Host: local"* ]]
-    [[ "${content}" == *"20260115-000000"* ]]
-    [[ "${content}" == *"20260115-235959"* ]]
+    [[ "${content}" == *"260115-0000"* ]]
+    [[ "${content}" == *"260115-2359"* ]]
 }
 
 # ---------------------------------------------------------------------------
@@ -263,7 +263,7 @@ setup() {
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::shelf.ini"
     )
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${OUTPUT_DIR}/integrity_test"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/integrity_test"
     assert_success
 
     local -a out_dirs=("${OUTPUT_DIR}"/integrity_test_*)
@@ -282,7 +282,7 @@ setup() {
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
     )
 
-    run main -l -v -s 20260115-000000 -e 20260115-235959 -o "${OUTPUT_DIR}/verbose_test"
+    run main -l -v -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/verbose_test"
     assert_success
     assert_output --partial "[DEBUG]"
 }
@@ -299,7 +299,7 @@ setup() {
         "${empty_dir}::some_pattern_<date:%Y%m%d%H%M%S>*<suffix:.log>"
     )
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${OUTPUT_DIR}/empty_test"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/empty_test"
     assert_success
     assert_output --partial "No files found"
 }
@@ -318,7 +318,7 @@ setup() {
         "${log_dir}::mylog_data_<date:%Y%m%d%H%M%S>.log"
     )
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${OUTPUT_DIR}/suffixdate_test"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/suffixdate_test"
     assert_success
 
     local -a out_dirs=("${OUTPUT_DIR}"/suffixdate_test_*)

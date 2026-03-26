@@ -8,15 +8,15 @@
 # mode (no SSH).
 #
 # Usage:
-#   ./pack_log.sh -n 1 -s 20260101-000000 -e 20260101-235959
-#   ./pack_log.sh -u myuser@10.90.68.188 -s 20260101-000000 -e 20260101-235959
-#   ./pack_log.sh -l -s 20260101-000000 -e 20260101-235959
+#   ./pack_log.sh -n 1 -s 260101-0000 -e 260101-2359
+#   ./pack_log.sh -u myuser@10.90.68.188 -s 260101-0000 -e 260101-2359
+#   ./pack_log.sh -l -s 260101-0000 -e 260101-2359
 #
 # For more information, run the script with the --help option.
 #
 # Author: Yunchien.chen <yunchien.chen@coretronic-robotics.com>
-# Date: 2026-03-13
-# Version: 1.4.0
+# Date: 2026-03-25
+# Version: 1.5.0
 
 set -euo pipefail
 
@@ -112,11 +112,12 @@ declare TRANSFER_RETRY_DELAY=5
 # Internal Variables (do not modify)
 # ==============================================================================
 
-declare -r VERSION="1.4.0"
+declare -r VERSION="1.5.0"
 declare VERBOSE=0
 declare NUM="" HOST="" GET_LOG_TOOL=""
 declare START_TIME="" END_TIME=""
 declare LANG_CODE=""
+declare DRY_RUN=false
 declare LOG_FILE="" _LOG_FD=""
 
 # KCOV_EXCL_START
@@ -211,6 +212,7 @@ print_help() {
   echo "${MSG_HELP_END}"
   echo "${MSG_HELP_OUTPUT}"
   echo "${MSG_HELP_LANG}"
+  echo "${MSG_HELP_DRY_RUN}"
   echo "${MSG_HELP_VERBOSE}"
   echo "${MSG_HELP_VERY_VERBOSE}"
   echo "${MSG_HELP_EXTRA_VERBOSE}"
@@ -308,13 +310,13 @@ date_format() {
   log_verbose "  date: ${date}"
   log_verbose "  format: ${format}"
 
-  if [[ ! "${date}" =~ ^[0-9]{8}-[0-9]{6}$ ]]; then
+  if [[ ! "${date}" =~ ^[0-9]{6}-[0-9]{4}$ ]]; then
     log_error "$(printf "${MSG_INVALID_DATE_FORMAT}" "${date}")"
   fi
 
   local ymd hms
-  ymd="${date:0:4}-${date:4:2}-${date:6:2}"
-  hms="${date:9:2}:${date:11:2}:${date:13:2}"
+  ymd="20${date:0:2}-${date:2:2}-${date:4:2}"
+  hms="${date:7:2}:${date:9:2}:00"
 
   if ! REPLY=$(date -d "${ymd} ${hms}" "+${format}"); then
     log_error "$(printf "${MSG_DATE_FORMAT_FAILED}" "${date}")" # KCOV_EXCL_LINE
@@ -479,6 +481,7 @@ option_parser() {
     "output:"
     "verbose" "very-verbose" "extra-verbose"
     "lang:"
+    "dry-run"
     "help" "version"
   )
   # KCOV_EXCL_STOP
@@ -514,6 +517,8 @@ option_parser() {
         VERBOSE=2; shift ;;
       --extra-verbose)
         VERBOSE=3; shift ;; # KCOV_EXCL_LINE
+      --dry-run)
+        DRY_RUN=true; shift ;;
       --lang)
         LANG_CODE="$2"; shift 2 ;;
       -h | --help)
@@ -629,7 +634,7 @@ time_handler() {
       time="${!t}"
     fi
 
-    if [[ "${time}" =~ ^[0-9]{8}-[0-9]{6}$ ]]; then
+    if [[ "${time}" =~ ^[0-9]{6}-[0-9]{4}$ ]]; then
       printf -v "${t}" "%s" "${time}"
     else
       log_error "$(printf "${MSG_INVALID_TIME_FORMAT}" "${t,,}" "${time}")"
@@ -825,6 +830,24 @@ string_handler() {
   local i=0
 
   log_debug "Original string: ${str}"
+
+  # Resolve <num> and <name> tokens (simple replacements)
+  if [[ "${str}" == *"<num>"* ]]; then
+    if [[ -n "${NUM}" ]]; then
+      str="${str//<num>/${NUM}}"
+    else
+      log_warn "$(printf "${MSG_TOKEN_NUM_NO_HOST}" "<num>")"
+      str="${str//<num>/}"
+    fi
+  fi
+  if [[ "${str}" == *"<name>"* ]]; then
+    if [[ -n "${NUM}" && "${NUM}" =~ ^[1-9][0-9]*$ ]]; then
+      str="${str//<name>/${HOSTS[${NUM}-1]%%::*}}"
+    else
+      log_warn "$(printf "${MSG_TOKEN_NUM_NO_HOST}" "<name>")"
+      str="${str//<name>/}"
+    fi
+  fi
   while [[ "${str}" =~ (<[^<>]*>) ]]; do
     local token="${BASH_REMATCH[1]}"
 
@@ -856,6 +879,23 @@ string_handler() {
 
   REPLY_PATH="${str%%::*}"
   REPLY_PREFIX="${str##*::}"
+}
+
+# Resolves <date:format> tokens remaining in REPLY_PATH using START_TIME.
+#
+# In LOG_PATHS, <date:> tokens in the file portion are kept for file_finder.
+# But <date:> tokens in the path portion must be resolved to actual dates
+# so the directory can be found.
+resolve_path_dates() {
+  local path="${REPLY_PATH}"
+  while [[ "${path}" =~ (\<date:[^\<\>]*\>) ]]; do
+    local token="${BASH_REMATCH[1]}"
+    local fmt="${token#<date:}"
+    fmt="${fmt%>}"
+    date_format "${START_TIME}" "${fmt}"
+    path="${path//${token}/${REPLY}}"
+  done
+  REPLY_PATH="${path}"
 }
 
 # Finds files matching a name pattern and time range on local or remote host.
@@ -1022,15 +1062,52 @@ file_finder() {
 
 # Creates the output folder.
 #
-# This function creates the output folder for the logs. The folder name is
-# constructed from the `SAVE_FOLDER` variable, the hostname and the current date.
+# If SAVE_FOLDER contains tokens (<num>, <name>, <date:format>), they are
+# resolved and the result is used directly. Otherwise the default suffix
+# (_hostname_timestamp) is appended.
+#
+# Supported tokens:
+#   <num>          Host number (from -n option)
+#   <name>         Host display name (from HOSTS array)
+#   <date:format>  START_TIME formatted with strftime format
 folder_creator() {
-  local combined
-  if ! combined=$(execute_cmd "printf '%s_%s' \"\$(hostname)\" \"\$(date +%Y%m%d-%H%M%S)\""); then
-    log_error "$(printf "${MSG_HOSTNAME_DATE_FAILED}" "${HOST}")" # KCOV_EXCL_LINE
+  if [[ "${SAVE_FOLDER}" == *"<"* ]]; then
+    # Resolve <num> token
+    if [[ "${SAVE_FOLDER}" == *"<num>"* ]]; then
+      if [[ -n "${NUM}" ]]; then
+        SAVE_FOLDER="${SAVE_FOLDER//<num>/${NUM}}"
+      else
+        log_warn "$(printf "${MSG_TOKEN_NUM_NO_HOST}" "<num>")"
+      fi
+    fi
+
+    # Resolve <name> token
+    if [[ "${SAVE_FOLDER}" == *"<name>"* ]]; then
+      if [[ -n "${NUM}" && "${NUM}" =~ ^[1-9][0-9]*$ ]]; then
+        SAVE_FOLDER="${SAVE_FOLDER//<name>/${HOSTS[${NUM}-1]%%::*}}"
+      else
+        log_warn "$(printf "${MSG_TOKEN_NUM_NO_HOST}" "<name>")"
+      fi
+    fi
+
+    # Resolve <date:format> tokens
+    while [[ "${SAVE_FOLDER}" =~ (\<date:[^\<\>]*\>) ]]; do
+      local token="${BASH_REMATCH[1]}"
+      local fmt="${token#<date:}"
+      fmt="${fmt%>}"
+      local resolved=""
+      date_format "${START_TIME}" "${fmt}"
+      resolved="${REPLY}"
+      SAVE_FOLDER="${SAVE_FOLDER//${token}/${resolved}}"
+    done
+  else
+    local combined
+    if ! combined=$(execute_cmd "printf '%s_%s' \"\$(hostname)\" \"\$(date +%Y%m%d-%H%M%S)\""); then
+      log_error "$(printf "${MSG_HOSTNAME_DATE_FAILED}" "${HOST}")" # KCOV_EXCL_LINE
+    fi
+    SAVE_FOLDER="${SAVE_FOLDER}_${combined}"
   fi
 
-  SAVE_FOLDER="${SAVE_FOLDER}_${combined}"
   create_folder "${SAVE_FOLDER}"
 }
 
@@ -1242,6 +1319,53 @@ file_sender() {
   # KCOV_EXCL_STOP
 }
 
+# Dry-run variant of get_log: finds and lists files without copying.
+get_log_dry_run() {
+  local log_path=""
+  local total=${#LOG_PATHS[@]}
+  local idx=0
+  local grand_total=0
+
+  for log_path in "${LOG_PATHS[@]}"; do
+    (( ++idx ))
+
+    log_info "$(printf "${MSG_PROCESSING}" "${idx}" "${total}" "${log_path}")"
+    string_handler "${log_path}"
+    resolve_path_dates
+    local path="${REPLY_PATH}" prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
+
+    if [[ -z "${path}" ]]; then
+      log_warn "$(printf "${MSG_EMPTY_PATH}" "${idx}" "${total}")"
+      continue
+    fi
+
+    log_info "$(printf "${MSG_DRY_RUN_RESOLVED}" "${path}")"
+    log_info "$(printf "${MSG_DRY_RUN_PATTERN}" "${prefix}${suffix}")"
+
+    if ! execute_cmd "test -d $(printf '%q' "${path}")"; then
+      log_warn "$(printf "${MSG_DRY_RUN_DIR_NOT_FOUND}" "${path}")"
+      continue
+    fi
+
+    file_finder "${path}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}"
+    local -a files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
+
+    if [[ "${#files[@]}" -eq 0 ]]; then
+      log_warn "$(printf "${MSG_NO_FILES_FOUND}" "${idx}" "${total}")"
+      continue
+    fi
+
+    log_info "$(printf "${MSG_DRY_RUN_WOULD_COPY}" "${#files[@]}")"
+    local f
+    for f in "${files[@]}"; do
+      log_info "  ${f}"
+    done
+    (( grand_total += ${#files[@]} ))
+  done
+
+  log_info "$(printf "${MSG_DRY_RUN_TOTAL}" "${grand_total}")"
+}
+
 # Main function for getting the logs.
 #
 # This function iterates over the `LOG_PATHS` array, finds the log files, and
@@ -1252,11 +1376,17 @@ get_log() {
   local idx=0
 
   for log_path in "${LOG_PATHS[@]}"; do
-    (( idx++ ))
+    (( ++idx ))
 
     log_info "$(printf "${MSG_PROCESSING}" "${idx}" "${total}" "${log_path}")"
     string_handler "${log_path}"
+    resolve_path_dates
     local path="${REPLY_PATH}" prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
+
+    if [[ -z "${path}" ]]; then
+      log_warn "$(printf "${MSG_EMPTY_PATH}" "${idx}" "${total}")"
+      continue
+    fi
 
     file_finder "${path}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}"
     local -a files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
@@ -1289,6 +1419,10 @@ main() {
   # KCOV_EXCL_STOP
   load_lang
 
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    log_info "${MSG_DRY_RUN_BANNER}"
+  fi
+
   log_info "${MSG_STEP1}"
   host_handler
 
@@ -1305,33 +1439,38 @@ main() {
   fi
 
   log_info "${MSG_STEP4}"
-  folder_creator
-  init_log_file
-
-  if [[ "${HOST}" == "local" ]]; then
-    trap file_cleaner SIGINT SIGTERM
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    get_log_dry_run
+    log_info "${MSG_DRY_RUN_COMPLETE}"
   else
-    trap file_cleaner EXIT SIGINT SIGTERM
-  fi
+    folder_creator
+    init_log_file
 
-  save_script_data
-  get_log
-
-  if [[ "${HOST}" != "local" ]]; then
-    log_info "$(printf "${MSG_STEP5_TRANSFER}" "${GET_LOG_TOOL}")" # KCOV_EXCL_LINE
-    # KCOV_EXCL_START — file_sender only runs in remote integration tests
-    if ! file_sender; then
-      trap - EXIT
-      close_log_file
-      exit 1
+    if [[ "${HOST}" == "local" ]]; then
+      trap file_cleaner SIGINT SIGTERM
+    else
+      trap file_cleaner EXIT SIGINT SIGTERM
     fi
-    # KCOV_EXCL_STOP
-  else
-    log_info "${MSG_STEP5_LOCAL}"
-  fi
 
-  log_info "${MSG_SUCCESS}"
-  close_log_file
+    save_script_data
+    get_log
+
+    if [[ "${HOST}" != "local" ]]; then
+      log_info "$(printf "${MSG_STEP5_TRANSFER}" "${GET_LOG_TOOL}")" # KCOV_EXCL_LINE
+      # KCOV_EXCL_START — file_sender only runs in remote integration tests
+      if ! file_sender; then
+        trap - EXIT
+        close_log_file
+        exit 1
+      fi
+      # KCOV_EXCL_STOP
+    else
+      log_info "${MSG_STEP5_LOCAL}"
+    fi
+
+    log_info "${MSG_SUCCESS}"
+    close_log_file
+  fi
 }
 
 # Allow sourcing without executing main

@@ -16,7 +16,7 @@ setup() {
     touch "${TEST_LOG_DIR}/shelf.ini"
     touch "${TEST_LOG_DIR}/other.txt"
 
-    file_finder "${TEST_LOG_DIR}" "node_config.yaml" "" "20260115-000000" "20260115-235959"
+    file_finder "${TEST_LOG_DIR}" "node_config.yaml" "" "260115-0000" "260115-2359"
 
     assert_equal "${#REPLY_FILES[@]}" 1
     assert_equal "${REPLY_FILES[0]}" "${TEST_LOG_DIR}/node_config.yaml"
@@ -27,7 +27,7 @@ setup() {
     touch "${TEST_LOG_DIR}/config_b.yaml"
     touch "${TEST_LOG_DIR}/unrelated.txt"
 
-    file_finder "${TEST_LOG_DIR}" "config_*" ".yaml" "20260115-000000" "20260115-235959"
+    file_finder "${TEST_LOG_DIR}" "config_*" ".yaml" "260115-0000" "260115-2359"
 
     assert_equal "${#REPLY_FILES[@]}" 2
 }
@@ -43,7 +43,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959"
+        "260115-0000" "260115-2359"
 
     # Should include files within range plus boundary expansion
     # Timestamps: 20260114100000, 20260115080000, 20260115103000, 20260115120000, 20260116080000
@@ -62,7 +62,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "corenavi_auto.host.user.log.INFO.<date:%Y%m%d-%H%M%S>*" "" \
-        "20260115-000000" "20260115-235959"
+        "260115-0000" "260115-2359"
 
     # Timestamps: 20260114-100000, 20260115-080000, 20260115-120000, 20260116-080000
     # In range: 20260115-080000, 20260115-120000
@@ -78,7 +78,7 @@ setup() {
 
     file_finder "${empty_dir}" \
         "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959"
+        "260115-0000" "260115-2359"
 
     assert_equal "${#REPLY_FILES[@]}" 0
 }
@@ -91,7 +91,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959"
+        "260115-0000" "260115-2359"
 
     assert_equal "${#REPLY_FILES[@]}" 0
 }
@@ -107,7 +107,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959"
+        "260115-0000" "260115-2359"
 
     # In range: 20260115100000
     # s_idx=2, e_idx=2, expansion: s_idx=1 (20260114100000), e_idx=3 (20260116100000)
@@ -126,7 +126,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959"
+        "260115-0000" "260115-2359"
 
     # All files older than start: s_idx=-1
     # e_idx is valid (all files <= end of range? No, all < start)
@@ -145,7 +145,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959"
+        "260115-0000" "260115-2359"
 
     # All files newer than end: e_idx=-1
     # s_idx=0 (first file >= start)
@@ -162,7 +162,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260117-000000" "20260114-235959"
+        "260117-0000" "260114-2359"
 
     # start > end: s_idx=-1 (no file >= 20260117000000), e_idx=0..1 (files < 20260114235959? no, they're > end)
     # Actually e_idx=-1 too since no file <= 20260114235959
@@ -177,7 +177,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959"
+        "260115-0000" "260115-2359"
 
     # Single file in range, s_idx=0, e_idx=0
     # Expansion: can't expand (already at boundaries)
@@ -198,7 +198,7 @@ setup() {
 }
 
 @test "file_finder: errors when end_time is missing" {
-    run file_finder "${TEST_LOG_DIR}" "prefix" "suffix" "20260115-000000"
+    run file_finder "${TEST_LOG_DIR}" "prefix" "suffix" "260115-0000"
     assert_failure
 }
 
@@ -217,7 +217,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "coreslam_2D_<date:%s>*" ".log" \
-        "20260115-000000" "20260115-235959"
+        "260115-0000" "260115-2359"
 
     # epoch_in_range is within range
     # expansion should include neighbors
@@ -233,7 +233,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "20260115-000000" "20260115-235959"
+        "260115-0000" "260115-2359"
 
     # Both timestamps in range, no expansion possible (at boundaries)
     assert_equal "${#REPLY_FILES[@]}" 3
@@ -247,7 +247,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "detect_shelf_<date:%Y%m%d%H%M%S>*" ".pcd" \
-        "20260115-000000" "20260115-235959"
+        "260115-0000" "260115-2359"
 
     assert_equal "${#REPLY_FILES[@]}" 1
     [[ "${REPLY_FILES[0]}" == *".pcd" ]]
@@ -261,7 +261,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "mylog_data_" "<date:%Y%m%d%H%M%S>.log" \
-        "20260115-000000" "20260115-235959"
+        "260115-0000" "260115-2359"
 
     # One file in range, single entry, no expansion possible
     assert_equal "${#REPLY_FILES[@]}" 1
@@ -277,7 +277,7 @@ setup() {
     # Override execute_cmd to fail
     execute_cmd() { return 1; }
 
-    file_finder "${TEST_LOG_DIR}" "some_prefix" "" "20260115-000000" "20260115-235959"
+    file_finder "${TEST_LOG_DIR}" "some_prefix" "" "260115-0000" "260115-2359"
     assert_equal "${#REPLY_FILES[@]}" 0
 
     # Restore original
@@ -293,7 +293,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "app_<date:>*" ".log" \
-        "20260115-000000" "20260115-235959"
+        "260115-0000" "260115-2359"
 
     # With empty format, the raw start/end times are used for comparison
     # Files should still be found based on timestamp ordering

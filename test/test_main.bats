@@ -7,6 +7,7 @@ setup() {
     NUM=""
     START_TIME=""
     END_TIME=""
+    DRY_RUN=false
 
     # Use temp paths for SSH and output
     SSH_KEY="${BATS_TEST_TMPDIR}/test_ssh_key"
@@ -44,23 +45,23 @@ setup() {
 
 @test "main: missing start time with local mode errors" {
     # Pipe empty input so read doesn't hang; empty string fails validation
-    run bash -c 'source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'" && echo "" | main -l -e 20260115-235959'
+    run bash -c 'source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'" && echo "" | main -l -e 260115-2359'
     assert_failure
 }
 
 @test "main: missing end time with local mode errors" {
-    run bash -c 'source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'" && echo "" | main -l -s 20260115-000000'
+    run bash -c 'source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'" && echo "" | main -l -s 260115-0000'
     assert_failure
 }
 
 @test "main: invalid start time format errors" {
-    run main -l -s "badtime" -e 20260115-235959
+    run main -l -s "badtime" -e 260115-2359
     assert_failure
     assert_output --partial "Invalid"
 }
 
 @test "main: invalid end time format errors" {
-    run main -l -s 20260115-000000 -e "badtime"
+    run main -l -s 260115-0000 -e "badtime"
     assert_failure
     assert_output --partial "Invalid"
 }
@@ -79,7 +80,7 @@ setup() {
     LOG_PATHS=("${test_dir}::test.yaml")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output"
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${BATS_TEST_TMPDIR}/output"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output"
     assert_success
     assert_output --partial "Packaging log completed successfully"
 }
@@ -92,7 +93,7 @@ setup() {
     LOG_PATHS=("${test_dir}::config.txt")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output2"
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${BATS_TEST_TMPDIR}/output2"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output2"
     assert_success
 
     # Output folder should exist (with hostname and date suffix appended)
@@ -108,7 +109,7 @@ setup() {
     LOG_PATHS=("${test_dir}::myfile.conf")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output3"
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${BATS_TEST_TMPDIR}/output3"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output3"
     assert_success
 
     # Find the output directory and verify the file was copied
@@ -130,7 +131,7 @@ setup() {
     LOG_PATHS=("${test_dir}::nonexistent_file.log")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output4"
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${BATS_TEST_TMPDIR}/output4"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output4"
     assert_success
     assert_output --partial "No files found"
 }
@@ -148,7 +149,7 @@ setup() {
     )
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output5"
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${BATS_TEST_TMPDIR}/output5"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output5"
     assert_success
     assert_output --partial "Packaging log completed successfully"
 }
@@ -165,7 +166,7 @@ setup() {
     LOG_PATHS=("${test_dir}::v.yaml")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output_v"
 
-    run main -l -v -s 20260115-000000 -e 20260115-235959 -o "${BATS_TEST_TMPDIR}/output_v"
+    run main -l -v -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_v"
     assert_success
     assert_output --partial "[DEBUG]"
 }
@@ -191,7 +192,7 @@ setup() {
     LOG_PATHS=("${test_dir}::file.yaml")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output_nossh"
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${BATS_TEST_TMPDIR}/output_nossh"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_nossh"
     assert_success
 
     # ssh_handler should NOT have been called in local mode
@@ -223,7 +224,7 @@ setup() {
 
     LOG_PATHS=("${test_dir}::file.yaml")
 
-    run main -u "testuser@fakehost" -s 20260115-000000 -e 20260115-235959 -o "${BATS_TEST_TMPDIR}/remote_out"
+    run main -u "testuser@fakehost" -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/remote_out"
     assert_success
     assert_output --partial "Packaging log completed successfully"
 }
@@ -246,7 +247,7 @@ setup() {
 
     LOG_PATHS=("${test_dir}::conf.yaml")
 
-    run main -u "testuser@fakehost" -s 20260115-000000 -e 20260115-235959 -o "${BATS_TEST_TMPDIR}/remote_trap_out"
+    run main -u "testuser@fakehost" -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/remote_trap_out"
     assert_success
 }
 
@@ -271,9 +272,157 @@ setup() {
 
     LOG_PATHS=("${test_dir}::out.yaml")
 
-    run main -l -s 20260115-000000 -e 20260115-235959 -o "${BATS_TEST_TMPDIR}/custom_output"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/custom_output"
     assert_success
 
     local -a output_dirs=("${BATS_TEST_TMPDIR}"/custom_output_*)
     [[ -d "${output_dirs[0]}" ]]
+}
+
+# ---------------------------------------------------------------------------
+# 11. Dry-run mode
+# ---------------------------------------------------------------------------
+
+@test "main: --dry-run lists files without copying" {
+    local test_dir="${BATS_TEST_TMPDIR}/test_logs_dry"
+    mkdir -p "${test_dir}"
+    echo "data" > "${test_dir}/test.yaml"
+
+    LOG_PATHS=("${test_dir}::test.yaml")
+    SAVE_FOLDER="${BATS_TEST_TMPDIR}/output_dry"
+
+    run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry"
+    assert_success
+    assert_output --partial "DRY RUN"
+    assert_output --partial "test.yaml"
+}
+
+@test "main: --dry-run does not create output folder" {
+    local test_dir="${BATS_TEST_TMPDIR}/test_logs_dry2"
+    mkdir -p "${test_dir}"
+    echo "data" > "${test_dir}/file.conf"
+
+    LOG_PATHS=("${test_dir}::file.conf")
+    SAVE_FOLDER="${BATS_TEST_TMPDIR}/output_dry2"
+
+    run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry2"
+    assert_success
+
+    # Output folder should NOT exist in dry-run mode
+    local -a output_dirs=("${BATS_TEST_TMPDIR}"/output_dry2_*)
+    [[ ! -d "${output_dirs[0]}" ]]
+}
+
+@test "main: --dry-run does not call file_sender in remote mode" {
+    ssh_handler() { :; }
+    get_tools_checker() { GET_LOG_TOOL="rsync"; }
+
+    local sender_called="${BATS_TEST_TMPDIR}/sender_called"
+    file_sender() { touch "${sender_called}"; }
+
+    execute_cmd() {
+        printf '%s' "$1" | bash -ls
+    }
+
+    local test_dir="${BATS_TEST_TMPDIR}/remote_dry"
+    mkdir -p "${test_dir}"
+    echo "data" > "${test_dir}/file.yaml"
+
+    LOG_PATHS=("${test_dir}::file.yaml")
+
+    run main --dry-run -u "testuser@fakehost" -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/remote_dry_out"
+    assert_success
+    assert_output --partial "DRY RUN"
+
+    # file_sender should NOT have been called
+    [[ ! -f "${sender_called}" ]]
+}
+
+@test "main: --dry-run shows total file count" {
+    local test_dir="${BATS_TEST_TMPDIR}/test_logs_dry3"
+    mkdir -p "${test_dir}"
+    echo "a" > "${test_dir}/a.conf"
+    echo "b" > "${test_dir}/b.conf"
+
+    LOG_PATHS=("${test_dir}::*.conf")
+    SAVE_FOLDER="${BATS_TEST_TMPDIR}/output_dry3"
+
+    run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry3"
+    assert_success
+    assert_output --partial "2"
+}
+
+@test "main: --dry-run shows resolved path and file pattern" {
+    local test_dir="${BATS_TEST_TMPDIR}/test_logs_dry4"
+    mkdir -p "${test_dir}"
+    echo "data" > "${test_dir}/app.log"
+
+    LOG_PATHS=("${test_dir}::app.log")
+
+    run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry4"
+    assert_success
+    assert_output --partial "Resolved path: ${test_dir}"
+    assert_output --partial "File pattern:"
+    assert_output --partial "app.log"
+}
+
+@test "main: --dry-run shows directory not found for missing paths" {
+    LOG_PATHS=("/nonexistent/path/abc123::some_file.log")
+
+    run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry5"
+    assert_success
+    assert_output --partial "Directory not found: /nonexistent/path/abc123"
+}
+
+@test "main: --dry-run skips empty resolved path with warning" {
+    NUM=""
+    LOG_PATHS=("<name>::*")
+
+    run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry_emptypath"
+    assert_success
+    assert_output --partial "path is empty"
+}
+
+@test "main: normal mode skips empty resolved path with warning" {
+    NUM=""
+    LOG_PATHS=("<name>::*")
+    SAVE_FOLDER="${BATS_TEST_TMPDIR}/output_emptypath"
+
+    run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_emptypath"
+    assert_success
+    assert_output --partial "path is empty"
+}
+
+@test "main: --dry-run shows no files found when dir exists but empty" {
+    local test_dir="${BATS_TEST_TMPDIR}/dry_empty_dir"
+    mkdir -p "${test_dir}"
+
+    LOG_PATHS=("${test_dir}::nonexistent_file.log")
+
+    run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry_empty"
+    assert_success
+    assert_output --partial "No files found"
+}
+
+@test "main: --dry-run processes multiple LOG_PATHS without crashing" {
+    local dir1="${BATS_TEST_TMPDIR}/dry_multi1"
+    local dir2="${BATS_TEST_TMPDIR}/dry_multi2"
+    local dir3="${BATS_TEST_TMPDIR}/dry_multi3"
+    mkdir -p "${dir1}" "${dir2}" "${dir3}"
+    echo "a" > "${dir1}/a.log"
+    echo "b" > "${dir2}/b.log"
+    echo "c" > "${dir3}/c.log"
+
+    LOG_PATHS=(
+        "${dir1}::a.log"
+        "${dir2}::b.log"
+        "${dir3}::c.log"
+    )
+
+    run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry_multi"
+    assert_success
+    assert_output --partial "[1/3]"
+    assert_output --partial "[2/3]"
+    assert_output --partial "[3/3]"
+    assert_output --partial "3"
 }

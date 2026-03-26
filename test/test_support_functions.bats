@@ -59,17 +59,17 @@ setup() {
 # --- date_format ---
 
 @test "date_format: formats date correctly with %Y%m%d" {
-    date_format "20260115-103045" "%Y%m%d"
+    date_format "260115-1030" "%Y%m%d"
     assert_equal "${REPLY}" "20260115"
 }
 
 @test "date_format: formats date correctly with %Y%m%d-%H%M%S" {
-    date_format "20260115-103045" "%Y%m%d-%H%M%S"
-    assert_equal "${REPLY}" "20260115-103045"
+    date_format "260115-1030" "%Y%m%d-%H%M%S"
+    assert_equal "${REPLY}" "20260115-103000"
 }
 
 @test "date_format: formats date correctly with %s (epoch)" {
-    date_format "20260115-103045" "%s"
+    date_format "260115-1030" "%s"
     # Verify it's a number (epoch timestamp)
     [[ "${REPLY}" =~ ^[0-9]+$ ]]
 }

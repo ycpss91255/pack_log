@@ -9,7 +9,7 @@
 > **TL;DR** — 单文件 Bash 脚本，通过 SSH 连接到远程主机，按时间范围查找 log 文件，再用 rsync/scp/sftp 传回本机。100% 测试覆盖率（Bats + Kcov）。
 >
 > ```bash
-> ./pack_log.sh -n 1 -s 20260115-000000 -e 20260115-235959   # 按主机编号
+> ./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359   # 按主机编号
 > ./pack_log.sh -u myuser@10.90.68.188 -s ... -e ...          # 直接指定 user@host
 > ./pack_log.sh -l -s ... -e ...                               # 本机模式
 > ```
@@ -26,7 +26,8 @@
 - **本机模式**：不走 SSH，直接在本机收集 log。
 - **i18n 多语言支持**：英文、繁体中文、简体中文、日文，通过 `--lang` 或 `$LANG` 切换。
 - **Log 文件输出**：所有操作记录写入 `pack_log.log`。
-- **传输重试与保留**：失败最多重试 3 次，最终失败保留远程文件夹。
+- **模拟执行模式**：预览会收集哪些文件，不做任何复制或传输（`--dry-run`）。
+- **传输重试与保留**：文件传输（rsync/scp/sftp）失败时自动重试，最多 3 次，每次间隔 5 秒，能处理 broken pipe 或网络中断等暂时性错误。若全部重试失败，远程临时文件夹会保留以供手动取回。
 - **100% 测试覆盖率**：268 个测试，涵盖单元测试、本机集成测试、远程集成测试。
 
 ## 快速开始
@@ -35,19 +36,25 @@
 
 ```bash
 # 交互式选择主机
-./pack_log.sh -s 20260115-000000 -e 20260115-235959
+./pack_log.sh -s 260115-0000 -e 260115-2359
 
 # 按主机编号（HOSTS 数组）
-./pack_log.sh -n 1 -s 20260115-000000 -e 20260115-235959
+./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359
 
 # 直接指定 user@host
-./pack_log.sh -u myuser@10.90.68.188 -s 20260115-000000 -e 20260115-235959
+./pack_log.sh -u myuser@10.90.68.188 -s 260115-0000 -e 260115-2359
 
 # 本机模式（不走 SSH）
-./pack_log.sh -l -s 20260115-000000 -e 20260115-235959
+./pack_log.sh -l -s 260115-0000 -e 260115-2359
 
 # 自定义输出文件夹 + 详细输出
-./pack_log.sh -n 1 -s 20260115-000000 -e 20260115-235959 -o /tmp/my_logs -v
+./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359 -o /tmp/my_logs -v
+
+# 使用 token 自定义输出文件夹名称
+./pack_log.sh -n 7 -s 260309-0000 -e 260309-2359 -o 'corenavi_<date:%m%d>_#<num>'
+
+# 模拟执行 — 查看会收集哪些文件，不做实际操作
+./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359 --dry-run
 ```
 
 ### 命令行选项
@@ -57,12 +64,13 @@
 | `-n, --number` | 主机编号（对应 `HOSTS` 数组） |
 | `-u, --userhost <user@host>` | 直接指定 SSH 目标 |
 | `-l, --local` | 本机模式（不走 SSH） |
-| `-s, --start <YYYYmmdd-HHMMSS>` | 起始时间 |
-| `-e, --end <YYYYmmdd-HHMMSS>` | 结束时间 |
-| `-o, --output <path>` | 输出文件夹路径（默认：`log_pack`） |
+| `-s, --start <YYmmdd-HHMM>` | 起始时间 |
+| `-e, --end <YYmmdd-HHMM>` | 结束时间 |
+| `-o, --output <path>` | 输出文件夹路径（支持 `<num>`, `<name>`, `<date:fmt>` token） |
 | `-v, --verbose` | 启用详细输出 |
 | `--very-verbose` | 启用 debug 输出 |
 | `--extra-verbose` | 启用追踪输出（`set -x`） |
+| `--dry-run` | 模拟执行：搜索文件但不复制或传输 |
 | `--lang <code>` | 语言：`en`、`zh-TW`、`zh-CN`、`ja` |
 | `-h, --help` | 显示说明 |
 | `--version` | 显示版本 |

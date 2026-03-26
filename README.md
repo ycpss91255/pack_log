@@ -9,7 +9,7 @@
 > **TL;DR** — Single-file Bash script that connects to remote hosts via SSH, finds log files by time range, and transfers them back locally via rsync/scp/sftp. 100% test coverage with Bats + Kcov.
 >
 > ```bash
-> ./pack_log.sh -n 1 -s 20260115-000000 -e 20260115-235959   # By host number
+> ./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359   # By host number
 > ./pack_log.sh -u myuser@10.90.68.188 -s ... -e ...          # By user@host
 > ./pack_log.sh -l -s ... -e ...                               # Local mode
 > ```
@@ -26,7 +26,8 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 - **Local Mode**: Run without SSH for local log collection.
 - **i18n Support**: English, Traditional Chinese, Simplified Chinese, and Japanese via `--lang` or `$LANG`.
 - **Log File Output**: All operations logged to `pack_log.log` in the output folder.
-- **Transfer Retry with Preservation**: Retries failed transfers up to 3 times; preserves remote folder on final failure.
+- **Dry-Run Mode**: Preview which files would be collected without any copying or transferring (`--dry-run`).
+- **Transfer Retry with Preservation**: Automatically retries failed file transfers (rsync/scp/sftp) up to 3 times with a 5-second delay between attempts, handling transient errors such as broken pipes or network interruptions. If all retries fail, the remote temporary folder is preserved so files can be retrieved manually.
 - **100% Test Coverage**: 268 tests across unit, local integration, and remote integration test suites.
 
 ## Quick Start
@@ -35,19 +36,25 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 
 ```bash
 # Select host interactively
-./pack_log.sh -s 20260115-000000 -e 20260115-235959
+./pack_log.sh -s 260115-0000 -e 260115-2359
 
 # By host number (from HOSTS array)
-./pack_log.sh -n 1 -s 20260115-000000 -e 20260115-235959
+./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359
 
 # Direct user@host
-./pack_log.sh -u myuser@10.90.68.188 -s 20260115-000000 -e 20260115-235959
+./pack_log.sh -u myuser@10.90.68.188 -s 260115-0000 -e 260115-2359
 
 # Local mode (no SSH)
-./pack_log.sh -l -s 20260115-000000 -e 20260115-235959
+./pack_log.sh -l -s 260115-0000 -e 260115-2359
 
 # Custom output folder + verbose
-./pack_log.sh -n 1 -s 20260115-000000 -e 20260115-235959 -o /tmp/my_logs -v
+./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359 -o /tmp/my_logs -v
+
+# Custom output folder with tokens
+./pack_log.sh -n 7 -s 260309-0000 -e 260309-2359 -o 'corenavi_<date:%m%d>_#<num>'
+
+# Dry run — see which files would be collected without copying
+./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359 --dry-run
 ```
 
 ### Command-Line Options
@@ -57,12 +64,13 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 | `-n, --number` | Host number (from `HOSTS` array) |
 | `-u, --userhost <user@host>` | Direct SSH target |
 | `-l, --local` | Local mode (no SSH) |
-| `-s, --start <YYYYmmdd-HHMMSS>` | Start time |
-| `-e, --end <YYYYmmdd-HHMMSS>` | End time |
-| `-o, --output <path>` | Output folder path (default: `log_pack`) |
+| `-s, --start <YYmmdd-HHMM>` | Start time |
+| `-e, --end <YYmmdd-HHMM>` | End time |
+| `-o, --output <path>` | Output folder path (supports `<num>`, `<name>`, `<date:fmt>` tokens) |
 | `-v, --verbose` | Enable verbose output |
 | `--very-verbose` | Enable debug output |
 | `--extra-verbose` | Enable trace output (`set -x`) |
+| `--dry-run` | Simulate run: find files without copying or transferring |
 | `--lang <code>` | Language: `en`, `zh-TW`, `zh-CN`, `ja` |
 | `-h, --help` | Show help message |
 | `--version` | Show version |

@@ -74,7 +74,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/rsync_config"
     assert_success
     assert_output --partial "Packaging log completed successfully"
@@ -92,7 +92,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/rsync_date"
     assert_success
     assert_output --partial "Packaging log completed successfully"
@@ -122,7 +122,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/scp_test"
     assert_success
     assert_output --partial "Packaging log completed successfully"
@@ -144,7 +144,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/sftp_test"
     assert_success
     assert_output --partial "Packaging log completed successfully"
@@ -163,7 +163,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/cmd_test"
     assert_success
 
@@ -185,7 +185,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/mixed_test"
     assert_success
     assert_output --partial "Packaging log completed successfully"
@@ -230,7 +230,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/cleanup_test"
     assert_success
 
@@ -251,7 +251,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/scriptlog_test"
     assert_success
 
@@ -262,7 +262,7 @@ teardown() {
     local content
     content=$(cat "${script_log}")
     [[ "${content}" == *"Host: ${INTEGRATION_HOST}"* ]]
-    [[ "${content}" == *"20260115-000000"* ]]
+    [[ "${content}" == *"260115-0000"* ]]
 }
 
 # ---------------------------------------------------------------------------
@@ -275,7 +275,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/content_test"
     assert_success
 
@@ -296,7 +296,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/suffix_remote"
     assert_success
 
@@ -322,7 +322,7 @@ teardown() {
     # With boundary expansion: should include 100000 and 140000, may include 160000
     # But 20260116-080000 should NEVER be included
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-120000 -e 20260115-160000 \
+        -s 260115-1200 -e 260115-1600 \
         -o "${OUTPUT_DIR}/falsepos_test"
     assert_success
 
@@ -345,7 +345,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/scp_content"
     assert_success
 
@@ -368,7 +368,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/sftp_content"
     assert_success
 
@@ -389,7 +389,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/epoch_test"
     assert_success
 
@@ -416,7 +416,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/dirstructure_test"
     assert_success
 
@@ -450,7 +450,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/multi_content"
     assert_success
 
@@ -475,7 +475,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/rec_test"
     assert_success
     assert_output --partial "Packaging log completed successfully"
@@ -507,7 +507,7 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260115-000000 -e 20260115-235959 \
+        -s 260115-0000 -e 260115-2359 \
         -o "${OUTPUT_DIR}/strip_test"
     assert_success
 
@@ -533,7 +533,7 @@ teardown() {
 
     # Query range is far in the future — all files are from 2025-01-01
     run main -u "${INTEGRATION_HOST}" \
-        -s 20260601-000000 -e 20260601-235959 \
+        -s 260601-0000 -e 260601-2359 \
         -o "${OUTPUT_DIR}/boundary_test"
     assert_success
     assert_output --partial "No files found"

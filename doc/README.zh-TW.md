@@ -9,7 +9,7 @@
 > **TL;DR** — 單檔 Bash 腳本，透過 SSH 連線到遠端主機，依時間範圍尋找 log 檔案，再用 rsync/scp/sftp 傳回本機。100% 測試覆蓋率（Bats + Kcov）。
 >
 > ```bash
-> ./pack_log.sh -n 1 -s 20260115-000000 -e 20260115-235959   # 依主機編號
+> ./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359   # 依主機編號
 > ./pack_log.sh -u myuser@10.90.68.188 -s ... -e ...          # 直接指定 user@host
 > ./pack_log.sh -l -s ... -e ...                               # 本機模式
 > ```
@@ -26,7 +26,8 @@
 - **本機模式**：不走 SSH，直接在本機收集 log。
 - **i18n 多語言支援**：英文、繁體中文、簡體中文、日文，透過 `--lang` 或 `$LANG` 切換。
 - **Log 檔案輸出**：所有操作記錄寫入 `pack_log.log`。
-- **傳輸重試與保留**：失敗最多重試 3 次，最終失敗保留遠端資料夾。
+- **模擬執行模式**：預覽會收集哪些檔案，不做任何複製或傳輸（`--dry-run`）。
+- **傳輸重試與保留**：檔案傳輸（rsync/scp/sftp）失敗時自動重試，最多 3 次，每次間隔 5 秒，能處理 broken pipe 或網路中斷等暫時性錯誤。若全部重試失敗，遠端暫存資料夾會保留以供手動取回。
 - **100% 測試覆蓋率**：268 個測試，涵蓋單元測試、本機整合測試、遠端整合測試。
 
 ## 快速開始
@@ -35,19 +36,25 @@
 
 ```bash
 # 互動式選擇主機
-./pack_log.sh -s 20260115-000000 -e 20260115-235959
+./pack_log.sh -s 260115-0000 -e 260115-2359
 
 # 依主機編號（HOSTS 陣列）
-./pack_log.sh -n 1 -s 20260115-000000 -e 20260115-235959
+./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359
 
 # 直接指定 user@host
-./pack_log.sh -u myuser@10.90.68.188 -s 20260115-000000 -e 20260115-235959
+./pack_log.sh -u myuser@10.90.68.188 -s 260115-0000 -e 260115-2359
 
 # 本機模式（不走 SSH）
-./pack_log.sh -l -s 20260115-000000 -e 20260115-235959
+./pack_log.sh -l -s 260115-0000 -e 260115-2359
 
 # 自訂輸出資料夾 + 詳細輸出
-./pack_log.sh -n 1 -s 20260115-000000 -e 20260115-235959 -o /tmp/my_logs -v
+./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359 -o /tmp/my_logs -v
+
+# 使用 token 自訂輸出資料夾名稱
+./pack_log.sh -n 7 -s 260309-0000 -e 260309-2359 -o 'corenavi_<date:%m%d>_#<num>'
+
+# 模擬執行 — 查看會收集哪些檔案，不做實際操作
+./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359 --dry-run
 ```
 
 ### 命令列選項
@@ -57,12 +64,13 @@
 | `-n, --number` | 主機編號（對應 `HOSTS` 陣列） |
 | `-u, --userhost <user@host>` | 直接指定 SSH 目標 |
 | `-l, --local` | 本機模式（不走 SSH） |
-| `-s, --start <YYYYmmdd-HHMMSS>` | 起始時間 |
-| `-e, --end <YYYYmmdd-HHMMSS>` | 結束時間 |
-| `-o, --output <path>` | 輸出資料夾路徑（預設：`log_pack`） |
+| `-s, --start <YYmmdd-HHMM>` | 起始時間 |
+| `-e, --end <YYmmdd-HHMM>` | 結束時間 |
+| `-o, --output <path>` | 輸出資料夾路徑（支援 `<num>`, `<name>`, `<date:fmt>` token） |
 | `-v, --verbose` | 啟用詳細輸出 |
 | `--very-verbose` | 啟用 debug 輸出 |
 | `--extra-verbose` | 啟用追蹤輸出（`set -x`） |
+| `--dry-run` | 模擬執行：搜尋檔案但不複製或傳輸 |
 | `--lang <code>` | 語言：`en`、`zh-TW`、`zh-CN`、`ja` |
 | `-h, --help` | 顯示說明 |
 | `--version` | 顯示版本 |

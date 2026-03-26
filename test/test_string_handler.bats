@@ -222,3 +222,82 @@ setup() {
     [[ "$REPLY_PREFIX" == "node_config.yaml" ]]
     [[ "$REPLY_SUFFIX" == "" ]]
 }
+
+# =============================================================================
+# <num> and <name> tokens
+# =============================================================================
+
+@test "string_handler: <num> token resolves to host number" {
+    NUM="7"
+    string_handler '/home/user/logs_#<num>::*'
+    [[ "$REPLY_PATH" == "/home/user/logs_#7" ]]
+    [[ "$REPLY_PREFIX" == "*" ]]
+}
+
+@test "string_handler: <name> token resolves to host display name" {
+    NUM="1"
+    string_handler '/home/user/logs_<name>::*'
+    [[ "$REPLY_PATH" == "/home/user/logs_${HOSTS[0]%%::*}" ]]
+    [[ "$REPLY_PREFIX" == "*" ]]
+}
+
+@test "string_handler: <num> and <name> combined with other tokens" {
+    NUM="3"
+    string_handler '<env:HOME>/logs_<name>_#<num>::*.log'
+    local expected_name="${HOSTS[2]%%::*}"
+    [[ "$REPLY_PATH" == "$HOME/logs_${expected_name}_#3" ]]
+    [[ "$REPLY_PREFIX" == "*.log" ]]
+}
+
+@test "string_handler: <num> warns and is removed when NUM is empty" {
+    NUM=""
+    run string_handler '/home/user/logs_#<num>::*'
+    assert_success
+    assert_output --partial "requires -n"
+}
+
+@test "string_handler: <name> warns and is removed when NUM is empty" {
+    NUM=""
+    run string_handler '/home/user/logs_<name>::*'
+    assert_success
+    assert_output --partial "requires -n"
+}
+
+@test "string_handler: <num> warns when using -u (no NUM)" {
+    NUM=""
+    HOST="myuser@10.0.0.1"
+    run string_handler '/home/user/corenavi_#<num>::*'
+    assert_success
+    assert_output --partial "requires -n"
+}
+
+# =============================================================================
+# resolve_path_dates
+# =============================================================================
+
+@test "resolve_path_dates: resolves date token in path portion" {
+    START_TIME="260309-0000"
+    END_TIME="260309-2359"
+    REPLY_PATH="/home/user/corenavi_<date:%m%d>_test"
+    resolve_path_dates
+    [[ "$REPLY_PATH" == "/home/user/corenavi_0309_test" ]]
+}
+
+@test "resolve_path_dates: leaves path without date tokens unchanged" {
+    START_TIME="260309-0000"
+    END_TIME="260309-2359"
+    REPLY_PATH="/home/user/plain_path"
+    resolve_path_dates
+    [[ "$REPLY_PATH" == "/home/user/plain_path" ]]
+}
+
+@test "resolve_path_dates: combined <num> and <date:> in path" {
+    NUM="7"
+    START_TIME="260309-0000"
+    END_TIME="260309-2359"
+    string_handler '/home/user/corenavi_<date:%m%d>_#<num>::app.<date:%Y%m%d-%H%M%S>*.log'
+    resolve_path_dates
+    [[ "$REPLY_PATH" == "/home/user/corenavi_0309_#7" ]]
+    # File portion date token preserved for file_finder
+    [[ "$REPLY_PREFIX" == "app.<date:%Y%m%d-%H%M%S>*.log" ]]
+}

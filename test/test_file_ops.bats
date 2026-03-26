@@ -49,8 +49,8 @@ setup() {
 @test "save_script_data: writes script.log with user inputs" {
     SAVE_FOLDER="${TEST_DIR}/save_test"
     mkdir -p "${SAVE_FOLDER}"
-    START_TIME="20260115-080000"
-    END_TIME="20260115-180000"
+    START_TIME="260115-0800"
+    END_TIME="260115-1800"
     GET_LOG_TOOL="rsync"
     LOG_PATHS=("path1::file1" "path2::file2")
 
@@ -72,8 +72,8 @@ setup() {
 @test "save_script_data: creates script.log in SAVE_FOLDER" {
     SAVE_FOLDER="${TEST_DIR}/save_test2"
     mkdir -p "${SAVE_FOLDER}"
-    START_TIME="20260101-000000"
-    END_TIME="20260101-235959"
+    START_TIME="260101-0000"
+    END_TIME="260101-2359"
     GET_LOG_TOOL="scp"
     LOG_PATHS=()
 
@@ -281,8 +281,8 @@ setup() {
 @test "get_log: warns when no files found for a log path" {
     SAVE_FOLDER="${TEST_DIR}/get_log_test"
     mkdir -p "${SAVE_FOLDER}"
-    START_TIME="20260115-000000"
-    END_TIME="20260115-235959"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
 
     local empty_dir="${TEST_DIR}/empty_path"
     mkdir -p "${empty_dir}"
@@ -297,8 +297,8 @@ setup() {
 @test "get_log: copies files when found" {
     SAVE_FOLDER="${TEST_DIR}/get_log_copy"
     mkdir -p "${SAVE_FOLDER}"
-    START_TIME="20260115-000000"
-    END_TIME="20260115-235959"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
 
     local log_dir="${TEST_DIR}/app_logs"
     mkdir -p "${log_dir}"
@@ -318,8 +318,8 @@ setup() {
 @test "get_log: handles multiple log paths" {
     SAVE_FOLDER="${TEST_DIR}/get_log_multi"
     mkdir -p "${SAVE_FOLDER}"
-    START_TIME="20260115-000000"
-    END_TIME="20260115-235959"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
 
     local log_dir1="${TEST_DIR}/logs1"
     local log_dir2="${TEST_DIR}/logs2"
@@ -341,8 +341,8 @@ setup() {
 @test "get_log: processes date-based log paths and copies matching files" {
     SAVE_FOLDER="${TEST_DIR}/get_log_date"
     mkdir -p "${SAVE_FOLDER}"
-    START_TIME="20260115-000000"
-    END_TIME="20260115-235959"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
 
     local log_dir="${TEST_DIR}/dated_logs"
     mkdir -p "${log_dir}"
@@ -362,8 +362,8 @@ setup() {
 @test "get_log: handles env token in path with local HOST" {
     SAVE_FOLDER="${TEST_DIR}/get_log_env"
     mkdir -p "${SAVE_FOLDER}"
-    START_TIME="20260115-000000"
-    END_TIME="20260115-235959"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
 
     local log_dir="${HOME}/test_pack_log_bats_temp"
     mkdir -p "${log_dir}"
@@ -422,6 +422,63 @@ setup() {
 }
 
 # =============================================================================
+# folder_creator: token support
+# =============================================================================
+
+@test "folder_creator: <num> token resolves in SAVE_FOLDER" {
+    NUM="5"
+    START_TIME="260309-0000"
+    SAVE_FOLDER="${TEST_DIR}/out_#<num>"
+    folder_creator
+    [[ "${SAVE_FOLDER}" == "${TEST_DIR}/out_#5" ]]
+    [[ -d "${SAVE_FOLDER}" ]]
+}
+
+@test "folder_creator: <name> token resolves in SAVE_FOLDER" {
+    NUM="1"
+    START_TIME="260309-0000"
+    local expected_name="${HOSTS[0]%%::*}"
+    SAVE_FOLDER="${TEST_DIR}/out_<name>"
+    folder_creator
+    [[ "${SAVE_FOLDER}" == "${TEST_DIR}/out_${expected_name}" ]]
+    [[ -d "${SAVE_FOLDER}" ]]
+}
+
+@test "folder_creator: <date:format> token resolves in SAVE_FOLDER" {
+    NUM=""
+    START_TIME="260309-0000"
+    SAVE_FOLDER="${TEST_DIR}/out_<date:%m%d>"
+    folder_creator
+    [[ "${SAVE_FOLDER}" == "${TEST_DIR}/out_0309" ]]
+    [[ -d "${SAVE_FOLDER}" ]]
+}
+
+@test "folder_creator: combined tokens in SAVE_FOLDER" {
+    NUM="7"
+    START_TIME="260309-0000"
+    SAVE_FOLDER="${TEST_DIR}/corenavi_<date:%m%d>_#<num>"
+    folder_creator
+    [[ "${SAVE_FOLDER}" == "${TEST_DIR}/corenavi_0309_#7" ]]
+    [[ -d "${SAVE_FOLDER}" ]]
+}
+
+@test "folder_creator: <num> warns when NUM is empty" {
+    NUM=""
+    START_TIME="260309-0000"
+    SAVE_FOLDER="${TEST_DIR}/out_<num>"
+    run folder_creator
+    assert_output --partial "requires -n"
+}
+
+@test "folder_creator: <name> warns when NUM is empty" {
+    NUM=""
+    START_TIME="260309-0000"
+    SAVE_FOLDER="${TEST_DIR}/out_<name>"
+    run folder_creator
+    assert_output --partial "requires -n"
+}
+
+# =============================================================================
 # save_script_data: string_array elements (L993-996)
 # =============================================================================
 
@@ -430,8 +487,8 @@ setup() {
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
         set +euo pipefail
         HOST="testhost@10.0.0.1"
-        START_TIME="20260115-080000"
-        END_TIME="20260115-180000"
+        START_TIME="260115-0800"
+        END_TIME="260115-1800"
         GET_LOG_TOOL="rsync"
         SAVE_FOLDER="'"${BATS_TEST_TMPDIR}"'/sd_test"
         VERBOSE=0
@@ -442,7 +499,7 @@ setup() {
     '
     assert_success
     assert_output --partial "Host: testhost@10.0.0.1"
-    assert_output --partial "Time range: 20260115-080000 ~ 20260115-180000"
+    assert_output --partial "Time range: 260115-0800 ~ 260115-1800"
     assert_output --partial "Using tool: rsync"
     assert_output --partial "Saving logs to folder:"
 }

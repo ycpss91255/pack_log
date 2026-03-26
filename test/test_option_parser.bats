@@ -10,6 +10,7 @@ setup() {
   START_TIME=""
   END_TIME=""
   SAVE_FOLDER="log_pack"
+  DRY_RUN=false
 }
 
 # ===========================================================================
@@ -55,25 +56,25 @@ setup() {
 # --- -s / --start ---
 
 @test "option_parser: -s sets START_TIME" {
-  option_parser -s "20260101-000000"
-  [[ "${START_TIME}" == "20260101-000000" ]]
+  option_parser -s "260101-0000"
+  [[ "${START_TIME}" == "260101-0000" ]]
 }
 
 @test "option_parser: --start sets START_TIME" {
-  option_parser --start "20260315-120000"
-  [[ "${START_TIME}" == "20260315-120000" ]]
+  option_parser --start "260315-1200"
+  [[ "${START_TIME}" == "260315-1200" ]]
 }
 
 # --- -e / --end ---
 
 @test "option_parser: -e sets END_TIME" {
-  option_parser -e "20260101-235959"
-  [[ "${END_TIME}" == "20260101-235959" ]]
+  option_parser -e "260101-2359"
+  [[ "${END_TIME}" == "260101-2359" ]]
 }
 
 @test "option_parser: --end sets END_TIME" {
-  option_parser --end "20260315-180000"
-  [[ "${END_TIME}" == "20260315-180000" ]]
+  option_parser --end "260315-1800"
+  [[ "${END_TIME}" == "260315-1800" ]]
 }
 
 # --- -o / --output ---
@@ -153,13 +154,25 @@ setup() {
 # --- --lang ---
 
 @test "option_parser: --lang sets LANG_CODE" {
-  option_parser --lang zh-TW -l -s 20260101-000000 -e 20260101-235959
+  option_parser --lang zh-TW -l -s 260101-0000 -e 260101-2359
   [[ "${LANG_CODE}" == "zh-TW" ]]
 }
 
 @test "option_parser: --lang ja sets LANG_CODE to ja" {
-  option_parser --lang ja -l -s 20260101-000000 -e 20260101-235959
+  option_parser --lang ja -l -s 260101-0000 -e 260101-2359
   [[ "${LANG_CODE}" == "ja" ]]
+}
+
+# --- --dry-run ---
+
+@test "option_parser: --dry-run sets DRY_RUN to true" {
+  option_parser --dry-run -l -s 260101-0000 -e 260101-2359
+  [[ "${DRY_RUN}" == "true" ]]
+}
+
+@test "option_parser: DRY_RUN defaults to false" {
+  option_parser -l -s 260101-0000 -e 260101-2359
+  [[ "${DRY_RUN}" == "false" ]]
 }
 
 # --- invalid option ---
@@ -180,20 +193,20 @@ setup() {
 # --- combinations ---
 
 @test "option_parser: multiple options combined" {
-  option_parser -n 1 -l -s "20260201-080000" -e "20260201-170000" -o "/tmp/out" -v
+  option_parser -n 1 -l -s "260201-0800" -e "260201-1700" -o "/tmp/out" -v
   [[ "${NUM}" == "1" ]]
   [[ "${HOST}" == "local" ]]
-  [[ "${START_TIME}" == "20260201-080000" ]]
-  [[ "${END_TIME}" == "20260201-170000" ]]
+  [[ "${START_TIME}" == "260201-0800" ]]
+  [[ "${END_TIME}" == "260201-1700" ]]
   [[ "${SAVE_FOLDER}" == "/tmp/out" ]]
   [[ "${VERBOSE}" -eq 1 ]]
 }
 
 @test "option_parser: long options combined" {
-  option_parser --number 4 --start "20260301-000000" --end "20260301-235959" --output "mydir" --very-verbose
+  option_parser --number 4 --start "260301-0000" --end "260301-2359" --output "mydir" --very-verbose
   [[ "${NUM}" == "4" ]]
-  [[ "${START_TIME}" == "20260301-000000" ]]
-  [[ "${END_TIME}" == "20260301-235959" ]]
+  [[ "${START_TIME}" == "260301-0000" ]]
+  [[ "${END_TIME}" == "260301-2359" ]]
   [[ "${SAVE_FOLDER}" == "mydir" ]]
   [[ "${VERBOSE}" -eq 2 ]]
 }
@@ -264,26 +277,26 @@ setup() {
 # --- valid times already set ---
 
 @test "time_handler: valid START_TIME and END_TIME pass through" {
-  START_TIME="20260101-000000"
-  END_TIME="20260101-235959"
+  START_TIME="260101-0000"
+  END_TIME="260101-2359"
   time_handler
-  [[ "${START_TIME}" == "20260101-000000" ]]
-  [[ "${END_TIME}" == "20260101-235959" ]]
+  [[ "${START_TIME}" == "260101-0000" ]]
+  [[ "${END_TIME}" == "260101-2359" ]]
 }
 
 @test "time_handler: another valid time range" {
-  START_TIME="20251231-083000"
-  END_TIME="20260115-174500"
+  START_TIME="251231-0830"
+  END_TIME="260115-1745"
   time_handler
-  [[ "${START_TIME}" == "20251231-083000" ]]
-  [[ "${END_TIME}" == "20260115-174500" ]]
+  [[ "${START_TIME}" == "251231-0830" ]]
+  [[ "${END_TIME}" == "260115-1745" ]]
 }
 
 # --- invalid START_TIME ---
 
 @test "time_handler: invalid START_TIME format exits with error" {
-  START_TIME="260101-0000"
-  END_TIME="20260101-235959"
+  START_TIME="20260101-0000"
+  END_TIME="260101-2359"
   run time_handler
   assert_failure
   assert_output --partial "Invalid start_time format"
@@ -291,7 +304,7 @@ setup() {
 
 @test "time_handler: START_TIME missing dash exits with error" {
   START_TIME="20260101000000"
-  END_TIME="20260101-235959"
+  END_TIME="260101-2359"
   run time_handler
   assert_failure
   assert_output --partial "Invalid start_time format"
@@ -299,7 +312,7 @@ setup() {
 
 @test "time_handler: START_TIME with letters exits with error" {
   START_TIME="2026ab01-120000"
-  END_TIME="20260101-235959"
+  END_TIME="260101-2359"
   run time_handler
   assert_failure
   assert_output --partial "Invalid start_time format"
@@ -308,15 +321,15 @@ setup() {
 # --- invalid END_TIME ---
 
 @test "time_handler: invalid END_TIME format exits with error" {
-  START_TIME="20260101-000000"
-  END_TIME="260101-2359"
+  START_TIME="260101-0000"
+  END_TIME="260101-235959"
   run time_handler
   assert_failure
   assert_output --partial "Invalid end_time format"
 }
 
 @test "time_handler: END_TIME too short exits with error" {
-  START_TIME="20260101-000000"
+  START_TIME="260101-0000"
   END_TIME="20260101-12"
   run time_handler
   assert_failure
@@ -324,12 +337,12 @@ setup() {
 }
 
 @test "time_handler: empty END_TIME with no stdin exits with error" {
-  START_TIME="20260101-000000"
+  START_TIME="260101-0000"
   END_TIME=""
   # Provide invalid input via stdin to trigger format error
   run bash -c '
     source "'"${PROJECT_ROOT}/pack_log.sh"'"
-    START_TIME="20260101-000000"
+    START_TIME="260101-0000"
     END_TIME=""
     echo "bad-input" | time_handler
   '
@@ -345,41 +358,41 @@ setup() {
     source "'"${PROJECT_ROOT}/pack_log.sh"'"
     START_TIME=""
     END_TIME=""
-    printf "20260301-100000\n20260301-200000\n" | time_handler
+    printf "260301-1000\n260301-2000\n" | time_handler
     echo "START_TIME=${START_TIME}"
     echo "END_TIME=${END_TIME}"
   '
   assert_success
-  assert_output --partial "START_TIME=20260301-100000"
-  assert_output --partial "END_TIME=20260301-200000"
+  assert_output --partial "START_TIME=260301-1000"
+  assert_output --partial "END_TIME=260301-2000"
 }
 
 @test "time_handler: reads only END_TIME from stdin when START_TIME is set" {
   run bash -c '
     source "'"${PROJECT_ROOT}/pack_log.sh"'"
-    START_TIME="20260501-060000"
+    START_TIME="260501-0600"
     END_TIME=""
-    printf "20260501-180000\n" | time_handler
+    printf "260501-1800\n" | time_handler
     echo "START_TIME=${START_TIME}"
     echo "END_TIME=${END_TIME}"
   '
   assert_success
-  assert_output --partial "START_TIME=20260501-060000"
-  assert_output --partial "END_TIME=20260501-180000"
+  assert_output --partial "START_TIME=260501-0600"
+  assert_output --partial "END_TIME=260501-1800"
 }
 
 @test "time_handler: reads only START_TIME from stdin when END_TIME is set" {
   run bash -c '
     source "'"${PROJECT_ROOT}/pack_log.sh"'"
     START_TIME=""
-    END_TIME="20260601-235959"
-    printf "20260601-000000\n" | time_handler
+    END_TIME="260601-2359"
+    printf "260601-0000\n" | time_handler
     echo "START_TIME=${START_TIME}"
     echo "END_TIME=${END_TIME}"
   '
   assert_success
-  assert_output --partial "START_TIME=20260601-000000"
-  assert_output --partial "END_TIME=20260601-235959"
+  assert_output --partial "START_TIME=260601-0000"
+  assert_output --partial "END_TIME=260601-2359"
 }
 
 @test "time_handler: interactive input with invalid format exits with error" {
@@ -387,7 +400,7 @@ setup() {
     source "'"${PROJECT_ROOT}/pack_log.sh"'"
     START_TIME=""
     END_TIME=""
-    printf "not-a-date\n20260101-235959\n" | time_handler
+    printf "not-a-date\n260101-2359\n" | time_handler
   '
   assert_failure
   assert_output --partial "Invalid start_time format"
@@ -396,17 +409,17 @@ setup() {
 # --- start > end validation ---
 
 @test "time_handler: start_time after end_time exits with error" {
-  START_TIME="20260201-000000"
-  END_TIME="20260101-235959"
+  START_TIME="260201-0000"
+  END_TIME="260101-2359"
   run time_handler
   assert_failure
   assert_output --partial "must be before end_time"
 }
 
 @test "time_handler: equal start and end times passes validation" {
-  START_TIME="20260115-120000"
-  END_TIME="20260115-120000"
+  START_TIME="260115-1200"
+  END_TIME="260115-1200"
   time_handler
-  [[ "${START_TIME}" == "20260115-120000" ]]
-  [[ "${END_TIME}" == "20260115-120000" ]]
+  [[ "${START_TIME}" == "260115-1200" ]]
+  [[ "${END_TIME}" == "260115-1200" ]]
 }

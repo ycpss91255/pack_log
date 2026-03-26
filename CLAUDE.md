@@ -10,13 +10,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # 依主機編號（未指定則互動式選擇）
-./pack_log.sh -n 1 -s 20260101-000000 -e 20260101-235959
+./pack_log.sh -n 1 -s 260101-0000 -e 260101-2359
 
 # 直接指定 user@host
-./pack_log.sh -u myuser@10.90.68.188 -s 20260101-000000 -e 20260101-235959
+./pack_log.sh -u myuser@10.90.68.188 -s 260101-0000 -e 260101-2359
 
 # 本機模式（不走 SSH）
-./pack_log.sh -l -s 20260101-000000 -e 20260101-235959
+./pack_log.sh -l -s 260101-0000 -e 260101-2359
 
 # 詳細輸出：-v（debug）、--very-verbose（verbose）、--extra-verbose（set -x）
 ```
@@ -45,7 +45,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. **`option_parser`** — 透過 `getopt` 解析命令列參數（含 `--lang`）
 2. **`load_lang`** — 載入 i18n 語言檔（`doc/lang/*.sh`）
 3. **`host_handler`** — 解析目標主機（編號 → HOSTS 陣列查詢、user@host、或 "local"）
-4. **`time_handler`** — 驗證起訖時間格式（`YYYYMMDD-HHMMSS`），確認 START < END
+4. **`time_handler`** — 驗證起訖時間格式（`YYMMDD-HHMM`），確認 START < END
 5. **`ssh_handler`** — 建立 SSH 連線，自動建立/複製金鑰（最多重試 3 次）
 6. **`folder_creator`** — 在遠端建立暫存資料夾（`log_pack_<hostname>_<date>`）
 7. **`init_log_file`** — 開啟 log 檔案寫入（`pack_log.log`）
