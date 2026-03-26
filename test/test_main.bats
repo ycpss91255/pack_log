@@ -260,6 +260,54 @@ setup() {
 }
 
 # ---------------------------------------------------------------------------
+# 8b. Transfer failure interactive prompt
+# ---------------------------------------------------------------------------
+
+_setup_transfer_fail_test() {
+    ssh_handler() { :; }
+    get_tools_checker() { GET_LOG_TOOL="rsync"; }
+    # file_sender always fails
+    file_sender() { return 1; }
+    execute_cmd() { printf '%s' "$1" | bash -ls; }
+    execute_cmd_from_array() {
+        local -r inner_cmd="$1"; shift
+        printf '%s\0' "$@" | bash -c "${inner_cmd}"
+    }
+
+    local test_dir="${BATS_TEST_TMPDIR}/transfer_fail"
+    mkdir -p "${test_dir}"
+    echo "data" > "${test_dir}/file.yaml"
+    LOG_PATHS=("${test_dir}::file.yaml")
+}
+
+@test "main: transfer failure with 'k' preserves remote and exits" {
+    _setup_transfer_fail_test
+
+    run main -u "testuser@fakehost" -s 260115-0000 -e 260115-2359 \
+        -o "${BATS_TEST_TMPDIR}/tf_opt_a" <<< "k"
+    assert_failure
+    assert_output --partial "[K]eep"
+}
+
+@test "main: transfer failure with 'c' cleans remote and exits" {
+    _setup_transfer_fail_test
+
+    run main -u "testuser@fakehost" -s 260115-0000 -e 260115-2359 \
+        -o "${BATS_TEST_TMPDIR}/tf_opt_b" <<< "c"
+    assert_failure
+    assert_output --partial "[C]lean"
+}
+
+@test "main: transfer failure with empty input retries then 'k' exits" {
+    _setup_transfer_fail_test
+    # First empty line → retry (file_sender fails again), second 'k' → exit
+    run main -u "testuser@fakehost" -s 260115-0000 -e 260115-2359 \
+        -o "${BATS_TEST_TMPDIR}/tf_opt_c" < <(printf '\nk\n')
+    assert_failure
+    assert_output --partial "[R]etry"
+}
+
+# ---------------------------------------------------------------------------
 # 9. Source guard (L1218)
 # ---------------------------------------------------------------------------
 

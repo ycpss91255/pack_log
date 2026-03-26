@@ -237,6 +237,7 @@ load_lang() {
       MSG_TRANSFER_FAILED='%s 在 %d 次嘗試後失敗。'
       MSG_REMOTE_PRESERVED='遠端資料夾已保留: %s:%s'
       MSG_RETRIEVE_MANUALLY='請手動取回檔案，完成後請刪除遠端資料夾。'
+      MSG_TRANSFER_CHOICE='[R]etry（重試，預設） / [K]eep（保留遠端資料） / [C]lean（清除遠端資料）: '
       MSG_EMPTY_PATH='[%d/%d] 解析後路徑為空，跳過。'
       MSG_PROCESSING='[%d/%d] 處理中: %s'
       MSG_NO_FILES_FOUND='[%d/%d] 找不到檔案。'
@@ -332,6 +333,7 @@ load_lang() {
       MSG_TRANSFER_FAILED='%s 在 %d 次尝试后失败。'
       MSG_REMOTE_PRESERVED='远程文件夹已保留: %s:%s'
       MSG_RETRIEVE_MANUALLY='请手动取回文件，完成后请删除远程文件夹。'
+      MSG_TRANSFER_CHOICE='[R]etry（重试，默认） / [K]eep（保留远程数据） / [C]lean（清除远程数据）: '
       MSG_EMPTY_PATH='[%d/%d] 解析后路径为空，跳过。'
       MSG_PROCESSING='[%d/%d] 处理中: %s'
       MSG_NO_FILES_FOUND='[%d/%d] 未找到文件。'
@@ -427,6 +429,7 @@ load_lang() {
       MSG_TRANSFER_FAILED='%s は %d 回の試行後に失敗しました。'
       MSG_REMOTE_PRESERVED='リモートフォルダを保持: %s:%s'
       MSG_RETRIEVE_MANUALLY='手動で取得し、完了後にリモートフォルダを削除してください。'
+      MSG_TRANSFER_CHOICE='[R]etry（リトライ、デフォルト） / [K]eep（リモートデータ保持） / [C]lean（リモートデータ削除）: '
       MSG_EMPTY_PATH='[%d/%d] 解決済みパスが空です。スキップします。'
       MSG_PROCESSING='[%d/%d] 処理中: %s'
       MSG_NO_FILES_FOUND='[%d/%d] ファイルが見つかりません。'
@@ -522,6 +525,7 @@ load_lang() {
       MSG_TRANSFER_FAILED='%s failed after %d attempts.'
       MSG_REMOTE_PRESERVED='Remote folder preserved: %s:%s'
       MSG_RETRIEVE_MANUALLY='Please retrieve manually and delete when done.'
+      MSG_TRANSFER_CHOICE='[R]etry (default) / [K]eep remote data / [C]lean remote data: '
       MSG_EMPTY_PATH='[%d/%d] Resolved path is empty, skipping.'
       MSG_PROCESSING='[%d/%d] Processing: %s'
       MSG_NO_FILES_FOUND='[%d/%d] No files found.'
@@ -1639,6 +1643,7 @@ file_sender() {
   local -r tool="${GET_LOG_TOOL}"
   # Always show transfer progress; add verbose detail only with -v
   # --partial: keep partially transferred files (resume on retry)
+  # --partial: keep partially transferred files (resume on retry)
   # --timeout: rsync-level I/O timeout (complements SSH ServerAliveInterval)
   local -a rsync_flags=("-a" "-z" "--progress" "--partial" "--timeout=60")
   local -a scp_flags=("-p" "-r")
@@ -1866,11 +1871,23 @@ main() {
     if [[ "${HOST}" != "local" ]]; then
       log_info "$(printf "${MSG_STEP5_TRANSFER}" "${GET_LOG_TOOL}")" # KCOV_EXCL_LINE
       # KCOV_EXCL_START — file_sender only runs in remote integration tests
-      if ! file_sender; then
-        trap - EXIT
-        close_log_file
-        exit 1
-      fi
+      local _transfer_ok=false
+      while ! file_sender; do
+        local choice=""
+        log_warn "${MSG_TRANSFER_CHOICE}"
+        read -r choice </dev/tty 2>/dev/null || read -r choice
+        case "${choice,,}" in
+          k|keep)
+            log_info "$(printf "${MSG_REMOTE_PRESERVED}" "${HOST}" "${SAVE_FOLDER}")"
+            trap - EXIT; close_log_file; exit 1 ;;
+          c|clean)
+            file_cleaner
+            trap - EXIT; close_log_file; exit 1 ;;
+          *)  # retry (default: empty or 'r')
+            log_info "[R]etry: restarting transfer..."
+            continue ;;
+        esac
+      done
       # KCOV_EXCL_STOP
     else
       log_info "${MSG_STEP5_LOCAL}"
