@@ -122,6 +122,7 @@ declare SSH_KEY="${HOME}/.ssh/get_log"
 declare SSH_TIMEOUT=3
 declare TRANSFER_MAX_RETRIES=3
 declare TRANSFER_RETRY_DELAY=5
+declare TRANSFER_SIZE_WARN_MB=300
 
 # ==============================================================================
 # Internal Variables (do not modify)
@@ -232,6 +233,8 @@ load_lang() {
       MSG_LOCAL_DESTINATION='本機目標資料夾: %s'
       MSG_REMOTE_NOT_FOUND='找不到遠端資料夾: %s'
       MSG_REMOTE_FOLDER_SIZE='遠端資料夾 %s 大小: %s'
+      MSG_SIZE_EXCEED_CONFIRM='資料夾大小超過 %dMB（%s），確定要傳送嗎？[Y/n] '
+      MSG_TRANSFER_CANCELLED='使用者取消傳送。'
       MSG_UNSUPPORTED_TOOL='不支援的檔案傳輸工具: %s'
       MSG_TRANSFER_RETRY='%s 失敗 (第 %d/%d 次)，%d 秒後重試...'
       MSG_TRANSFER_FAILED='%s 在 %d 次嘗試後失敗。'
@@ -328,6 +331,8 @@ load_lang() {
       MSG_LOCAL_DESTINATION='本机目标文件夹: %s'
       MSG_REMOTE_NOT_FOUND='未找到远程文件夹: %s'
       MSG_REMOTE_FOLDER_SIZE='远程文件夹 %s 大小: %s'
+      MSG_SIZE_EXCEED_CONFIRM='文件夹大小超过 %dMB（%s），确定要传送吗？[Y/n] '
+      MSG_TRANSFER_CANCELLED='用户取消传送。'
       MSG_UNSUPPORTED_TOOL='不支持的文件传输工具: %s'
       MSG_TRANSFER_RETRY='%s 失败 (第 %d/%d 次)，%d 秒后重试...'
       MSG_TRANSFER_FAILED='%s 在 %d 次尝试后失败。'
@@ -424,6 +429,8 @@ load_lang() {
       MSG_LOCAL_DESTINATION='ローカル保存先フォルダ: %s'
       MSG_REMOTE_NOT_FOUND='リモートフォルダが見つかりません: %s'
       MSG_REMOTE_FOLDER_SIZE='リモートフォルダ %s のサイズ: %s'
+      MSG_SIZE_EXCEED_CONFIRM='フォルダサイズが %dMB（%s）を超えています。転送しますか？[Y/n] '
+      MSG_TRANSFER_CANCELLED='転送がキャンセルされました。'
       MSG_UNSUPPORTED_TOOL='サポートされていないファイル転送ツール: %s'
       MSG_TRANSFER_RETRY='%s 失敗 (第 %d/%d 回)、%d 秒後にリトライ...'
       MSG_TRANSFER_FAILED='%s は %d 回の試行後に失敗しました。'
@@ -520,6 +527,8 @@ load_lang() {
       MSG_LOCAL_DESTINATION='Local destination folder: %s'
       MSG_REMOTE_NOT_FOUND='Remote folder not found: %s'
       MSG_REMOTE_FOLDER_SIZE='Remote folder %s size is: %s'
+      MSG_SIZE_EXCEED_CONFIRM='Folder size exceeds %dMB (%s). Proceed with transfer? [Y/n] '
+      MSG_TRANSFER_CANCELLED='Transfer cancelled by user.'
       MSG_UNSUPPORTED_TOOL='Unsupported file transfer tool: %s'
       MSG_TRANSFER_RETRY='%s failed (attempt %d/%d), retrying in %ds...'
       MSG_TRANSFER_FAILED='%s failed after %d attempts.'
@@ -1676,6 +1685,22 @@ file_sender() {
   local folder_size=""
   folder_size=$(execute_cmd "du -sh ${remote_esc} | awk '{print \$1}'")
   log_info "$(printf "${MSG_REMOTE_FOLDER_SIZE}" "${SAVE_FOLDER}" "${folder_size}")"
+
+  # Check if folder size exceeds warning threshold
+  if [[ "${TRANSFER_SIZE_WARN_MB:-0}" -gt 0 ]]; then
+    local size_bytes
+    size_bytes=$(execute_cmd "du -sb ${remote_esc} | awk '{print \$1}'")
+    local size_mb=$(( size_bytes / 1024 / 1024 ))
+    if [[ "${size_mb}" -ge "${TRANSFER_SIZE_WARN_MB}" ]]; then
+      local confirm=""
+      log_warn "$(printf "${MSG_SIZE_EXCEED_CONFIRM}" "${TRANSFER_SIZE_WARN_MB}" "${folder_size}")"
+      read -r confirm </dev/tty 2>/dev/null || read -r confirm
+      if [[ "${confirm,,}" == "n" || "${confirm,,}" == "no" ]]; then
+        log_info "${MSG_TRANSFER_CANCELLED}"
+        return 1
+      fi
+    fi
+  fi
 
   # KCOV_EXCL_START — transfer loop requires real SSH/rsync/scp/sftp
   local attempt=0

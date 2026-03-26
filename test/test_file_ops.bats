@@ -6,6 +6,7 @@ setup() {
     HOST="local"
     TRANSFER_MAX_RETRIES=3
     TRANSFER_RETRY_DELAY=0
+    TRANSFER_SIZE_WARN_MB=300
 
     TEST_DIR="${BATS_TEST_TMPDIR}/file_ops"
     mkdir -p "${TEST_DIR}"
@@ -193,6 +194,33 @@ setup() {
 # =============================================================================
 # file_sender
 # =============================================================================
+
+@test "file_sender: warns and prompts when size exceeds threshold" {
+    GET_LOG_TOOL="rsync"
+    SAVE_FOLDER="${TEST_DIR}/large_folder"
+    mkdir -p "${SAVE_FOLDER}"
+    # Create a file that makes du report > 1MB (threshold set to 1 for testing)
+    dd if=/dev/zero of="${SAVE_FOLDER}/bigfile" bs=1M count=2 2>/dev/null
+    TRANSFER_SIZE_WARN_MB=1
+
+    # User answers 'n' to cancel
+    run file_sender <<< "n"
+    assert_failure
+    assert_output --partial "MB"
+}
+
+@test "file_sender: skips prompt when size below threshold" {
+    GET_LOG_TOOL="rsync"
+    SAVE_FOLDER="${TEST_DIR}/small_folder"
+    mkdir -p "${SAVE_FOLDER}"
+    echo "tiny" > "${SAVE_FOLDER}/small.txt"
+    TRANSFER_SIZE_WARN_MB=300
+
+    # Should not prompt — goes straight to transfer (which fails because HOST=local + rsync)
+    run file_sender
+    # No prompt output about "exceed" or confirmation
+    refute_output --partial "exceed"
+}
 
 @test "file_sender: errors on unknown tool" {
     GET_LOG_TOOL="unknown_tool"
