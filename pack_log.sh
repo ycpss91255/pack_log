@@ -432,8 +432,7 @@ load_lang() {
       MSG_DRY_RUN_TOTAL='[ドライラン] 収集予定の合計ファイル数：%d'
       MSG_DRY_RUN_COMPLETE='*** ドライラン完了 — 変更は行われていません ***'
       ;;
-    # KCOV_EXCL_STOP
-    *) # English (default)
+    *) # English (default) # KCOV_EXCL_STOP
       MSG_HELP_USAGE='Usage: %s [options]'
       MSG_HELP_OPTIONS='  Options:'
       MSG_HELP_NUMBER='    -n, --number                  Host number (1-%d)'
