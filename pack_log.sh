@@ -1641,17 +1641,17 @@ file_copier() {
 # with TRANSFER_RETRY_DELAY seconds between attempts.
 file_sender() {
   local -r tool="${GET_LOG_TOOL}"
-  # Always show transfer progress; add verbose detail only with -v
-  # --partial: keep partially transferred files (resume on retry)
+  # Default: show overall transfer progress (--info=progress2)
+  # Verbose: add per-file detail (-v --progress)
   # --partial: keep partially transferred files (resume on retry)
   # --timeout: rsync-level I/O timeout (complements SSH ServerAliveInterval)
-  local -a rsync_flags=("-a" "-z" "--progress" "--partial" "--timeout=60")
+  local -a rsync_flags=("-a" "-z" "--info=progress2" "--partial" "--timeout=60")
   local -a scp_flags=("-p" "-r")
   local sftp_progress="progress\n" sftp_output="/dev/stdout"
 
   # KCOV_EXCL_START — file_sender only runs in remote integration tests
   if [[ "${VERBOSE:-0}" -ge 1 ]]; then
-    rsync_flags+=("-v")
+    rsync_flags+=("-v" "--progress")
     scp_flags+=("-v")
   fi
   # KCOV_EXCL_STOP
