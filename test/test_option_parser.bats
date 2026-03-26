@@ -231,6 +231,18 @@ setup() {
   assert_output "pack_log"
 }
 
+@test "SAVE_FOLDER: dynamically follows renamed script" {
+  local copy="${BATS_TEST_TMPDIR}/my_custom_tool.sh"
+  cp "${BATS_TEST_DIRNAME}/../pack_log.sh" "${copy}"
+  run env -u LD_PRELOAD -u BASH_ENV bash -c '
+    source "'"${copy}"'"
+    set +u +o pipefail
+    echo "${SAVE_FOLDER}"
+  '
+  assert_success
+  assert_output "my_custom_tool"
+}
+
 # --- --extra-verbose in-process for kcov (L479) ---
 
 @test "option_parser: extra-verbose sets VERBOSE to 3 in subprocess" {

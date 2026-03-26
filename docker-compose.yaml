@@ -22,23 +22,31 @@ services:
             bats-assert \
             bats-file \
             shellcheck \
-            openssh-client
+            openssh-client \
+            rsync \
+            sudo
 
         echo "--- Running ShellCheck ---"
         shellcheck -x -S error pack_log.sh
 
-        echo "--- Running Tests & Coverage ---"
-        kcov --include-path=./pack_log.sh \
-            --exclude-region=KCOV_EXCL_START:KCOV_EXCL_STOP \
-            --exclude-line=KCOV_EXCL_LINE \
-            ./coverage \
-            bats test/
+        echo "--- Creating test user ---"
+        groupadd -g "${HOST_GID}" testrunner 2>/dev/null || true
+        useradd -m -u "${HOST_UID}" -g "${HOST_GID}" -s /bin/bash testrunner 2>/dev/null || true
+        echo "testrunner ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/testrunner
+        chown -R "${HOST_UID}:${HOST_GID}" /source
 
-        if [ -n "${HOST_UID}" ] && [ -n "${HOST_GID}" ]; then
-            echo "--- Fixing permissions for coverage directory ---"
-            chown -R "${HOST_UID}:${HOST_GID}" coverage/
-            echo "Coverage report generated at: $(pwd)/coverage/index.html"
-        fi
+        echo "--- Running Tests & Coverage (as non-root) ---"
+        su testrunner -c '
+          kcov --include-path=./pack_log.sh \
+              --exclude-region=KCOV_EXCL_START:KCOV_EXCL_STOP \
+              --exclude-line=KCOV_EXCL_LINE \
+              ./coverage \
+              bats test/
+        '
+
+        echo "--- Fixing permissions for coverage directory ---"
+        chown -R "${HOST_UID}:${HOST_GID}" coverage/
+        echo "Coverage report generated at: $(pwd)/coverage/index.html"
 
   # --- Remote integration test (SSH to sshd container) ---
   sshd:

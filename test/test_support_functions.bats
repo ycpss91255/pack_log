@@ -6,22 +6,24 @@ setup() {
     HOST="local"
 }
 
+# --- CI environment ---
+
+@test "CI: tests run as non-root user" {
+    [[ "${EUID:-${UID}}" -ne 0 ]]
+}
+
 # --- have_sudo_access ---
 
-@test "have_sudo_access: returns 0 when EUID is 0 (root)" {
-    # EUID is readonly in bash, so test in subshell with UID override
-    run env -u LD_PRELOAD -u BASH_ENV bash -c '
-        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +u +o pipefail
-        # Simulate root by checking the function logic path
-        HAVE_SUDO_ACCESS=0
-        have_sudo_access
-    '
+@test "have_sudo_access: returns 0 when cached as success" {
+    # Cache check is after /usr/bin/sudo existence check
+    [[ -x /usr/bin/sudo ]] || skip "sudo not installed"
+    HAVE_SUDO_ACCESS=0
+    run have_sudo_access
     assert_success
 }
 
 @test "have_sudo_access: returns 1 when sudo not available" {
-    [[ "${EUID:-${UID}}" -eq 0 ]] && skip "root always has sudo access"
+
     unset HAVE_SUDO_ACCESS
     # If /usr/bin/sudo is not executable or not present, returns 1
     # Test the cached failure path instead
@@ -31,13 +33,16 @@ setup() {
 }
 
 @test "have_sudo_access: caches result in HAVE_SUDO_ACCESS" {
+    # Cache check is after /usr/bin/sudo existence check,
+    # so this only works when sudo binary exists
+    [[ -x /usr/bin/sudo ]] || skip "sudo not installed"
     HAVE_SUDO_ACCESS=0
     run have_sudo_access
     assert_success
 }
 
 @test "have_sudo_access: returns cached failure" {
-    [[ "${EUID:-${UID}}" -eq 0 ]] && skip "root always has sudo access"
+
     HAVE_SUDO_ACCESS=1
     run have_sudo_access
     assert_failure
@@ -52,7 +57,7 @@ setup() {
 }
 
 @test "pkg_install_handler: errors when no sudo and package missing" {
-    [[ "${EUID:-${UID}}" -eq 0 ]] && skip "root always has sudo access"
+
     HAVE_SUDO_ACCESS=1
     run pkg_install_handler "nonexistent_pkg_xyz_12345"
     assert_failure
@@ -196,7 +201,7 @@ setup() {
 # --- have_sudo_access: /usr/bin/sudo not executable (L196-197) ---
 
 @test "have_sudo_access: returns 1 when /usr/bin/sudo is not executable" {
-    [[ "${EUID:-${UID}}" -eq 0 ]] && skip "root always has sudo access"
+
     run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
         set +u +o pipefail
@@ -245,6 +250,8 @@ setup() {
 # --- pkg_install_handler: successful install path (L245) ---
 
 @test "pkg_install_handler: successful install path hits verbose separator" {
+    # have_sudo_access checks /usr/bin/sudo existence before cache
+    [[ -x /usr/bin/sudo ]] || skip "sudo not installed"
     VERBOSE=2
     HAVE_SUDO_ACCESS=0
     # Create fake sudo and apt-get that succeed
@@ -325,7 +332,7 @@ WRAPPER
 # --- pkg_install_handler: no sudo path (L243) ---
 
 @test "pkg_install_handler: log_error when no sudo access for missing package" {
-    [[ "${EUID:-${UID}}" -eq 0 ]] && skip "root always has sudo access"
+
     run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
         set +u +o pipefail

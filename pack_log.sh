@@ -18,8 +18,8 @@
 # Date: 2026-03-25
 # Version: 1.5.0
 
-# KCOV_EXCL_LINE
-declare -r _PACK_LOG_SCRIPT_NAME="pack_log"
+set +u 2>/dev/null # KCOV_EXCL_LINE
+declare -r _PACK_LOG_SCRIPT_NAME="$(basename "${BASH_SOURCE[0]:-$0}" .sh)" # KCOV_EXCL_LINE
 
 set -euo pipefail
 
@@ -673,9 +673,10 @@ pkg_install_handler() {
 
   log_info "$(printf "${MSG_PKG_NOT_FOUND}" "${pkg_name}")"
 
-  # Check for sudo access. If missing, return error immediately.
+  # Check for sudo access. If missing, return error so caller can decide.
   if ! have_sudo_access; then
-    log_error "$(printf "${MSG_NO_SUDO_ACCESS}" "${pkg_name}")" # KCOV_EXCL_LINE
+    log_warn "$(printf "${MSG_NO_SUDO_ACCESS}" "${pkg_name}")"
+    return 1
   fi
 
   # Attempt to update and install the package.
@@ -1495,11 +1496,23 @@ folder_creator() {
       SAVE_FOLDER="${SAVE_FOLDER//${token}/${resolved}}"
     done
   else
-    local combined
-    if ! combined=$(execute_cmd "printf '%s_%s' \"\$(hostname)\" \"\$(date +%y%m%d-%H%M%S)\""); then
+    local host_label
+    if [[ -n "${NUM}" && "${NUM}" =~ ^[1-9][0-9]*$ ]]; then
+      # -n mode: use HOSTS display name
+      host_label="${HOSTS[${NUM}-1]%%::*}"
+    else
+      # -l or -u mode: use hostname
+      if ! host_label=$(execute_cmd "hostname"); then
+        log_error "$(printf "${MSG_HOSTNAME_DATE_FAILED}" "${HOST}")" # KCOV_EXCL_LINE
+      fi
+    fi
+
+    local timestamp
+    if ! timestamp=$(execute_cmd "date +%y%m%d-%H%M%S"); then
       log_error "$(printf "${MSG_HOSTNAME_DATE_FAILED}" "${HOST}")" # KCOV_EXCL_LINE
     fi
-    SAVE_FOLDER="${SAVE_FOLDER}_${combined}"
+
+    SAVE_FOLDER="${SAVE_FOLDER}_${host_label}_${timestamp}"
   fi
 
   create_folder "${SAVE_FOLDER}"

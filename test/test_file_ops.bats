@@ -24,7 +24,9 @@ setup() {
     [ -d "${SAVE_FOLDER}" ]
 }
 
-@test "folder_creator: appends hostname to SAVE_FOLDER" {
+@test "folder_creator: uses hostname for local mode" {
+    HOST="local"
+    NUM=""
     SAVE_FOLDER="${TEST_DIR}/output"
     local expected_hostname
     expected_hostname=$(hostname)
@@ -32,6 +34,29 @@ setup() {
     folder_creator
 
     [[ "${SAVE_FOLDER}" == *"_${expected_hostname}_"* ]]
+}
+
+@test "folder_creator: uses hostname when NUM is empty" {
+    HOST="local"
+    NUM=""
+    SAVE_FOLDER="${TEST_DIR}/output_uh"
+    local expected_hostname
+    expected_hostname=$(hostname)
+
+    folder_creator
+
+    [[ "${SAVE_FOLDER}" == *"_${expected_hostname}_"* ]]
+}
+
+@test "folder_creator: uses HOSTS display name for -n mode" {
+    HOST="local"
+    NUM="1"
+    SAVE_FOLDER="${TEST_DIR}/output_n"
+
+    local expected_name="${HOSTS[0]%%::*}"
+    folder_creator
+
+    [[ "${SAVE_FOLDER}" == *"_${expected_name}_"* ]]
 }
 
 @test "folder_creator: appends date with 2-digit year to SAVE_FOLDER" {
