@@ -181,11 +181,6 @@ declare -a LOG_PATHS=(
 │       └── test_remote.bats             # リモート結合テスト (24)
 │
 ├── doc/
-│   ├── lang/                            # i18n メッセージファイル
-│   │   ├── en.sh                        # 英語（デフォルト）
-│   │   ├── zh-TW.sh                     # 繁体字中国語
-│   │   ├── zh-CN.sh                     # 簡体字中国語
-│   │   └── ja.sh                        # 日本語
 │   ├── README.zh-TW.md                  # 繁体字中国語 README
 │   ├── README.zh-CN.md                  # 簡体字中国語 README
 │   └── README.ja.md                     # 日本語 README
