@@ -9,7 +9,7 @@ setup() {
   HOST=""
   START_TIME=""
   END_TIME=""
-  SAVE_FOLDER="log_pack"
+  SAVE_FOLDER="pack_log"
   DRY_RUN=false
 }
 
@@ -117,7 +117,7 @@ setup() {
 
 @test "option_parser: --extra-verbose sets VERBOSE to 3 (without triggering set -x)" {
   # We run in a subshell to avoid set -x polluting the test runner
-  run bash -c '
+  run env -u LD_PRELOAD -u BASH_ENV bash -c '
     source "'"${PROJECT_ROOT}/pack_log.sh"'"
     VERBOSE=0
     option_parser --extra-verbose
@@ -218,15 +218,25 @@ setup() {
   [[ "${HOST}" == "" ]]
   [[ "${START_TIME}" == "" ]]
   [[ "${END_TIME}" == "" ]]
-  [[ "${SAVE_FOLDER}" == "log_pack" ]]
+  [[ "${SAVE_FOLDER}" == "pack_log" ]]
+}
+
+@test "SAVE_FOLDER: default value is script basename without .sh" {
+  run env -u LD_PRELOAD -u BASH_ENV bash -c '
+    source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
+    set +u +o pipefail
+    echo "${SAVE_FOLDER}"
+  '
+  assert_success
+  assert_output "pack_log"
 }
 
 # --- --extra-verbose in-process for kcov (L479) ---
 
 @test "option_parser: extra-verbose sets VERBOSE to 3 in subprocess" {
-  run bash -c '
+  run env -u LD_PRELOAD -u BASH_ENV bash -c '
     source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-    set +euo pipefail
+    set +u +o pipefail
     VERBOSE=0
     option_parser --extra-verbose
     echo "VERBOSE=${VERBOSE}"
@@ -241,9 +251,9 @@ setup() {
   # After getopt, remaining args come after '--'. The *) break is a safety
   # fallback. We simulate it by calling the while-loop body directly
   # with something that doesn't match any case.
-  run bash -c '
+  run env -u LD_PRELOAD -u BASH_ENV bash -c '
     source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-    set +euo pipefail
+    set +u +o pipefail
     VERBOSE=0
     # Manually invoke the loop with a non-option token before --
     # getopt always adds -- at end, but we can test the safety net
@@ -259,9 +269,9 @@ setup() {
 # --- set -x triggered when VERBOSE >= 3 (L490) ---
 
 @test "option_parser: VERBOSE 3 triggers set -x in subprocess" {
-  run bash -c '
+  run env -u LD_PRELOAD -u BASH_ENV bash -c '
     source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-    set +euo pipefail
+    set +u +o pipefail
     VERBOSE=0
     option_parser --extra-verbose
     echo "TRACE_ON=$-"
@@ -340,7 +350,7 @@ setup() {
   START_TIME="260101-0000"
   END_TIME=""
   # Provide invalid input via stdin to trigger format error
-  run bash -c '
+  run env -u LD_PRELOAD -u BASH_ENV bash -c '
     source "'"${PROJECT_ROOT}/pack_log.sh"'"
     START_TIME="260101-0000"
     END_TIME=""
@@ -353,12 +363,12 @@ setup() {
 # --- interactive input via stdin ---
 
 @test "time_handler: reads START_TIME and END_TIME from stdin when empty" {
-  # Use a subshell with run because read -er -p uses stdin
-  run bash -c '
+  run env -u LD_PRELOAD -u BASH_ENV bash -c '
     source "'"${PROJECT_ROOT}/pack_log.sh"'"
+    set +u +o pipefail
     START_TIME=""
     END_TIME=""
-    printf "260301-1000\n260301-2000\n" | time_handler
+    time_handler < <(printf "260301-1000\n260301-2000\n")
     echo "START_TIME=${START_TIME}"
     echo "END_TIME=${END_TIME}"
   '
@@ -368,11 +378,12 @@ setup() {
 }
 
 @test "time_handler: reads only END_TIME from stdin when START_TIME is set" {
-  run bash -c '
+  run env -u LD_PRELOAD -u BASH_ENV bash -c '
     source "'"${PROJECT_ROOT}/pack_log.sh"'"
+    set +u +o pipefail
     START_TIME="260501-0600"
     END_TIME=""
-    printf "260501-1800\n" | time_handler
+    time_handler < <(printf "260501-1800\n")
     echo "START_TIME=${START_TIME}"
     echo "END_TIME=${END_TIME}"
   '
@@ -382,11 +393,12 @@ setup() {
 }
 
 @test "time_handler: reads only START_TIME from stdin when END_TIME is set" {
-  run bash -c '
+  run env -u LD_PRELOAD -u BASH_ENV bash -c '
     source "'"${PROJECT_ROOT}/pack_log.sh"'"
+    set +u +o pipefail
     START_TIME=""
     END_TIME="260601-2359"
-    printf "260601-0000\n" | time_handler
+    time_handler < <(printf "260601-0000\n")
     echo "START_TIME=${START_TIME}"
     echo "END_TIME=${END_TIME}"
   '
@@ -396,7 +408,7 @@ setup() {
 }
 
 @test "time_handler: interactive input with invalid format exits with error" {
-  run bash -c '
+  run env -u LD_PRELOAD -u BASH_ENV bash -c '
     source "'"${PROJECT_ROOT}/pack_log.sh"'"
     START_TIME=""
     END_TIME=""

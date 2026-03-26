@@ -4,6 +4,8 @@ setup() {
     load 'test_helper'
     VERBOSE=0
     HOST="local"
+    TRANSFER_MAX_RETRIES=3
+    TRANSFER_RETRY_DELAY=0
 
     TEST_DIR="${BATS_TEST_TMPDIR}/file_ops"
     mkdir -p "${TEST_DIR}"
@@ -14,11 +16,11 @@ setup() {
 # =============================================================================
 
 @test "folder_creator: creates folder with hostname and date in name" {
-    SAVE_FOLDER="${TEST_DIR}/log_pack"
+    SAVE_FOLDER="${TEST_DIR}/test_output"
     folder_creator
 
-    # SAVE_FOLDER should now be log_pack_<hostname>_<date>
-    [[ "${SAVE_FOLDER}" == *"log_pack_"* ]]
+    # SAVE_FOLDER should now be test_output_<hostname>_<date>
+    [[ "${SAVE_FOLDER}" == *"test_output_"* ]]
     [ -d "${SAVE_FOLDER}" ]
 }
 
@@ -32,14 +34,17 @@ setup() {
     [[ "${SAVE_FOLDER}" == *"_${expected_hostname}_"* ]]
 }
 
-@test "folder_creator: appends date to SAVE_FOLDER" {
+@test "folder_creator: appends date with 2-digit year to SAVE_FOLDER" {
     SAVE_FOLDER="${TEST_DIR}/output"
-    local today
-    today=$(date +%Y%m%d)
+    local today_2digit today_4digit
+    today_2digit=$(date +%y%m%d)
+    today_4digit=$(date +%Y%m%d)
 
     folder_creator
 
-    [[ "${SAVE_FOLDER}" == *"${today}"* ]]
+    # Must contain 2-digit year format, not 4-digit year format
+    [[ "${SAVE_FOLDER}" == *"_${today_2digit}-"* ]]
+    [[ "${SAVE_FOLDER}" != *"_${today_4digit}-"* ]]
 }
 
 # =============================================================================
@@ -385,40 +390,19 @@ setup() {
 # folder_creator: hostname/date command failure (L980, L984)
 # =============================================================================
 
-@test "folder_creator: log_error when hostname command fails" {
-    run bash -c '
+@test "folder_creator: log_error when hostname/date command fails" {
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
+        set +u +o pipefail
         HOST="local"
         VERBOSE=0
         SAVE_FOLDER="'"${BATS_TEST_TMPDIR}"'/fc_test"
-        # Override execute_cmd to fail on hostname
-        execute_cmd() {
-            if [[ "$1" == "hostname" ]]; then return 1; fi
-            eval "$1"
-        }
+        # Override execute_cmd to always fail (simulates hostname/date failure)
+        execute_cmd() { return 1; }
         folder_creator
     '
     assert_failure
-    assert_output --partial "Failed to get hostname"
-}
-
-@test "folder_creator: log_error when date command fails" {
-    run bash -c '
-        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
-        HOST="local"
-        VERBOSE=0
-        SAVE_FOLDER="'"${BATS_TEST_TMPDIR}"'/fc_test"
-        # Override execute_cmd to fail on date
-        execute_cmd() {
-            if [[ "$1" == *"date"* ]]; then return 1; fi
-            eval "$1"
-        }
-        folder_creator
-    '
-    assert_failure
-    assert_output --partial "Failed to get date"
+    assert_output --partial "Failed to get hostname/date"
 }
 
 # =============================================================================
@@ -483,10 +467,10 @@ setup() {
 # =============================================================================
 
 @test "save_script_data: string_array lines are written to script.log" {
-    run bash -c '
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
-        HOST="testhost@10.0.0.1"
+        set +u +o pipefail
+        HOST="local"
         START_TIME="260115-0800"
         END_TIME="260115-1800"
         GET_LOG_TOOL="rsync"
@@ -498,7 +482,7 @@ setup() {
         cat "${SAVE_FOLDER}/script.log"
     '
     assert_success
-    assert_output --partial "Host: testhost@10.0.0.1"
+    assert_output --partial "Host: local"
     assert_output --partial "Time range: 260115-0800 ~ 260115-1800"
     assert_output --partial "Using tool: rsync"
     assert_output --partial "Saving logs to folder:"
@@ -509,9 +493,9 @@ setup() {
 # =============================================================================
 
 @test "file_cleaner: warns when rm -rf fails" {
-    run bash -c '
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
+        set +u +o pipefail
         HOST="local"
         VERBOSE=0
         SAVE_FOLDER="/some/path"
@@ -528,16 +512,12 @@ setup() {
 # =============================================================================
 
 @test "get_tools_checker: log_error when no tools available" {
-    run bash -c '
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
+        set +u +o pipefail
         VERBOSE=0
-        HAVE_SUDO_ACCESS=1
-        # Override command to report nothing installed
-        command() {
-            if [[ "$1" == "-v" ]]; then return 1; fi
-            builtin command "$@"
-        }
+        # Override pkg_install_handler to always fail (simulates no tools)
+        pkg_install_handler() { return 1; }
         get_tools_checker
     '
     assert_failure

@@ -87,6 +87,14 @@ Log 路徑字串支援在執行時對遠端主機解析的 token：
 
 可調參數也在腳本頂部：`SSH_KEY`、`SSH_TIMEOUT`、`TRANSFER_MAX_RETRIES`、`TRANSFER_RETRY_DELAY`。
 
+## 開發流程
+
+本專案採用 TDD（Test-Driven Development）：
+1. **先寫測試**：在對應的 `test/test_*.bats` 中新增或修改測試案例
+2. **確認測試失敗**：執行 `bats test/test_xxx.bats` 確認新測試為紅燈
+3. **實作功能**：修改 `pack_log.sh` 使測試通過
+4. **執行完整測試**：`./ci.sh unit` 確認所有測試通過且 ShellCheck 合規
+
 ## 重要慣例
 
 - 腳本使用 `set -euo pipefail`，所有錯誤皆為致命錯誤

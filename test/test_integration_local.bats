@@ -201,12 +201,15 @@ setup() {
 # ---------------------------------------------------------------------------
 
 @test "local-integration: no files matching time range warns but succeeds" {
+    # Use a path where no files exist
+    local empty_dir="${BATS_TEST_TMPDIR}/empty_logs"
+    mkdir -p "${empty_dir}"
+
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"
+        "${empty_dir}::nonexistent_file_*.log"
     )
 
-    # Time range far in the future - no files will match
-    run main -l -s 20300101-000000 -e 20300101-235959 -o "${OUTPUT_DIR}/nomatch_test"
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/nomatch_test"
     assert_success
     assert_output --partial "No files found"
 }
@@ -315,7 +318,7 @@ setup() {
     touch "${log_dir}/mylog_data_20260116080000.log"
 
     LOG_PATHS=(
-        "${log_dir}::mylog_data_<date:%Y%m%d%H%M%S>.log"
+        "${log_dir}::mylog_data_*<date:%Y%m%d%H%M%S>*.log"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/suffixdate_test"

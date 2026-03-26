@@ -38,6 +38,34 @@ _create_fake_ssh_key() {
     ssh-keygen -t ed25519 -f "${SSH_KEY}" -N "" -q 2>/dev/null
 }
 
+# Helper: mock execute_cmd that fails for the first N calls, then succeeds.
+# Uses a file counter because execute_cmd is called inside $() subshells,
+# which prevents variable-based counters from persisting.
+_mock_execute_cmd_fail_then_succeed() {
+    local fail_count="${1:-1}"
+    local fail_msg="${2:-Connection refused}"
+    local counter_file="${BATS_TEST_TMPDIR}/exec_counter"
+    echo "0" > "${counter_file}"
+
+    execute_cmd() {
+        local c
+        c=$(cat "${BATS_TEST_TMPDIR}/exec_counter")
+        c=$((c + 1))
+        echo "${c}" > "${BATS_TEST_TMPDIR}/exec_counter"
+        if [[ ${c} -le FAIL_COUNT_PLACEHOLDER ]]; then
+            echo "FAIL_MSG_PLACEHOLDER" >&2
+            return 1
+        fi
+        return 0
+    }
+    # Patch placeholders with actual values (avoids closure issues)
+    local func_body
+    func_body=$(declare -f execute_cmd)
+    func_body="${func_body//FAIL_COUNT_PLACEHOLDER/${fail_count}}"
+    func_body="${func_body//FAIL_MSG_PLACEHOLDER/${fail_msg}}"
+    eval "${func_body}"
+}
+
 # ---------------------------------------------------------------------------
 # 1. pkg_install_handler is called for "ssh"
 # ---------------------------------------------------------------------------
@@ -87,21 +115,10 @@ _create_fake_ssh_key() {
     # Ensure no key exists
     rm -f "${SSH_KEY}" "${SSH_KEY}.pub"
 
-    local keygen_called=0
-    local copy_called=0
-
     pkg_install_handler() { return 0; }
 
     # First call to execute_cmd fails (connection test), second succeeds (after key setup)
-    local call_count=0
-    execute_cmd() {
-        call_count=$((call_count + 1))
-        if [[ ${call_count} -le 1 ]]; then
-            echo "Connection refused" >&2
-            return 1
-        fi
-        return 0
-    }
+    _mock_execute_cmd_fail_then_succeed 1 "Connection refused"
 
     # We need ssh-keygen and ssh-copy-id to work.
     # Create real key pair since ssh-keygen is available in test env
@@ -134,15 +151,7 @@ WRAPPER
 
     pkg_install_handler() { return 0; }
 
-    local call_count=0
-    execute_cmd() {
-        call_count=$((call_count + 1))
-        if [[ ${call_count} -le 1 ]]; then
-            echo "Permission denied (publickey)" >&2
-            return 1
-        fi
-        return 0
-    }
+    _mock_execute_cmd_fail_then_succeed 1 "Permission denied (publickey)"
 
     # Stub ssh-copy-id
     local bin_dir="${BATS_TEST_TMPDIR}/bin"
@@ -167,15 +176,7 @@ WRAPPER
 
     pkg_install_handler() { return 0; }
 
-    local call_count=0
-    execute_cmd() {
-        call_count=$((call_count + 1))
-        if [[ ${call_count} -le 1 ]]; then
-            echo "Host key verification failed" >&2
-            return 1
-        fi
-        return 0
-    }
+    _mock_execute_cmd_fail_then_succeed 1 "Host key verification failed"
 
     # Stub ssh-keygen -F, -R, and ssh-keyscan to avoid real network calls
     local bin_dir="${BATS_TEST_TMPDIR}/bin"
@@ -209,15 +210,7 @@ WRAPPER
 
     pkg_install_handler() { return 0; }
 
-    local call_count=0
-    execute_cmd() {
-        call_count=$((call_count + 1))
-        if [[ ${call_count} -le 1 ]]; then
-            echo "REMOTE HOST IDENTIFICATION HAS CHANGED!" >&2
-            return 1
-        fi
-        return 0
-    }
+    _mock_execute_cmd_fail_then_succeed 1 "REMOTE HOST IDENTIFICATION HAS CHANGED!"
 
     local bin_dir="${BATS_TEST_TMPDIR}/bin"
     mkdir -p "${bin_dir}"
@@ -324,15 +317,7 @@ WRAPPER
 
     pkg_install_handler() { return 0; }
 
-    local call_count=0
-    execute_cmd() {
-        call_count=$((call_count + 1))
-        if [[ ${call_count} -le 1 ]]; then
-            echo "Connection refused" >&2
-            return 1
-        fi
-        return 0
-    }
+    _mock_execute_cmd_fail_then_succeed 1 "Connection refused"
 
     local bin_dir="${BATS_TEST_TMPDIR}/bin"
     mkdir -p "${bin_dir}"
@@ -426,7 +411,7 @@ WRAPPER
     cat > "${bin_dir}/ssh-keygen" << WRAPPER
 #!/bin/bash
 case "\$1" in
-    -y) echo "ssh-ed25519 AAAA"; exit 0 ;;
+    -y) /usr/bin/ssh-keygen "\$@"; exit \$? ;;
     *)  /usr/bin/ssh-keygen "\$@" ;;
 esac
 WRAPPER
@@ -448,15 +433,7 @@ WRAPPER
 
     pkg_install_handler() { return 0; }
 
-    local call_count=0
-    execute_cmd() {
-        call_count=$((call_count + 1))
-        if [[ ${call_count} -le 1 ]]; then
-            echo "Host key verification failed" >&2
-            return 1
-        fi
-        return 0
-    }
+    _mock_execute_cmd_fail_then_succeed 1 "Host key verification failed"
 
     local bin_dir="${BATS_TEST_TMPDIR}/bin"
     mkdir -p "${bin_dir}"

@@ -18,6 +18,9 @@
 # Date: 2026-03-25
 # Version: 1.5.0
 
+# KCOV_EXCL_LINE
+declare -r _PACK_LOG_SCRIPT_NAME="pack_log"
+
 set -euo pipefail
 
 # ==============================================================================
@@ -88,6 +91,18 @@ declare -a LOG_PATHS=(
   '<env:HOME>/ros-docker/AMR/myuser/core_storage::external_param.launch'
   '<env:HOME>/ros-docker/AMR/myuser/core_storage::run_config.yaml'
 
+  # 2D LiDAR SLAM log path(docker)
+  '<env:HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
+  '<env:HOME>/ros-docker/AMR/myuser/log_slam::coreslam_2D_<date:%s>*<suffix:.log>'
+  '<env:HOME>/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
+
+  # 2D LiDAR AvoidStop log path(docker)
+  '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default::uimap.png'
+  '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default::uimap.yaml'
+  '<env:HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>::<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>'
+  '<env:HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
+  '<env:HOME>/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
+
   # # ASE Us
   # # LiDAR Detection pallet log path
   # '<env:HOME>/log_data/lidar_detection::detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.dat>'
@@ -97,7 +112,7 @@ declare -a LOG_PATHS=(
 )
 # KCOV_EXCL_STOP
 
-declare SAVE_FOLDER="log_pack"
+declare SAVE_FOLDER="${_PACK_LOG_SCRIPT_NAME}"
 
 # ==============================================================================
 # Tunable Parameters (occasionally adjusted)
@@ -629,8 +644,11 @@ have_sudo_access() {
   # check sudo access only once
   if [[ -z "${HAVE_SUDO_ACCESS-}" ]]; then
     log_info "${MSG_CHECKING_SUDO}"
-    "${sudo_cmd[@]}" -v && "${sudo_cmd[@]}" -l mkdir &>/dev/null
-    HAVE_SUDO_ACCESS="$?"
+    if "${sudo_cmd[@]}" -v && "${sudo_cmd[@]}" -l mkdir &>/dev/null; then
+      HAVE_SUDO_ACCESS=0
+    else
+      HAVE_SUDO_ACCESS=1
+    fi
   fi
   # KCOV_EXCL_STOP
 
@@ -1087,10 +1105,10 @@ ssh_handler() {
     if [[ "${need_remove_host}" == "true" ]]; then
       if ssh-keygen -F "${host_ip}" &>/dev/null; then
         log_info "$(printf "${MSG_SSH_HOST_KEY_REMOVE}" "${host_ip}")"
-        ssh-keygen -R "${host_ip}" &>/dev/null
+        ssh-keygen -R "${host_ip}" &>/dev/null || true
       fi
       log_info "$(printf "${MSG_SSH_HOST_KEY_ADD}" "${host_ip}")"
-      ssh-keyscan -H "${host_ip}" >> "${known_hosts}" 2>/dev/null
+      ssh-keyscan -H "${host_ip}" >> "${known_hosts}" 2>/dev/null || true
     fi
 
     if [[ "${need_copy_key}" == "true" ]]; then
@@ -1414,7 +1432,7 @@ file_finder() {
 
   # Apply Expansion (Safely)
   if [[ $s_idx -gt 0 ]]; then (( s_idx-- )); fi
-  if [[ $e_idx -lt $(( ${#uniq_ts[@]} - 1 )) ]]; then (( e_idx++ )); fi
+  if [[ $e_idx -lt $(( ${#uniq_ts[@]} - 1 )) ]]; then (( ++e_idx )); fi
 
   local final_start_val="${uniq_ts[s_idx]}"
   local final_end_val="${uniq_ts[e_idx]}"
@@ -1478,7 +1496,7 @@ folder_creator() {
     done
   else
     local combined
-    if ! combined=$(execute_cmd "printf '%s_%s' \"\$(hostname)\" \"\$(date +%Y%m%d-%H%M%S)\""); then
+    if ! combined=$(execute_cmd "printf '%s_%s' \"\$(hostname)\" \"\$(date +%y%m%d-%H%M%S)\""); then
       log_error "$(printf "${MSG_HOSTNAME_DATE_FAILED}" "${HOST}")" # KCOV_EXCL_LINE
     fi
     SAVE_FOLDER="${SAVE_FOLDER}_${combined}"
@@ -1534,9 +1552,9 @@ save_script_data() {
 # Globals:
 #   SAVE_FOLDER: The path of the folder to be removed.
 file_cleaner() {
-  close_log_file
   if [[ -z "${SAVE_FOLDER}" ]]; then
     log_debug "${MSG_NO_SAVE_FOLDER}"
+    close_log_file
     return 0
   fi
 
@@ -1549,6 +1567,7 @@ file_cleaner() {
   else
     log_debug "$(printf "${MSG_FOLDER_REMOVED}" "${SAVE_FOLDER}")"
   fi
+  close_log_file
 }
 
 # Copies matched files into the SAVE_FOLDER on local or remote host.
@@ -1681,7 +1700,7 @@ file_sender() {
       break
     fi
 
-    (( attempt++ ))
+    (( ++attempt ))
     if (( attempt < TRANSFER_MAX_RETRIES )); then
       log_warn "$(printf "${MSG_TRANSFER_RETRY}" "${tool}" "${attempt}" "${TRANSFER_MAX_RETRIES}" "${TRANSFER_RETRY_DELAY}")"
       sleep "${TRANSFER_RETRY_DELAY}"
@@ -1849,7 +1868,8 @@ main() {
   fi
 }
 
-# Allow sourcing without executing main
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  main "$@"
-fi
+# Allow sourcing without executing main.
+# "return" succeeds when sourced but fails when executed directly.
+# KCOV_EXCL_START
+(return 0 2>/dev/null) || main "$@"
+# KCOV_EXCL_STOP

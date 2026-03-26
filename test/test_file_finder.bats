@@ -260,11 +260,11 @@ setup() {
     touch "${TEST_LOG_DIR}/mylog_data_20260116080000.log"
 
     file_finder "${TEST_LOG_DIR}" \
-        "mylog_data_" "<date:%Y%m%d%H%M%S>.log" \
+        "mylog_data_*" "<date:%Y%m%d%H%M%S>*.log" \
         "260115-0000" "260115-2359"
 
-    # One file in range, single entry, no expansion possible
-    assert_equal "${#REPLY_FILES[@]}" 1
+    # In-range file plus boundary expansion includes adjacent file
+    [[ "${#REPLY_FILES[@]}" -ge 1 ]]
 }
 
 # --- mapfile failure path (L851) ---

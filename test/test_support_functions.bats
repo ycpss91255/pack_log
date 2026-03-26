@@ -10,9 +10,9 @@ setup() {
 
 @test "have_sudo_access: returns 0 when EUID is 0 (root)" {
     # EUID is readonly in bash, so test in subshell with UID override
-    run bash -c '
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
+        set +u +o pipefail
         # Simulate root by checking the function logic path
         HAVE_SUDO_ACCESS=0
         have_sudo_access
@@ -21,6 +21,7 @@ setup() {
 }
 
 @test "have_sudo_access: returns 1 when sudo not available" {
+    [[ "${EUID:-${UID}}" -eq 0 ]] && skip "root always has sudo access"
     unset HAVE_SUDO_ACCESS
     # If /usr/bin/sudo is not executable or not present, returns 1
     # Test the cached failure path instead
@@ -36,6 +37,7 @@ setup() {
 }
 
 @test "have_sudo_access: returns cached failure" {
+    [[ "${EUID:-${UID}}" -eq 0 ]] && skip "root always has sudo access"
     HAVE_SUDO_ACCESS=1
     run have_sudo_access
     assert_failure
@@ -50,6 +52,7 @@ setup() {
 }
 
 @test "pkg_install_handler: errors when no sudo and package missing" {
+    [[ "${EUID:-${UID}}" -eq 0 ]] && skip "root always has sudo access"
     HAVE_SUDO_ACCESS=1
     run pkg_install_handler "nonexistent_pkg_xyz_12345"
     assert_failure
@@ -123,8 +126,8 @@ setup() {
 
 @test "get_remote_value: gets env var via execute_cmd" {
     HOST="local"
-    # USER should be available
-    get_remote_value "env" "USER"
+    # HOME is always available in both root and non-root environments
+    get_remote_value "env" "HOME"
     [[ -n "${REPLY}" ]]
 }
 
@@ -193,9 +196,10 @@ setup() {
 # --- have_sudo_access: /usr/bin/sudo not executable (L196-197) ---
 
 @test "have_sudo_access: returns 1 when /usr/bin/sudo is not executable" {
-    run bash -c '
+    [[ "${EUID:-${UID}}" -eq 0 ]] && skip "root always has sudo access"
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
+        set +u +o pipefail
         unset HAVE_SUDO_ACCESS
         # Redefine the function to test the path with a nonexistent sudo
         have_sudo_access() {
@@ -212,11 +216,10 @@ setup() {
 # --- have_sudo_access: SUDO_ASKPASS branch (L202) ---
 
 @test "have_sudo_access: processes SUDO_ASKPASS when set" {
-    run bash -c '
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
+        set +u +o pipefail
         unset HAVE_SUDO_ACCESS
-        EUID=1000
         export SUDO_ASKPASS="/bin/true"
         have_sudo_access || true
         echo "done"
@@ -227,13 +230,12 @@ setup() {
 # --- have_sudo_access: HAVE_SUDO_ACCESS unset, actual sudo check (L207-209) ---
 
 @test "have_sudo_access: runs actual sudo check when HAVE_SUDO_ACCESS is unset" {
-    run bash -c '
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
+        set +u +o pipefail
         unset HAVE_SUDO_ACCESS
-        EUID=1000
-        have_sudo_access
-        echo "result=$?"
+        rc=0; have_sudo_access || rc=$?
+        echo "result=${rc}"
     '
     # Whether it succeeds or fails depends on the environment;
     # the important thing is the code path is exercised
@@ -307,15 +309,14 @@ WRAPPER
 # --- have_sudo_access: return cached value (L220) ---
 
 @test "have_sudo_access: returns cached HAVE_SUDO_ACCESS value via return" {
-    run bash -c '
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
+        set +u +o pipefail
         unset HAVE_SUDO_ACCESS
-        EUID=1000
         # If /usr/bin/sudo exists, this will attempt actual sudo check
         # Either way, HAVE_SUDO_ACCESS gets set and returned
-        have_sudo_access
-        echo "exit=$?"
+        rc=0; have_sudo_access || rc=$?
+        echo "exit=${rc}"
     '
     # The function should complete and return a value
     assert_output --partial "exit="
@@ -324,9 +325,10 @@ WRAPPER
 # --- pkg_install_handler: no sudo path (L243) ---
 
 @test "pkg_install_handler: log_error when no sudo access for missing package" {
-    run bash -c '
+    [[ "${EUID:-${UID}}" -eq 0 ]] && skip "root always has sudo access"
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
+        set +u +o pipefail
         HAVE_SUDO_ACCESS=1
         VERBOSE=0
         pkg_install_handler "nonexistent_pkg_xyz_12345"
@@ -338,9 +340,9 @@ WRAPPER
 # --- date_format: date command failure (L282) ---
 
 @test "date_format: log_error when date command fails" {
-    run bash -c '
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
+        set +u +o pipefail
         VERBOSE=0
         # Valid format but impossible date
         date_format "99991399-999999" "%Y%m%d"
@@ -351,9 +353,9 @@ WRAPPER
 # --- get_remote_value: command failure (L367) ---
 
 @test "get_remote_value: log_error when command fails" {
-    run bash -c '
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
+        set +u +o pipefail
         HOST="local"
         VERBOSE=0
         get_remote_value "cmd" "false"
@@ -365,9 +367,9 @@ WRAPPER
 # --- create_folder: mkdir failure (L396) ---
 
 @test "create_folder: log_error when mkdir fails" {
-    run bash -c '
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +euo pipefail
+        set +u +o pipefail
         HOST="local"
         VERBOSE=0
         create_folder "/proc/impossible/path/that/cannot/be/created"

@@ -45,12 +45,12 @@ setup() {
 
 @test "main: missing start time with local mode errors" {
     # Pipe empty input so read doesn't hang; empty string fails validation
-    run bash -c 'source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'" && echo "" | main -l -e 260115-2359'
+    run env -u LD_PRELOAD -u BASH_ENV bash -c 'source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'" && echo "" | main -l -e 260115-2359'
     assert_failure
 }
 
 @test "main: missing end time with local mode errors" {
-    run bash -c 'source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'" && echo "" | main -l -s 260115-0000'
+    run env -u LD_PRELOAD -u BASH_ENV bash -c 'source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'" && echo "" | main -l -s 260115-0000'
     assert_failure
 }
 
@@ -213,9 +213,13 @@ setup() {
     get_tools_checker() { GET_LOG_TOOL="rsync"; }
     file_sender() { :; }
 
-    # Override execute_cmd to always work locally regardless of HOST
+    # Override execute_cmd and execute_cmd_from_array to work locally
     execute_cmd() {
         printf '%s' "$1" | bash -ls
+    }
+    execute_cmd_from_array() {
+        local -r inner_cmd="$1"; shift
+        printf '%s\0' "$@" | bash -c "${inner_cmd}"
     }
 
     local test_dir="${BATS_TEST_TMPDIR}/remote_test"
@@ -239,6 +243,10 @@ setup() {
     file_sender() { :; }
     execute_cmd() {
         printf '%s' "$1" | bash -ls
+    }
+    execute_cmd_from_array() {
+        local -r inner_cmd="$1"; shift
+        printf '%s\0' "$@" | bash -c "${inner_cmd}"
     }
 
     local test_dir="${BATS_TEST_TMPDIR}/remote_trap_test"

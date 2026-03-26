@@ -20,5 +20,12 @@ fi
 # shellcheck disable=SC1091
 source "${PROJECT_ROOT}/pack_log.sh"
 
-# Restore shell options after pack_log.sh sets -euo pipefail
-set +euo pipefail
+# Undo -u (nounset) and pipefail from pack_log.sh, but keep -e (errexit)
+# so that bats can detect assertion failures via the ERR trap.
+set +u +o pipefail
+
+# Prevent kcov LD_PRELOAD from breaking BASH_SOURCE in bash -c subprocesses.
+# kcov instruments bash via LD_PRELOAD, which can leave BASH_SOURCE unbound
+# in child bash processes. Tests using "run bash -c '...'" should use
+# "run env -u LD_PRELOAD bash -c '...'" instead, or use this wrapper:
+_run_bash() { run env -u LD_PRELOAD bash -c "$@"; }
