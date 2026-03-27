@@ -6,10 +6,10 @@
 
 | 类别 | 数量 | 说明 |
 |------|-----:|------|
-| 单元测试 | 272 | 单个函数测试 |
-| 本机集成测试 | 16 | 完整 `main()` 流程（本机模式） |
+| 单元测试 | 274 | 单个函数测试 |
+| 本机集成测试 | 17 | 完整 `main()` 流程（本机模式） |
 | 远程集成测试 | 27 | 完整流程（通过 SSH 连接到 Docker sshd） |
-| **合计** | **315** | **100% 代码覆盖率** |
+| **合计** | **318** | **100% 代码覆盖率** |
 
 ## 运行测试
 
@@ -48,8 +48,8 @@ bats test/test_option_parser.bats -f "parses -n flag"
 | `test_support_functions.bats` | 37 | `have_sudo_access`、`pkg_install_handler`、`execute_cmd`、`date_format` |
 | `test_option_parser.bats` | 48 | 命令行参数解析、`SAVE_FOLDER` 默认值、`--dry-run`、`--extra-verbose` |
 | `test_host_handler.bats` | 21 | 主机解析（`-n`、`-u`、`-l`）、交互模式 |
-| `test_string_handler.bats` | 36 | Token 解析（`<env:>`、`<cmd:>`、`<date:>`、`<suffix:>`）、路径分割 |
-| `test_file_finder.bats` | 25 | 日期筛选、边界扩展、时间容差、symlink 支持 |
+| `test_string_handler.bats` | 37 | Token 解析（`<env:>`、`<cmd:>`、`<date:>`、`<suffix:>`）、路径分割 |
+| `test_file_finder.bats` | 26 | 日期筛选、边界扩展、时间容差、symlink 支持 |
 | `test_file_ops.bats` | 42 | `folder_creator`、`file_copier`、`file_sender`、`get_log`、`file_cleaner` |
 | `test_ssh_handler.bats` | 13 | SSH 密钥创建、密钥复制、host key 轮换、重试机制 |
 | `test_main.bats` | 30 | 完整流程（本机/远程）、dry-run、传输失败交互提示 |
@@ -64,6 +64,7 @@ bats test/test_option_parser.bats -f "parses -n flag"
 - 输出文件夹结构与 `/tmp` 放置
 - Symlink 文件收集
 - 解析后路径显示
+- 跨日期文件夹展开（如 `AvoidStop_<date:%Y-%m-%d>` 跨多天）
 
 ### 远程集成测试
 
@@ -86,7 +87,7 @@ bats test/test_option_parser.bats -f "parses -n flag"
 graph LR
     S["ci.sh unit"]:::entry --> SC["ShellCheck\n静态分析 pack_log.sh"]:::step
     SC --> USER["创建非 root\ntestrunner 用户"]:::step
-    USER --> BT["Bats + Kcov\n288 个测试 + 覆盖率"]:::step
+    USER --> BT["Bats + Kcov\n291 个测试 + 覆盖率"]:::step
     BT --> CC["Codecov\n上传报告"]:::step
 
     S2["ci.sh integration"]:::entry --> SSHD["启动 sshd\nDocker 容器"]:::step

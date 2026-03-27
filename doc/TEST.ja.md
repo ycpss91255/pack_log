@@ -6,10 +6,10 @@
 
 | カテゴリ | 件数 | 説明 |
 |----------|-----:|------|
-| ユニットテスト | 272 | 個別関数のテスト |
-| ローカル結合テスト | 16 | `main()` フルパイプライン（ローカルモード） |
+| ユニットテスト | 274 | 個別関数のテスト |
+| ローカル結合テスト | 17 | `main()` フルパイプライン（ローカルモード） |
 | リモート結合テスト | 27 | フルパイプライン（Docker sshd への実 SSH 接続） |
-| **合計** | **315** | **100% コードカバレッジ** |
+| **合計** | **318** | **100% コードカバレッジ** |
 
 ## テスト実行
 
@@ -48,8 +48,8 @@ bats test/test_option_parser.bats -f "parses -n flag"
 | `test_support_functions.bats` | 37 | `have_sudo_access`、`pkg_install_handler`、`execute_cmd`、`date_format` |
 | `test_option_parser.bats` | 48 | CLI 引数解析、`SAVE_FOLDER` デフォルト値、`--dry-run`、`--extra-verbose` |
 | `test_host_handler.bats` | 21 | ホスト解決（`-n`、`-u`、`-l`）、インタラクティブモード |
-| `test_string_handler.bats` | 36 | トークン解析（`<env:>`、`<cmd:>`、`<date:>`、`<suffix:>`）、パス分割 |
-| `test_file_finder.bats` | 25 | 日付フィルタ、境界拡張、時間許容範囲、symlink サポート |
+| `test_string_handler.bats` | 37 | トークン解析（`<env:>`、`<cmd:>`、`<date:>`、`<suffix:>`）、パス分割 |
+| `test_file_finder.bats` | 26 | 日付フィルタ、境界拡張、時間許容範囲、symlink サポート |
 | `test_file_ops.bats` | 42 | `folder_creator`、`file_copier`、`file_sender`、`get_log`、`file_cleaner` |
 | `test_ssh_handler.bats` | 13 | SSH 鍵作成、鍵コピー、ホスト鍵ローテーション、リトライロジック |
 | `test_main.bats` | 30 | フルパイプライン（ローカル/リモート）、dry-run、転送失敗インタラクティブプロンプト |
@@ -64,6 +64,7 @@ bats test/test_option_parser.bats -f "parses -n flag"
 - 出力フォルダ構造と `/tmp` 配置
 - Symlink ファイル収集
 - 解決済みパス表示
+- 日付横断フォルダ展開（例: `AvoidStop_<date:%Y-%m-%d>` が複数日にわたる場合）
 
 ### リモート結合テスト
 
@@ -86,7 +87,7 @@ bats test/test_option_parser.bats -f "parses -n flag"
 graph LR
     S["ci.sh unit"]:::entry --> SC["ShellCheck\n静的解析 pack_log.sh"]:::step
     SC --> USER["非 root ユーザー\ntestrunner 作成"]:::step
-    USER --> BT["Bats + Kcov\n288 テスト + カバレッジ"]:::step
+    USER --> BT["Bats + Kcov\n291 テスト + カバレッジ"]:::step
     BT --> CC["Codecov\nレポートアップロード"]:::step
 
     S2["ci.sh integration"]:::entry --> SSHD["sshd 起動\nDocker コンテナ"]:::step

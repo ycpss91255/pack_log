@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 概述
 
-`pack_log.sh` 是一個單檔 Bash 腳本（約 1340 行），用於透過 SSH 連線到遠端主機，依照指定時間範圍尋找 log 檔案，複製到遠端暫存資料夾後，再用 rsync/scp/sftp 傳回本機。支援 i18n（en/zh-TW/zh-CN/ja），所有翻譯內嵌於腳本中（無外部語言檔）。
+`pack_log.sh` 是一個單檔 Bash 腳本（約 2060 行），用於透過 SSH 連線到遠端主機，依照指定時間範圍尋找 log 檔案，複製到遠端暫存資料夾後，再用 rsync/scp/sftp 傳回本機。支援 i18n（en/zh-TW/zh-CN/ja），所有翻譯內嵌於腳本中（無外部語言檔）。
 
 ## 執行方式
 
@@ -95,17 +95,18 @@ Log 路徑字串支援在執行時對遠端主機解析的 token：
 3. **實作功能**：修改 `pack_log.sh` 使測試通過
 4. **執行完整測試**：`./ci.sh unit` 確認所有測試通過且 ShellCheck 合規
 
+### 每次改動後的檢查清單
+
+1. **測試**：`bats test/` 本地通過 + `./ci.sh unit` CI 通過
+2. **文件更新**：README（4 語言）、CLAUDE.md、TEST.md（4 語言）的測試數量、行數、功能描述是否同步
+3. **過時檔案**：確認沒有引用已刪除的檔案（如舊的 `doc/lang/`）或過時的格式描述
+
 ## 重要慣例
 
 - 腳本使用 `set -euo pipefail`，所有錯誤皆為致命錯誤
 - 函式使用 REPLY 慣例作為輸出（`REPLY`, `REPLY_TYPE`, `REPLY_STR` 等）
 - SSH 金鑰路徑固定為 `~/.ssh/get_log`
 - CI 中強制執行 ShellCheck（`shellcheck -x -S error pack_log.sh`）
-- `BASH_SOURCE` guard 使腳本可被 source 而不執行 `main()`：
-  ```bash
-  if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
-  fi
-  ```
+- Source guard 使腳本可被 source 而不執行 `main()`：`(return 0 2>/dev/null) || main "$@"`
 - 測試中 `declare` 的變數（HOSTS、LOG_PATHS 等）在 source 時會變成 local scope，需在每個 test 的 `setup()` 中重新初始化
 - 覆蓋率排除標記：`# KCOV_EXCL_START` / `# KCOV_EXCL_STOP`（區塊排除）、`# KCOV_EXCL_LINE`（單行排除）——用於部署特定設定和 runtime-only 分支
