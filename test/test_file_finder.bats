@@ -32,6 +32,19 @@ setup() {
     [[ "${REPLY_FILES[0]}" == *"link_config.yaml" ]]
 }
 
+@test "file_finder: finds files through symlink directory" {
+    local real_dir="${TEST_LOG_DIR}/real_mapfiles"
+    mkdir -p "${real_dir}"
+    echo "map data" > "${real_dir}/uimap.png"
+    echo "map yaml" > "${real_dir}/uimap.yaml"
+    ln -s "${real_dir}" "${TEST_LOG_DIR}/default"
+
+    file_finder "${TEST_LOG_DIR}/default" "uimap.png" "" "260115-0000" "260115-2359"
+
+    assert_equal "${#REPLY_FILES[@]}" 1
+    [[ "$(cat "${REPLY_FILES[0]}")" == "map data" ]]
+}
+
 @test "file_finder: symlink files with date token are included" {
     touch "${TEST_LOG_DIR}/real_20260115120000.log"
     ln -s "${TEST_LOG_DIR}/real_20260115120000.log" "${TEST_LOG_DIR}/app_20260115120000.log"

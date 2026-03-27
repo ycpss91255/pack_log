@@ -78,30 +78,37 @@ declare -a HOSTS=(
 #    e.g. "logs::<date:%Y%m%d>" or "logs::<date:%Y%m%d-%H%M%S>"
 # KCOV_EXCL_START
 declare -a LOG_PATHS=(
-  # Panasonic
-  # LiDAR Detection shelf log path (docker)
-  '<env:HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
-  '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>'
-  '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>'
-  '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog::detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*'
-  '<env:HOME>/ros-docker/AMR/myuser/log_slam::coreslam_2D_<date:%s>*<suffix:.log>'
-  '<env:HOME>/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
-  '<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml'
-  '<env:HOME>/ros-docker/AMR/myuser/core_storage::shelf.ini'
-  '<env:HOME>/ros-docker/AMR/myuser/core_storage::external_param.launch'
-  '<env:HOME>/ros-docker/AMR/myuser/core_storage::run_config.yaml'
+  # AvoidStop (pana-04, local test with symlink dirs)
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/core_storage/default::uimap.png'
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/core_storage/default::uimap.yaml'
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>::<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>'
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log_core::corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*'
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
 
-  # 2D LiDAR SLAM log path(docker)
-  '<env:HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
-  '<env:HOME>/ros-docker/AMR/myuser/log_slam::coreslam_2D_<date:%s>*<suffix:.log>'
-  '<env:HOME>/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
+  # # Panasonic
+  # # LiDAR Detection shelf log path (docker)
+  # '<env:HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog::detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam::coreslam_2D_<date:%s>*<suffix:.log>'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml'
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage::shelf.ini'
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage::external_param.launch'
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage::run_config.yaml'
 
-  # 2D LiDAR AvoidStop log path(docker)
-  '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default::uimap.png'
-  '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default::uimap.yaml'
-  '<env:HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>::<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>'
-  '<env:HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
-  '<env:HOME>/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
+  # # 2D LiDAR SLAM log path(docker)
+  # '<env:HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam::coreslam_2D_<date:%s>*<suffix:.log>'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
+
+  # # 2D LiDAR AvoidStop log path(docker)
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default::uimap.png'
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default::uimap.yaml'
+  # '<env:HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>::<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
 
   # # ASE Us
   # # LiDAR Detection pallet log path
@@ -1342,11 +1349,11 @@ file_finder() {
   if [[ "${file_prefix}" =~ (<date:[^<>]*>) ]]; then
     token="${BASH_REMATCH[1]}"
     format_position="prefix"
-    file_prefix="${file_prefix//${token}/}"
+    file_prefix="${file_prefix//${token}/*}"
   elif [[ "${file_suffix}" =~ (<date:[^<>]*>) ]]; then
     token="${BASH_REMATCH[1]}"
     format_position="suffix"
-    file_suffix="${file_suffix//${token}/}"
+    file_suffix="${file_suffix//${token}/*}"
   fi
   log_debug "Date token position: ${format_position}, content: ${token}"
 
@@ -1357,7 +1364,7 @@ file_finder() {
   fi
 
   local find_cmd
-  printf -v find_cmd "find %q -maxdepth 1 \\( -type f -o -type l \\) -name %q 2>/dev/null | sort" \
+  printf -v find_cmd "find -L %q -maxdepth 1 \\( -type f -o -type l \\) -name %q 2>/dev/null | sort" \
     "${folder_path}" "${file_prefix}${file_suffix}"
   readonly find_cmd
 
