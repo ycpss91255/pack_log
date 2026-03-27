@@ -181,19 +181,24 @@ declare -a LOG_PATHS=(
 │   ├── test_option_parser.bats          # Option parser tests (48)
 │   ├── test_host_handler.bats           # Host handler tests (21)
 │   ├── test_string_handler.bats         # String/token handler tests (36)
-│   ├── test_file_finder.bats            # File finder tests (23)
-│   ├── test_file_ops.bats              # File operation tests (41)
+│   ├── test_file_finder.bats            # File finder tests (25)
+│   ├── test_file_ops.bats              # File operation tests (42)
 │   ├── test_ssh_handler.bats            # SSH handler tests (13)
 │   ├── test_main.bats                   # Main pipeline tests (30)
-│   ├── test_integration_local.bats      # Local integration tests (13)
+│   ├── test_integration_local.bats      # Local integration tests (16)
 │   ├── Dockerfile.sshd                  # SSH server for remote tests
 │   ├── setup_remote_logs.sh             # Remote test data seeder
 │   ├── lib/bats-mock                    # Bats mock library (symlink)
 │   └── integration/
 │       ├── test_helper.bash             # Remote test helper
-│       └── test_remote.bats             # Remote integration tests (24)
+│       └── test_remote.bats             # Remote integration tests (27)
+│
+├── TEST.md                              # Test documentation (English)
 │
 ├── doc/
+│   ├── TEST.zh-TW.md                    # Test documentation (Traditional Chinese)
+│   ├── TEST.zh-CN.md                    # Test documentation (Simplified Chinese)
+│   ├── TEST.ja.md                       # Test documentation (Japanese)
 │   ├── README.zh-TW.md                  # Traditional Chinese README
 │   ├── README.zh-CN.md                  # Simplified Chinese README
 │   └── README.ja.md                     # Japanese README
@@ -203,69 +208,13 @@ declare -a LOG_PATHS=(
 
 ## Testing
 
-### Test Summary
-
-| Category | Tests | Description |
-|----------|------:|-------------|
-| Unit Tests | 269 | Individual function testing |
-| Local Integration | 13 | Full `main()` pipeline with local mode |
-| Remote Integration | 24 | Full pipeline with real SSH to Docker sshd |
-| **Total** | **306** | **100% code coverage** |
-
-### Run Tests
+315 tests (272 unit + 16 local integration + 27 remote integration) with **100% code coverage**. See **[TEST.md](TEST.md)** for full details.
 
 ```bash
-# All tests (requires Docker)
-./ci.sh
-
-# Unit tests + ShellCheck + coverage only
-./ci.sh unit
-
-# Remote integration tests only
-./ci.sh integration
+./ci.sh              # All tests (Docker required)
+./ci.sh unit         # Unit + ShellCheck + coverage
+./ci.sh integration  # Remote integration tests
 ```
-
-### CI Pipeline
-
-```mermaid
-graph LR
-    S["ci.sh unit"]:::entry --> SC["ShellCheck\nlint pack_log.sh"]:::step
-    SC --> BT["Bats + Kcov\n282 tests + coverage"]:::step
-    BT --> CC["Codecov\nupload report"]:::step
-
-    S2["ci.sh integration"]:::entry --> SSHD["Start sshd\nDocker container"]:::step
-    SSHD --> KEY["SSH Key Setup\ngenerate + copy"]:::step
-    KEY --> DATA["Seed Test Data\nlog files on remote"]:::step
-    DATA --> IT["Bats\n24 remote tests"]:::step
-
-    classDef entry fill:#1a5276,color:#fff,stroke:#2980b9
-    classDef step fill:#8B6914,color:#fff,stroke:#c8960c
-```
-
-### Remote Integration Test Architecture
-
-```text
-┌───────────────────────┐      SSH (port 22)      ┌───────────────────────┐
-│  integration container│ ◄──────────────────────► │    sshd container     │
-│  (kcov/kcov)          │                          │    (ubuntu:22.04)     │
-│                       │                          │                       │
-│  • bats test runner   │                          │  • openssh-server     │
-│  • openssh-client     │                          │  • rsync              │
-│  • rsync / sshpass    │                          │  • testuser + key     │
-│  • pack_log.sh        │                          │  • pre-seeded logs    │
-└───────────────────────┘                          └───────────────────────┘
-```
-
-## Dependencies
-
-To run CI locally, you need:
-- **Docker** + **Docker Compose**
-
-The CI containers automatically install:
-- **Bats** (core + assert + file + support): Test framework
-- **ShellCheck**: Static analysis
-- **Kcov**: Coverage reporting
-- **openssh-client / rsync / sshpass**: SSH and file transfer tools
 
 ## Conventions
 

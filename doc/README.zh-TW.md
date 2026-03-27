@@ -190,69 +190,13 @@ declare -a LOG_PATHS=(
 
 ## 測試
 
-### 測試總覽
-
-| 類別 | 測試數量 | 說明 |
-|------|------:|------|
-| 單元測試 | 269 | 個別函式測試 |
-| 本機整合測試 | 13 | 完整 `main()` 本機模式流程 |
-| 遠端整合測試 | 24 | 完整流程 + 真實 SSH 連線至 Docker sshd |
-| **合計** | **306** | **100% 程式碼覆蓋率** |
-
-### 執行測試
+315 個測試（272 單元 + 16 本機整合 + 27 遠端整合），**100% 程式碼覆蓋率**。詳見 **[TEST.zh-TW.md](../TEST.zh-TW.md)**。
 
 ```bash
-# 全部測試（需要 Docker）
-./ci.sh
-
-# 只跑單元測試 + ShellCheck + 覆蓋率
-./ci.sh unit
-
-# 只跑遠端整合測試
-./ci.sh integration
+./ci.sh              # 全部測試（需要 Docker）
+./ci.sh unit         # 單元 + ShellCheck + 覆蓋率
+./ci.sh integration  # 遠端整合測試
 ```
-
-### CI 流程
-
-```mermaid
-graph LR
-    S["ci.sh unit"]:::entry --> SC["ShellCheck\n靜態分析 pack_log.sh"]:::step
-    SC --> BT["Bats + Kcov\n244 個測試 + 覆蓋率"]:::step
-    BT --> CC["Codecov\n上傳報告"]:::step
-
-    S2["ci.sh integration"]:::entry --> SSHD["啟動 sshd\nDocker 容器"]:::step
-    SSHD --> KEY["SSH 金鑰設定\n產生 + 複製"]:::step
-    KEY --> DATA["建立測試資料\n遠端 log 檔案"]:::step
-    DATA --> IT["Bats\n24 個遠端測試"]:::step
-
-    classDef entry fill:#1a5276,color:#fff,stroke:#2980b9
-    classDef step fill:#8B6914,color:#fff,stroke:#c8960c
-```
-
-### 遠端整合測試架構
-
-```text
-┌───────────────────────┐      SSH (port 22)      ┌───────────────────────┐
-│  integration 容器     │ ◄──────────────────────► │      sshd 容器        │
-│  (kcov/kcov)          │                          │    (ubuntu:22.04)     │
-│                       │                          │                       │
-│  • bats 測試執行器    │                          │  • openssh-server     │
-│  • openssh-client     │                          │  • rsync              │
-│  • rsync / sshpass    │                          │  • testuser + 金鑰   │
-│  • pack_log.sh        │                          │  • 預建立的 log 檔案  │
-└───────────────────────┘                          └───────────────────────┘
-```
-
-## 依賴
-
-本機執行 CI 需要：
-- **Docker** + **Docker Compose**
-
-CI 容器會自動安裝：
-- **Bats**（core + assert + file + support）：測試框架
-- **ShellCheck**：靜態分析工具
-- **Kcov**：覆蓋率報告產生器
-- **openssh-client / rsync / sshpass**：SSH 和檔案傳輸工具
 
 ## 重要慣例
 

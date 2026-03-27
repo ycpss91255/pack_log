@@ -190,69 +190,13 @@ declare -a LOG_PATHS=(
 
 ## テスト
 
-### テスト概要
-
-| カテゴリ | テスト数 | 説明 |
-|----------|--------:|------|
-| 単体テスト | 269 | 個別関数のテスト |
-| ローカル結合テスト | 13 | `main()` のローカルモード全体フロー |
-| リモート結合テスト | 24 | Docker sshd への実際の SSH 接続を含む全体フロー |
-| **合計** | **306** | **100% コードカバレッジ** |
-
-### テストの実行
+315 テスト（272 ユニット + 16 ローカル結合 + 27 リモート結合）、**100% コードカバレッジ**。詳細は **[TEST.ja.md](../TEST.ja.md)** を参照。
 
 ```bash
-# 全テスト（Docker が必要）
-./ci.sh
-
-# 単体テスト + ShellCheck + カバレッジのみ
-./ci.sh unit
-
-# リモート結合テストのみ
-./ci.sh integration
+./ci.sh              # 全テスト（Docker が必要）
+./ci.sh unit         # ユニット + ShellCheck + カバレッジ
+./ci.sh integration  # リモート結合テスト
 ```
-
-### CI パイプライン
-
-```mermaid
-graph LR
-    S["ci.sh unit"]:::entry --> SC["ShellCheck\npack_log.sh の静的解析"]:::step
-    SC --> BT["Bats + Kcov\n244 テスト + カバレッジ"]:::step
-    BT --> CC["Codecov\nレポートアップロード"]:::step
-
-    S2["ci.sh integration"]:::entry --> SSHD["sshd 起動\nDocker コンテナ"]:::step
-    SSHD --> KEY["SSH 鍵設定\n生成 + コピー"]:::step
-    KEY --> DATA["テストデータ作成\nリモート log ファイル"]:::step
-    DATA --> IT["Bats\n24 リモートテスト"]:::step
-
-    classDef entry fill:#1a5276,color:#fff,stroke:#2980b9
-    classDef step fill:#8B6914,color:#fff,stroke:#c8960c
-```
-
-### リモート結合テストアーキテクチャ
-
-```text
-┌───────────────────────┐      SSH (port 22)      ┌───────────────────────┐
-│  integration コンテナ  │ ◄──────────────────────► │    sshd コンテナ      │
-│  (kcov/kcov)          │                          │    (ubuntu:22.04)     │
-│                       │                          │                       │
-│  • bats テストランナー │                          │  • openssh-server     │
-│  • openssh-client     │                          │  • rsync              │
-│  • rsync / sshpass    │                          │  • testuser + 鍵     │
-│  • pack_log.sh        │                          │  • 事前作成済み log   │
-└───────────────────────┘                          └───────────────────────┘
-```
-
-## 依存関係
-
-CI をローカルで実行するには以下が必要です：
-- **Docker** + **Docker Compose**
-
-CI コンテナは以下を自動的にインストールします：
-- **Bats**（core + assert + file + support）：テストフレームワーク
-- **ShellCheck**：静的解析ツール
-- **Kcov**：カバレッジレポート生成ツール
-- **openssh-client / rsync / sshpass**：SSH およびファイル転送ツール
 
 ## 規約
 

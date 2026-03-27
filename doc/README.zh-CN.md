@@ -190,69 +190,13 @@ declare -a LOG_PATHS=(
 
 ## 测试
 
-### 测试总览
-
-| 类别 | 测试数量 | 说明 |
-|------|------:|------|
-| 单元测试 | 269 | 各函数独立测试 |
-| 本机集成测试 | 13 | 完整 `main()` 本机模式流程 |
-| 远程集成测试 | 24 | 完整流程 + 真实 SSH 连接至 Docker sshd |
-| **合计** | **306** | **100% 代码覆盖率** |
-
-### 运行测试
+315 个测试（272 单元 + 16 本机集成 + 27 远程集成），**100% 代码覆盖率**。详见 **[TEST.zh-CN.md](../TEST.zh-CN.md)**。
 
 ```bash
-# 全部测试（需要 Docker）
-./ci.sh
-
-# 只跑单元测试 + ShellCheck + 覆盖率
-./ci.sh unit
-
-# 只跑远程集成测试
-./ci.sh integration
+./ci.sh              # 全部测试（需要 Docker）
+./ci.sh unit         # 单元 + ShellCheck + 覆盖率
+./ci.sh integration  # 远程集成测试
 ```
-
-### CI 流程
-
-```mermaid
-graph LR
-    S["ci.sh unit"]:::entry --> SC["ShellCheck\n静态分析 pack_log.sh"]:::step
-    SC --> BT["Bats + Kcov\n244 个测试 + 覆盖率"]:::step
-    BT --> CC["Codecov\n上传报告"]:::step
-
-    S2["ci.sh integration"]:::entry --> SSHD["启动 sshd\nDocker 容器"]:::step
-    SSHD --> KEY["SSH 密钥设置\n生成 + 复制"]:::step
-    KEY --> DATA["创建测试数据\n远程 log 文件"]:::step
-    DATA --> IT["Bats\n24 个远程测试"]:::step
-
-    classDef entry fill:#1a5276,color:#fff,stroke:#2980b9
-    classDef step fill:#8B6914,color:#fff,stroke:#c8960c
-```
-
-### 远程集成测试架构
-
-```text
-┌───────────────────────┐      SSH (port 22)      ┌───────────────────────┐
-│  integration 容器     │ ◄──────────────────────► │      sshd 容器        │
-│  (kcov/kcov)          │                          │    (ubuntu:22.04)     │
-│                       │                          │                       │
-│  • bats 测试执行器    │                          │  • openssh-server     │
-│  • openssh-client     │                          │  • rsync              │
-│  • rsync / sshpass    │                          │  • testuser + 密钥   │
-│  • pack_log.sh        │                          │  • 预创建的 log 文件  │
-└───────────────────────┘                          └───────────────────────┘
-```
-
-## 依赖
-
-本机运行 CI 需要：
-- **Docker** + **Docker Compose**
-
-CI 容器会自动安装：
-- **Bats**（core + assert + file + support）：测试框架
-- **ShellCheck**：静态分析工具
-- **Kcov**：覆盖率报告生成器
-- **openssh-client / rsync / sshpass**：SSH 和文件传输工具
 
 ## 重要惯例
 
