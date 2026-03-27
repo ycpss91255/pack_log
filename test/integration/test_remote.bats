@@ -214,31 +214,33 @@ teardown() {
     )
 
     run main -u "${INTEGRATION_HOST}" \
-        -s 20300101-000000 -e 20300101-235959 \
+        -s 300101-0000 -e 300101-2359 \
         -o "${OUTPUT_DIR}/norange_test"
     assert_success
     assert_output --partial "No files found"
 }
 
 # ---------------------------------------------------------------------------
-# 8. Remote folder cleanup (EXIT trap)
+# 8. Remote folder preserved in /tmp after success
 # ---------------------------------------------------------------------------
 
-@test "remote: EXIT trap cleans up remote SAVE_FOLDER" {
+@test "remote: SAVE_FOLDER is preserved in /tmp after successful transfer" {
     LOG_PATHS=(
         "<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
     )
 
     run main -u "${INTEGRATION_HOST}" \
         -s 260115-0000 -e 260115-2359 \
-        -o "${OUTPUT_DIR}/cleanup_test"
+        -o "preserve_test"
     assert_success
 
-    # The remote SAVE_FOLDER should have been cleaned up by EXIT trap
-    # Try to find any remote folder matching the pattern
+    # The remote SAVE_FOLDER should still exist in /tmp
     local remote_check
-    remote_check=$(execute_cmd "ls -d ${OUTPUT_DIR}/cleanup_test_* 2>/dev/null || echo 'not_found'")
-    [[ "${remote_check}" == "not_found" ]]
+    remote_check=$(execute_cmd "ls -d /tmp/preserve_test_* 2>/dev/null || echo 'not_found'")
+    [[ "${remote_check}" != "not_found" ]]
+
+    # Clean up
+    execute_cmd "rm -rf /tmp/preserve_test_*" 2>/dev/null || true
 }
 
 # ---------------------------------------------------------------------------
@@ -554,4 +556,58 @@ teardown() {
     result=$(execute_cmd_from_array "xargs -0 -r ls -1" test_files)
     [[ "${result}" == *"node_config.yaml"* ]]
     [[ "${result}" == *"shelf.ini"* ]]
+}
+
+# ---------------------------------------------------------------------------
+# 22. Symlink files are discovered and transferred
+# ---------------------------------------------------------------------------
+
+@test "remote: symlink files are discovered and transferred" {
+    LOG_PATHS=(
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage::link_config.yaml"
+    )
+
+    run main -u "${INTEGRATION_HOST}" \
+        -s 260115-0000 -e 260115-2359 \
+        -o "${OUTPUT_DIR}/symlink_remote"
+    assert_success
+
+    local -a out_dirs=("${OUTPUT_DIR}"/symlink_remote_*)
+    local found
+    found=$(find "${out_dirs[0]}" -name "link_config.yaml" \( -type f -o -type l \) | head -1)
+    [[ -n "${found}" ]]
+    [[ "$(cat "${found}")" == "node_config: test" ]]
+}
+
+# ---------------------------------------------------------------------------
+# 23. Resolved path displayed in output
+# ---------------------------------------------------------------------------
+
+@test "remote: resolved path is shown after processing" {
+    LOG_PATHS=(
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+    )
+
+    run main -u "${INTEGRATION_HOST}" \
+        -s 260115-0000 -e 260115-2359 \
+        -o "${OUTPUT_DIR}/resolved_remote"
+    assert_success
+    assert_output --partial "Resolved:"
+    assert_output --partial "core_storage::node_config.yaml"
+}
+
+# ---------------------------------------------------------------------------
+# 24. Output folder path displayed at completion
+# ---------------------------------------------------------------------------
+
+@test "remote: output folder path shown at completion" {
+    LOG_PATHS=(
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+    )
+
+    run main -u "${INTEGRATION_HOST}" \
+        -s 260115-0000 -e 260115-2359 \
+        -o "${OUTPUT_DIR}/outpath_remote"
+    assert_success
+    assert_output --partial "Output folder:"
 }

@@ -329,3 +329,59 @@ setup() {
     count=$(find "${out_dirs[0]}" -name "mylog_data_*.log" -type f | wc -l)
     [[ "${count}" -ge 1 ]]
 }
+
+# ---------------------------------------------------------------------------
+# 14. Symlink files are collected in local mode
+# ---------------------------------------------------------------------------
+
+@test "local-integration: symlink log files are collected" {
+    local link_dir="${BATS_TEST_TMPDIR}/symlink_logs"
+    mkdir -p "${link_dir}"
+    echo "real content" > "${link_dir}/real_config.yaml"
+    ln -s "${link_dir}/real_config.yaml" "${link_dir}/link_config.yaml"
+
+    LOG_PATHS=(
+        "${link_dir}::link_config.yaml"
+    )
+
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/symlink_test"
+    assert_success
+
+    local -a out_dirs=("${OUTPUT_DIR}"/symlink_test_*)
+    local found
+    found=$(find "${out_dirs[0]}" -name "link_config.yaml" \( -type f -o -type l \) | head -1)
+    [[ -n "${found}" ]]
+    [[ "$(cat "${found}")" == "real content" ]]
+}
+
+# ---------------------------------------------------------------------------
+# 15. Output folder is under /tmp
+# ---------------------------------------------------------------------------
+
+@test "local-integration: output folder is created under /tmp" {
+    LOG_PATHS=(
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+    )
+
+    run main -l -s 260115-0000 -e 260115-2359 -o "localtest_tmp"
+    assert_success
+    assert_output --partial "/tmp/localtest_tmp_"
+
+    # Clean up
+    rm -rf /tmp/localtest_tmp_*
+}
+
+# ---------------------------------------------------------------------------
+# 16. Resolved path is shown in output
+# ---------------------------------------------------------------------------
+
+@test "local-integration: resolved path is displayed after processing" {
+    LOG_PATHS=(
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+    )
+
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/resolved_test"
+    assert_success
+    assert_output --partial "Resolved:"
+    assert_output --partial "core_storage::node_config.yaml"
+}

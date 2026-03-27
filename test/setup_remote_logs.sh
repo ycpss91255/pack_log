@@ -55,4 +55,7 @@ echo "[shelf]"           > "${BASE}/core_storage/shelf.ini"
 echo "<launch>"          > "${BASE}/core_storage/external_param.launch"
 echo "run_config: test"  > "${BASE}/core_storage/run_config.yaml"
 
-echo "Remote log setup complete: $(find "${BASE}" -type f | wc -l) files created."
+# Symlink test data
+ln -sf "${BASE}/core_storage/node_config.yaml" "${BASE}/core_storage/link_config.yaml"
+
+echo "Remote log setup complete: $(find "${BASE}" \( -type f -o -type l \) | wc -l) files created."
