@@ -192,7 +192,7 @@ declare -a LOG_PATHS=(
 │   ├── lib/bats-mock                    # Bats mock library (symlink)
 │   └── integration/
 │       ├── test_helper.bash             # Remote test helper
-│       └── test_remote.bats             # Remote integration tests (27)
+│       └── test_remote.bats             # Remote integration tests (30)
 │
 ├── TEST.md                              # Test documentation (English)
 │
@@ -209,7 +209,7 @@ declare -a LOG_PATHS=(
 
 ## Testing
 
-318 tests (274 unit + 17 local integration + 27 remote integration) with **100% code coverage**. See **[TEST.md](TEST.md)** for full details.
+325 tests (278 unit + 17 local integration + 30 remote integration) with **100% code coverage**. See **[TEST.md](TEST.md)** for full details.
 
 ```bash
 ./ci.sh              # All tests (Docker required)

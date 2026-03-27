@@ -6,10 +6,10 @@
 
 | Category | Tests | Description |
 |----------|------:|-------------|
-| Unit Tests | 274 | Individual function testing |
+| Unit Tests | 278 | Individual function testing |
 | Local Integration | 17 | Full `main()` pipeline with local mode |
-| Remote Integration | 27 | Full pipeline with real SSH to Docker sshd |
-| **Total** | **318** | **100% code coverage** |
+| Remote Integration | 30 | Full pipeline with real SSH to Docker sshd |
+| **Total** | **325** | **100% code coverage** |
 
 ## Run Tests
 
