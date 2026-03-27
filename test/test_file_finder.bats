@@ -22,6 +22,27 @@ setup() {
     assert_equal "${REPLY_FILES[0]}" "${TEST_LOG_DIR}/node_config.yaml"
 }
 
+@test "file_finder: symlink files are included" {
+    touch "${TEST_LOG_DIR}/real_config.yaml"
+    ln -s "${TEST_LOG_DIR}/real_config.yaml" "${TEST_LOG_DIR}/link_config.yaml"
+
+    file_finder "${TEST_LOG_DIR}" "link_config.yaml" "" "260115-0000" "260115-2359"
+
+    assert_equal "${#REPLY_FILES[@]}" 1
+    [[ "${REPLY_FILES[0]}" == *"link_config.yaml" ]]
+}
+
+@test "file_finder: symlink files with date token are included" {
+    touch "${TEST_LOG_DIR}/real_20260115120000.log"
+    ln -s "${TEST_LOG_DIR}/real_20260115120000.log" "${TEST_LOG_DIR}/app_20260115120000.log"
+
+    file_finder "${TEST_LOG_DIR}" \
+        "app_<date:%Y%m%d%H%M%S>*" ".log" \
+        "260115-0000" "260115-2359"
+
+    assert_equal "${#REPLY_FILES[@]}" 1
+}
+
 @test "file_finder: config wildcard matches multiple files" {
     touch "${TEST_LOG_DIR}/config_a.yaml"
     touch "${TEST_LOG_DIR}/config_b.yaml"

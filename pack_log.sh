@@ -1357,7 +1357,7 @@ file_finder() {
   fi
 
   local find_cmd
-  printf -v find_cmd "find %q -maxdepth 1 -type f -name %q 2>/dev/null | sort" \
+  printf -v find_cmd "find %q -maxdepth 1 \\( -type f -o -type l \\) -name %q 2>/dev/null | sort" \
     "${folder_path}" "${file_prefix}${file_suffix}"
   readonly find_cmd
 
