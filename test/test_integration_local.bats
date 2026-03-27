@@ -25,6 +25,8 @@ setup() {
     mkdir -p "${base}/log_data/lidar_detection"
     mkdir -p "${base}/log_data/lidar_detection/glog"
     mkdir -p "${base}/log_slam"
+    mkdir -p "${base}/log/AvoidStop_2026-01-15"
+    mkdir -p "${base}/log/AvoidStop_2026-01-16"
     mkdir -p "${base}/core_storage"
 
     local hostname_val
@@ -55,6 +57,11 @@ setup() {
     epoch_out=$(date -d "2026-01-16 12:00:00" "+%s")
     echo "slam in" > "${base}/log_slam/coreslam_2D_${epoch_in}.log"
     echo "slam out" > "${base}/log_slam/coreslam_2D_${epoch_out}.log"
+
+    # -- AvoidStop cross-date test data --
+    echo "avoid 15a" > "${base}/log/AvoidStop_2026-01-15/2026-01-15-10.00.00_111_avoid.png"
+    echo "avoid 15b" > "${base}/log/AvoidStop_2026-01-15/2026-01-15-14.00.00_222_avoid.png"
+    echo "avoid 16a" > "${base}/log/AvoidStop_2026-01-16/2026-01-16-09.00.00_333_avoid.png"
 
     # -- config files (no date token) --
     echo "key: value" > "${base}/core_storage/node_config.yaml"
@@ -384,4 +391,26 @@ setup() {
     assert_success
     assert_output --partial "Resolved:"
     assert_output --partial "core_storage :: node_config.yaml"
+}
+
+# ---------------------------------------------------------------------------
+# 17. Cross-date folder: AvoidStop spans multiple days
+# ---------------------------------------------------------------------------
+
+@test "local-integration: cross-date folders collect files from all days" {
+    LOG_PATHS=(
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"
+    )
+
+    # Range spans Jan 15-16
+    run main -l -s 260115-0000 -e 260116-2359 -o "${OUTPUT_DIR}/crossdate_test"
+    assert_success
+
+    local -a out_dirs=("${OUTPUT_DIR}"/crossdate_test_*)
+    # Should find files from BOTH AvoidStop_2026-01-15 and AvoidStop_2026-01-16
+    local count_15 count_16
+    count_15=$(find "${out_dirs[0]}" -path "*AvoidStop_2026-01-15*" \( -type f -o -type l \) | wc -l)
+    count_16=$(find "${out_dirs[0]}" -path "*AvoidStop_2026-01-16*" \( -type f -o -type l \) | wc -l)
+    [[ "${count_15}" -ge 1 ]]
+    [[ "${count_16}" -ge 1 ]]
 }

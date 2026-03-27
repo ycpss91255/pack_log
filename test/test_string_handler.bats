@@ -280,7 +280,8 @@ setup() {
     END_TIME="260309-2359"
     REPLY_PATH="/home/user/corenavi_<date:%m%d>_test"
     resolve_path_dates
-    [[ "$REPLY_PATH" == "/home/user/corenavi_0309_test" ]]
+    [[ "${#REPLY_PATHS[@]}" -eq 1 ]]
+    [[ "${REPLY_PATHS[0]}" == "/home/user/corenavi_0309_test" ]]
 }
 
 @test "resolve_path_dates: leaves path without date tokens unchanged" {
@@ -288,7 +289,19 @@ setup() {
     END_TIME="260309-2359"
     REPLY_PATH="/home/user/plain_path"
     resolve_path_dates
-    [[ "$REPLY_PATH" == "/home/user/plain_path" ]]
+    [[ "${#REPLY_PATHS[@]}" -eq 1 ]]
+    [[ "${REPLY_PATHS[0]}" == "/home/user/plain_path" ]]
+}
+
+@test "resolve_path_dates: expands cross-date paths" {
+    START_TIME="260115-0000"
+    END_TIME="260117-2359"
+    REPLY_PATH="/home/user/log/AvoidStop_<date:%Y-%m-%d>"
+    resolve_path_dates
+    [[ "${#REPLY_PATHS[@]}" -eq 3 ]]
+    [[ "${REPLY_PATHS[0]}" == "/home/user/log/AvoidStop_2026-01-15" ]]
+    [[ "${REPLY_PATHS[1]}" == "/home/user/log/AvoidStop_2026-01-16" ]]
+    [[ "${REPLY_PATHS[2]}" == "/home/user/log/AvoidStop_2026-01-17" ]]
 }
 
 @test "resolve_path_dates: combined <num> and <date:> in path" {
@@ -297,7 +310,7 @@ setup() {
     END_TIME="260309-2359"
     string_handler '/home/user/corenavi_<date:%m%d>_#<num>' 'app.<date:%Y%m%d-%H%M%S>*.log'
     resolve_path_dates
-    [[ "$REPLY_PATH" == "/home/user/corenavi_0309_#7" ]]
-    # File portion date token preserved for file_finder
+    [[ "${#REPLY_PATHS[@]}" -eq 1 ]]
+    [[ "${REPLY_PATHS[0]}" == "/home/user/corenavi_0309_#7" ]]
     [[ "$REPLY_PREFIX" == "app.<date:%Y%m%d-%H%M%S>*.log" ]]
 }

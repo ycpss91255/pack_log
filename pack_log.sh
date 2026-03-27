@@ -1317,16 +1317,56 @@ string_handler() {
 # In LOG_PATHS, <date:> tokens in the file portion are kept for file_finder.
 # But <date:> tokens in the path portion must be resolved to actual dates
 # so the directory can be found.
+# Resolves <date:> tokens in REPLY_PATH.
+# When a path contains date tokens, generates all dates from START_TIME
+# to END_TIME and returns an array of resolved paths.
+#
+# Sets:
+#   REPLY_PATHS: Array of resolved paths (one per date when cross-date,
+#                or single element when no date token in path).
 resolve_path_dates() {
   local path="${REPLY_PATH}"
-  while [[ "${path}" =~ (\<date:[^\<\>]*\>) ]]; do
-    local token="${BASH_REMATCH[1]}"
-    local fmt="${token#<date:}"
-    fmt="${fmt%>}"
-    date_format "${START_TIME}" "${fmt}"
-    path="${path//${token}/${REPLY}}"
+
+  if [[ ! "${path}" =~ (\<date:[^\<\>]*\>) ]]; then
+    REPLY_PATHS=("${path}")
+    return 0
+  fi
+
+  local token="${BASH_REMATCH[1]}"
+  local fmt="${token#<date:}"
+  fmt="${fmt%>}"
+
+  # Generate all dates from START_TIME to END_TIME
+  local start_epoch end_epoch
+  date_format "${START_TIME}" "%s"; start_epoch="${REPLY}"
+  date_format "${END_TIME}" "%s"; end_epoch="${REPLY}"
+
+  # Determine step size from format (daily for most formats)
+  local step_sec=86400  # default: 1 day
+
+  local -a paths=()
+  local -A seen=()
+  local epoch="${start_epoch}"
+  while [[ "${epoch}" -le "${end_epoch}" ]]; do
+    local resolved_date
+    resolved_date=$(date -d "@${epoch}" "+${fmt}" 2>/dev/null) || break
+    local resolved_path="${path//${token}/${resolved_date}}"
+    if [[ -z "${seen["${resolved_path}"]+set}" ]]; then
+      paths+=("${resolved_path}")
+      seen["${resolved_path}"]=1
+    fi
+    epoch=$(( epoch + step_sec ))
   done
-  REPLY_PATH="${path}"
+
+  # Also include END_TIME's date in case step missed it
+  local end_date
+  end_date=$(date -d "@${end_epoch}" "+${fmt}" 2>/dev/null) || true
+  local end_path="${path//${token}/${end_date}}"
+  if [[ -z "${seen["${end_path}"]+set}" ]]; then
+    paths+=("${end_path}")
+  fi
+
+  REPLY_PATHS=("${paths[@]}")
 }
 
 # Finds files matching a name pattern and time range on local or remote host.
@@ -1850,36 +1890,43 @@ get_log_dry_run() {
     log_info "$(printf "${MSG_PROCESSING}" "${idx}" "${total}" "${log_path}" "${log_pattern}")"
     string_handler "${log_path}" "${log_pattern}"
     resolve_path_dates
-    local path="${REPLY_PATH}" prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
-    log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${path}" "${prefix}" "${suffix}")"
+    local prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
 
-    if [[ -z "${path}" ]]; then
-      log_warn "$(printf "${MSG_EMPTY_PATH}" "${idx}" "${total}")"
-      continue
-    fi
+    local path_found=false
+    local rpath=""
+    for rpath in "${REPLY_PATHS[@]}"; do
+      log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${rpath}" "${prefix}" "${suffix}")"
 
-    log_info "$(printf "${MSG_DRY_RUN_RESOLVED}" "${path}")"
-    log_info "$(printf "${MSG_DRY_RUN_PATTERN}" "${prefix}${suffix}")"
+      if [[ -z "${rpath}" ]]; then
+        log_warn "$(printf "${MSG_EMPTY_PATH}" "${idx}" "${total}")"
+        continue
+      fi
 
-    if ! execute_cmd "test -d $(printf '%q' "${path}")"; then
-      log_warn "$(printf "${MSG_DRY_RUN_DIR_NOT_FOUND}" "${path}")"
-      continue
-    fi
+      log_info "$(printf "${MSG_DRY_RUN_RESOLVED}" "${rpath}")"
+      log_info "$(printf "${MSG_DRY_RUN_PATTERN}" "${prefix}${suffix}")"
 
-    file_finder "${path}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}"
-    local -a files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
+      if ! execute_cmd "test -d $(printf '%q' "${rpath}")"; then
+        log_warn "$(printf "${MSG_DRY_RUN_DIR_NOT_FOUND}" "${rpath}")"
+        continue
+      fi
 
-    if [[ "${#files[@]}" -eq 0 ]]; then
-      log_warn "$(printf "${MSG_NO_FILES_FOUND}" "${idx}" "${total}")"
-      continue
-    fi
+      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}"
+      local -a files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
 
-    log_info "$(printf "${MSG_DRY_RUN_WOULD_COPY}" "${#files[@]}")"
-    local f
-    for f in "${files[@]}"; do
-      log_info "  ${f}"
+      if [[ "${#files[@]}" -gt 0 ]]; then
+        path_found=true
+        log_info "$(printf "${MSG_DRY_RUN_WOULD_COPY}" "${#files[@]}")"
+        local f
+        for f in "${files[@]}"; do
+          log_info "  ${f}"
+        done
+        (( grand_total += ${#files[@]} ))
+      fi
     done
-    (( grand_total += ${#files[@]} ))
+
+    if [[ "${path_found}" == "false" ]]; then
+      log_warn "$(printf "${MSG_NO_FILES_FOUND}" "${idx}" "${total}")"
+    fi
   done
 
   log_info "$(printf "${MSG_DRY_RUN_TOTAL}" "${grand_total}")"
@@ -1903,24 +1950,30 @@ get_log() {
     log_info "$(printf "${MSG_PROCESSING}" "${idx}" "${total}" "${log_path}" "${log_pattern}")"
     string_handler "${log_path}" "${log_pattern}"
     resolve_path_dates
-    local path="${REPLY_PATH}" prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
-    log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${path}" "${prefix}" "${suffix}")"
+    local prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
 
-    if [[ -z "${path}" ]]; then
-      log_warn "$(printf "${MSG_EMPTY_PATH}" "${idx}" "${total}")"
-      continue
-    fi
+    local -a all_found_files=()
+    local rpath=""
+    for rpath in "${REPLY_PATHS[@]}"; do
+      log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${rpath}" "${prefix}" "${suffix}")"
 
-    file_finder "${path}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}"
-    local -a files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
+      if [[ -z "${rpath}" ]]; then
+        log_warn "$(printf "${MSG_EMPTY_PATH}" "${idx}" "${total}")"
+        continue
+      fi
 
-    if [[ "${#files[@]}" -eq 0 ]]; then
+      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}"
+      if [[ "${#REPLY_FILES[@]}" -gt 0 ]]; then
+        all_found_files+=("${REPLY_FILES[@]}")
+        file_copier "${rpath}" "${REPLY_FILES[@]}"
+      fi
+    done
+
+    if [[ "${#all_found_files[@]}" -eq 0 ]]; then
       log_warn "$(printf "${MSG_NO_FILES_FOUND}" "${idx}" "${total}")"
-      continue
+    else
+      log_info "$(printf "${MSG_FOUND_COPYING}" "${idx}" "${total}" "${#all_found_files[@]}")"
     fi
-
-    log_info "$(printf "${MSG_FOUND_COPYING}" "${idx}" "${total}" "${#files[@]}")"
-    file_copier "${path}" "${files[@]}"
   done
 }
 
