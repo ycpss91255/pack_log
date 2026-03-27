@@ -58,4 +58,17 @@ echo "run_config: test"  > "${BASE}/core_storage/run_config.yaml"
 # Symlink test data
 ln -sf "${BASE}/core_storage/node_config.yaml" "${BASE}/core_storage/link_config.yaml"
 
+# Symlink directory (simulates mapfile/default -> mapfile/)
+mkdir -p "${BASE}/core_storage/mapfile"
+echo "map data" > "${BASE}/core_storage/mapfile/uimap.png"
+echo "map yaml" > "${BASE}/core_storage/mapfile/uimap.yaml"
+ln -sf "${BASE}/core_storage/mapfile" "${BASE}/core_storage/default"
+
+# AvoidStop cross-date folders
+mkdir -p "${BASE}/log/AvoidStop_2026-01-15"
+mkdir -p "${BASE}/log/AvoidStop_2026-01-16"
+echo "avoid 15" > "${BASE}/log/AvoidStop_2026-01-15/2026-01-15-10.00.00_111_avoid.png"
+echo "avoid 15b" > "${BASE}/log/AvoidStop_2026-01-15/2026-01-15-14.00.00_222_avoid.png"
+echo "avoid 16" > "${BASE}/log/AvoidStop_2026-01-16/2026-01-16-09.00.00_333_avoid.png"
+
 echo "Remote log setup complete: $(find "${BASE}" \( -type f -o -type l \) | wc -l) files created."

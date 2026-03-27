@@ -611,3 +611,70 @@ teardown() {
     assert_success
     assert_output --partial "Output folder:"
 }
+
+# ---------------------------------------------------------------------------
+# 25. Symlink directory: files found through symlink dir
+# ---------------------------------------------------------------------------
+
+@test "remote: finds files through symlink directory" {
+    LOG_PATHS=(
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage/default"  "uimap.png"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage/default"  "uimap.yaml"
+    )
+    run main -u "${INTEGRATION_HOST}" \
+        -s 260115-0000 -e 260115-2359 \
+        -o "${OUTPUT_DIR}/symdir_remote"
+    assert_success
+    local -a out_dirs=("${OUTPUT_DIR}"/symdir_remote_*)
+    [[ -n "$(find "${out_dirs[0]}" -name "uimap.png" \( -type f -o -type l \))" ]]
+    [[ -n "$(find "${out_dirs[0]}" -name "uimap.yaml" \( -type f -o -type l \))" ]]
+}
+
+# ---------------------------------------------------------------------------
+# 26. Cross-date folder expansion on remote
+# ---------------------------------------------------------------------------
+
+@test "remote: cross-date folders collect files from multiple days" {
+    LOG_PATHS=(
+        "<env:HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"
+    )
+    run main -u "${INTEGRATION_HOST}" \
+        -s 260115-0000 -e 260116-2359 \
+        -o "${OUTPUT_DIR}/crossdate_remote"
+    assert_success
+    local -a out_dirs=("${OUTPUT_DIR}"/crossdate_remote_*)
+    local count_15 count_16
+    count_15=$(find "${out_dirs[0]}" -path "*AvoidStop_2026-01-15*" \( -type f -o -type l \) | wc -l)
+    count_16=$(find "${out_dirs[0]}" -path "*AvoidStop_2026-01-16*" \( -type f -o -type l \) | wc -l)
+    [[ "${count_15}" -ge 1 ]]
+    [[ "${count_16}" -ge 1 ]]
+}
+
+# ---------------------------------------------------------------------------
+# 27. Full scenario: symlink dir + cross-date + corenavi + rec
+# ---------------------------------------------------------------------------
+
+@test "remote: full scenario with symlink dir, cross-date, and all log types" {
+    LOG_PATHS=(
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage/default"                              "uimap.png"
+        "<env:HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>"                     "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"
+        "<env:HOME>/ros-docker/AMR/myuser/log_core"                                          "corenavi_auto.<cmd:hostname>.<cmd:whoami>.log.INFO.<date:%Y%m%d-%H%M%S>*"
+        "<env:HOME>/ros-docker/AMR/myuser/log_slam/record"                                   "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"
+    )
+    run main -u "${INTEGRATION_HOST}" \
+        -s 260115-0000 -e 260116-2359 \
+        -o "${OUTPUT_DIR}/full_scenario"
+    assert_success
+    assert_output --partial "Packaging log completed successfully"
+
+    local -a out_dirs=("${OUTPUT_DIR}"/full_scenario_*)
+    # uimap through symlink
+    [[ -n "$(find "${out_dirs[0]}" -name "uimap.png" \( -type f -o -type l \))" ]]
+    # AvoidStop from both dates
+    [[ -n "$(find "${out_dirs[0]}" -path "*AvoidStop_2026-01-15*" \( -type f -o -type l \))" ]]
+    [[ -n "$(find "${out_dirs[0]}" -path "*AvoidStop_2026-01-16*" \( -type f -o -type l \))" ]]
+    # corenavi
+    [[ -n "$(find "${out_dirs[0]}" -name "corenavi_auto.*" \( -type f -o -type l \))" ]]
+    # rec files
+    [[ -n "$(find "${out_dirs[0]}" -name "*.rec" \( -type f -o -type l \))" ]]
+}

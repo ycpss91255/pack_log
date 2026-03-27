@@ -67,6 +67,18 @@ setup() {
     echo "key: value" > "${base}/core_storage/node_config.yaml"
     echo "[shelf]"    > "${base}/core_storage/shelf.ini"
 
+    # -- symlink directory (mapfile/default -> mapfile/) --
+    mkdir -p "${base}/core_storage/mapfile"
+    echo "map data" > "${base}/core_storage/mapfile/uimap.png"
+    echo "map yaml" > "${base}/core_storage/mapfile/uimap.yaml"
+    ln -s "${base}/core_storage/mapfile" "${base}/core_storage/default"
+
+    # -- coreslam_2D record files --
+    mkdir -p "${base}/log_slam/record"
+    echo "rec 1" > "${base}/log_slam/record/coreslam_2D_2026-01-15-10-00-00.rec"
+    echo "rec 2" > "${base}/log_slam/record/coreslam_2D_2026-01-15-14-00-00.rec"
+    echo "rec 3" > "${base}/log_slam/record/coreslam_2D_2026-01-16-10-00-00.rec"
+
     OUTPUT_DIR="${BATS_TEST_TMPDIR}/output"
 }
 
@@ -413,4 +425,89 @@ setup() {
     count_16=$(find "${out_dirs[0]}" -path "*AvoidStop_2026-01-16*" \( -type f -o -type l \) | wc -l)
     [[ "${count_15}" -ge 1 ]]
     [[ "${count_16}" -ge 1 ]]
+}
+
+# ---------------------------------------------------------------------------
+# 18. Symlink directory test
+# ---------------------------------------------------------------------------
+
+@test "local-integration: finds files through symlink directory" {
+    LOG_PATHS=(
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage/default"  "uimap.png"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage/default"  "uimap.yaml"
+    )
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/symdir_test"
+    assert_success
+    local -a out_dirs=("${OUTPUT_DIR}"/symdir_test_*)
+    [[ -n "$(find "${out_dirs[0]}" -name "uimap.png" \( -type f -o -type l \))" ]]
+    [[ -n "$(find "${out_dirs[0]}" -name "uimap.yaml" \( -type f -o -type l \))" ]]
+}
+
+# ---------------------------------------------------------------------------
+# 19. Epoch slam log test
+# ---------------------------------------------------------------------------
+
+@test "local-integration: epoch date format filters slam logs" {
+    LOG_PATHS=(
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam"  "coreslam_2D_<date:%s>*<suffix:.log>"
+    )
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/epoch_test2"
+    assert_success
+    local -a out_dirs=("${OUTPUT_DIR}"/epoch_test2_*)
+    local count
+    count=$(find "${out_dirs[0]}" -name "coreslam_2D_*.log" \( -type f -o -type l \) | wc -l)
+    [[ "${count}" -ge 1 ]]
+}
+
+# ---------------------------------------------------------------------------
+# 20. Record files with %Y-%m-%d-%H-%M-%S
+# ---------------------------------------------------------------------------
+
+@test "local-integration: Y-m-d-H-M-S date format filters record files" {
+    LOG_PATHS=(
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam/record"  "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"
+    )
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/rec_test"
+    assert_success
+    local -a out_dirs=("${OUTPUT_DIR}"/rec_test_*)
+    local count
+    count=$(find "${out_dirs[0]}" -name "*.rec" \( -type f -o -type l \) | wc -l)
+    [[ "${count}" -ge 1 ]]
+}
+
+# ---------------------------------------------------------------------------
+# 21. Full AvoidStop scenario with all path types
+# ---------------------------------------------------------------------------
+
+@test "local-integration: full AvoidStop scenario with all path types" {
+    local hostname_val
+    hostname_val=$(hostname)
+    local user_val="${USER}"
+
+    LOG_PATHS=(
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage/default"                              "uimap.png"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage/default"                              "uimap.yaml"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>"                     "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_core"                                          "corenavi_auto.${hostname_val}.${user_val}.log.INFO.<date:%Y%m%d-%H%M%S>*"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam/record"                                   "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"
+    )
+
+    # Range spans both Jan 15-16 for cross-date
+    run main -l -s 260115-0000 -e 260116-2359 -o "${OUTPUT_DIR}/full_avoid"
+    assert_success
+    assert_output --partial "Packaging log completed successfully"
+
+    local -a out_dirs=("${OUTPUT_DIR}"/full_avoid_*)
+    # uimap through symlink dir
+    [[ -n "$(find "${out_dirs[0]}" -name "uimap.png" \( -type f -o -type l \))" ]]
+    # AvoidStop from both dates
+    local avoid_15 avoid_16
+    avoid_15=$(find "${out_dirs[0]}" -path "*AvoidStop_2026-01-15*" \( -type f -o -type l \) | wc -l)
+    avoid_16=$(find "${out_dirs[0]}" -path "*AvoidStop_2026-01-16*" \( -type f -o -type l \) | wc -l)
+    [[ "${avoid_15}" -ge 1 ]]
+    [[ "${avoid_16}" -ge 1 ]]
+    # corenavi
+    [[ -n "$(find "${out_dirs[0]}" -name "corenavi_auto.*" \( -type f -o -type l \))" ]]
+    # rec files
+    [[ -n "$(find "${out_dirs[0]}" -name "*.rec" \( -type f -o -type l \))" ]]
 }
