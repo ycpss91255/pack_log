@@ -55,12 +55,11 @@ declare -a HOSTS=(
 )
 # KCOV_EXCL_STOP
 
-# Log paths format:
-# <path>::<file>
+# Log paths format: consecutive pairs of (PATH, FILE_PATTERN).
 #
-# To get all files in a folder, just use the folder path without any special
-# format, for example:
-#   "/home/user/logs::*"
+# To get all files in a folder, just use the folder path with '*' as pattern,
+# for example:
+#   "/home/user/logs"  "*"
 #
 # Special formats are also supported:
 #
@@ -71,51 +70,52 @@ declare -a HOSTS=(
 #    e.g. "<cmd:hostname>/logs"
 #
 # 3. Use a suffix to filter files: <suffix:yyy>
-#    e.g. "logs::<suffix:yyy>"
+#    e.g. "<suffix:yyy>"
 #
 # 4. Set a date format for time-range filtering: <date:format>
 #    Supports any strftime format, e.g. %Y%m%d%H%M%S, %Y-%m-%d-%H-%M-%S, %s (epoch)
-#    e.g. "logs::<date:%Y%m%d>" or "logs::<date:%Y%m%d-%H%M%S>"
+#    e.g. "<date:%Y%m%d>" or "<date:%Y%m%d-%H%M%S>"
 # KCOV_EXCL_START
 declare -a LOG_PATHS=(
+  # PATH                                                                                          FILE_PATTERN
   # AvoidStop (pana-04, local test with symlink dirs)
-  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/core_storage/default::uimap.png'
-  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/core_storage/default::uimap.yaml'
-  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>::<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>'
-  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log_core::corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*'
-  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/core_storage/default'              'uimap.png'
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/core_storage/default'              'uimap.yaml'
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>'     '<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>'
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log_core'                          'corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*'
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log_slam/record'                   'coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
 
   # # Panasonic
   # # LiDAR Detection shelf log path (docker)
-  # '<env:HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog::detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_slam::coreslam_2D_<date:%s>*<suffix:.log>'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
-  # '<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml'
-  # '<env:HOME>/ros-docker/AMR/myuser/core_storage::shelf.ini'
-  # '<env:HOME>/ros-docker/AMR/myuser/core_storage::external_param.launch'
-  # '<env:HOME>/ros-docker/AMR/myuser/core_storage::run_config.yaml'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_core'                                                   'corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection'                                   'detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection'                                   'detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog'                              'detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam'                                                   'coreslam_2D_<date:%s>*<suffix:.log>'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record'                                            'coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage'                                               'node_config.yaml'
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage'                                               'shelf.ini'
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage'                                               'external_param.launch'
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage'                                               'run_config.yaml'
 
   # # 2D LiDAR SLAM log path(docker)
-  # '<env:HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_slam::coreslam_2D_<date:%s>*<suffix:.log>'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_core'                                                   'corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam'                                                   'coreslam_2D_<date:%s>*<suffix:.log>'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record'                                            'coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
 
   # # 2D LiDAR AvoidStop log path(docker)
-  # '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default::uimap.png'
-  # '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default::uimap.yaml'
-  # '<env:HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>::<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default'                               'uimap.png'
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default'                               'uimap.yaml'
+  # '<env:HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>'                              '<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_core'                                                   'corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record'                                            'coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
 
   # # ASE Us
   # # LiDAR Detection pallet log path
-  # '<env:HOME>/log_data/lidar_detection::detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.dat>'
-  # '<env:HOME>/log_data/lidar_detection::detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.pcd>'
-  # '<env:HOME>/log_data/lidar_detection/glog::detect_pallet_node-DetectPallet-<date:%Y%m%d-%H%M%S>*'
-  # '<env:HOME>/coretronic_amr_navi_install/share/lidar_detection_pkg/config::pallet.ini'
+  # '<env:HOME>/log_data/lidar_detection'                                                         'detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.dat>'
+  # '<env:HOME>/log_data/lidar_detection'                                                         'detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.pcd>'
+  # '<env:HOME>/log_data/lidar_detection/glog'                                                    'detect_pallet_node-DetectPallet-<date:%Y%m%d-%H%M%S>*'
+  # '<env:HOME>/coretronic_amr_navi_install/share/lidar_detection_pkg/config'                     'pallet.ini'
 )
 # KCOV_EXCL_STOP
 
@@ -250,9 +250,9 @@ load_lang() {
       MSG_RETRIEVE_MANUALLY='請手動取回檔案，完成後請刪除遠端資料夾。'
       MSG_TRANSFER_CHOICE='[R]etry（重試，預設） / [K]eep（保留遠端資料） / [C]lean（清除遠端資料）: '
       MSG_EMPTY_PATH='[%d/%d] 解析後路徑為空，跳過。'
-      MSG_PROCESSING='[%d/%d] 處理中: %s'
+      MSG_PROCESSING='[%d/%d] 處理中: %s :: %s'
       MSG_NO_FILES_FOUND='[%d/%d] 找不到檔案。'
-      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s::%s%s'
+      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 個檔案，複製中...'
       MSG_STEP1='=== 步驟 1/5: 解析目標主機 ==='
       MSG_STEP2='=== 步驟 2/5: 驗證時間範圍 ==='
@@ -349,9 +349,9 @@ load_lang() {
       MSG_RETRIEVE_MANUALLY='请手动取回文件，完成后请删除远程文件夹。'
       MSG_TRANSFER_CHOICE='[R]etry（重试，默认） / [K]eep（保留远程数据） / [C]lean（清除远程数据）: '
       MSG_EMPTY_PATH='[%d/%d] 解析后路径为空，跳过。'
-      MSG_PROCESSING='[%d/%d] 处理中: %s'
+      MSG_PROCESSING='[%d/%d] 处理中: %s :: %s'
       MSG_NO_FILES_FOUND='[%d/%d] 未找到文件。'
-      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s::%s%s'
+      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 个文件，复制中...'
       MSG_STEP1='=== 步骤 1/5: 解析目标主机 ==='
       MSG_STEP2='=== 步骤 2/5: 验证时间范围 ==='
@@ -449,9 +449,9 @@ load_lang() {
       MSG_RETRIEVE_MANUALLY='手動で取得し、完了後にリモートフォルダを削除してください。'
       MSG_TRANSFER_CHOICE='[R]etry（リトライ、デフォルト） / [K]eep（リモートデータ保持） / [C]lean（リモートデータ削除）: '
       MSG_EMPTY_PATH='[%d/%d] 解決済みパスが空です。スキップします。'
-      MSG_PROCESSING='[%d/%d] 処理中: %s'
+      MSG_PROCESSING='[%d/%d] 処理中: %s :: %s'
       MSG_NO_FILES_FOUND='[%d/%d] ファイルが見つかりません。'
-      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s::%s%s'
+      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] %d 個のファイルが見つかりました。コピー中...'
       MSG_STEP1='=== ステップ 1/5: ターゲットホストの解決 ==='
       MSG_STEP2='=== ステップ 2/5: 時間範囲の検証 ==='
@@ -549,9 +549,9 @@ load_lang() {
       MSG_RETRIEVE_MANUALLY='Please retrieve manually and delete when done.'
       MSG_TRANSFER_CHOICE='[R]etry (default) / [K]eep remote data / [C]lean remote data: '
       MSG_EMPTY_PATH='[%d/%d] Resolved path is empty, skipping.'
-      MSG_PROCESSING='[%d/%d] Processing: %s'
+      MSG_PROCESSING='[%d/%d] Processing: %s :: %s'
       MSG_NO_FILES_FOUND='[%d/%d] No files found.'
-      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s::%s%s'
+      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] Found %d files, copying...'
       MSG_STEP1='=== Step 1/5: Resolving target host ==='
       MSG_STEP2='=== Step 2/5: Validating time range ==='
@@ -1234,74 +1234,82 @@ special_string_parser() {
   log_debug "Resolved string: ${REPLY_STR}"
 }
 
-# Handles a string containing special tokens.
+# Handles path and pattern strings containing special tokens.
 #
-# This function takes a string, finds all special tokens in the format
-# `<...>`, and replaces them with their resolved values.
+# This function takes a path and a pattern, finds all special tokens in the
+# format `<...>`, and replaces them with their resolved values.
 #
 # Arguments:
-#   str: The string to process.
+#   path_str:    The directory path to process.
+#   pattern_str: The file name pattern to process.
 #
 # Sets:
-#   REPLY_PATH:   The path part of the string (before ::).
-#   REPLY_PREFIX: The prefix part of the string (after ::).
+#   REPLY_PATH:   The resolved directory path.
+#   REPLY_PREFIX: The resolved file name pattern (without suffix token).
 #   REPLY_SUFFIX: The suffix filter (from <suffix:> token), or empty.
 string_handler() {
-  local str="${1:?"${FUNCNAME[0]} need string."}"; shift
+  local path_str="${1:?"${FUNCNAME[0]} needs path argument."}"; shift
+  local pattern_str="${1:?"${FUNCNAME[0]} needs pattern argument."}"; shift
   REPLY_SUFFIX=""
-  local -a date_tokens=()
-  local i=0
 
-  log_debug "Original string: ${str}"
+  log_debug "Original path: ${path_str}"
+  log_debug "Original pattern: ${pattern_str}"
 
-  # Resolve <num> and <name> tokens (simple replacements)
-  if [[ "${str}" == *"<num>"* ]]; then
-    if [[ -n "${NUM}" ]]; then
-      str="${str//<num>/${NUM}}"
-    else
-      log_warn "$(printf "${MSG_TOKEN_NUM_NO_HOST}" "<num>")"
-      str="${str//<num>/}"
-    fi
-  fi
-  if [[ "${str}" == *"<name>"* ]]; then
-    if [[ -n "${NUM}" && "${NUM}" =~ ^[1-9][0-9]*$ ]]; then
-      str="${str//<name>/${HOSTS[${NUM}-1]%%::*}}"
-    else
-      log_warn "$(printf "${MSG_TOKEN_NUM_NO_HOST}" "<name>")"
-      str="${str//<name>/}"
-    fi
-  fi
-  while [[ "${str}" =~ (<[^<>]*>) ]]; do
-    local token="${BASH_REMATCH[1]}"
+  local str_name
+  for str_name in path_str pattern_str; do
+    local -n str_ref="${str_name}"
+    local -a date_tokens=()
+    local i=0
 
-    # special case for date, need to process later
-    if [[ "${token}" == "<date:"*">" ]]; then
-      log_debug "Date token process later: ${token}"
-      date_tokens+=("${token}")
-      str="${str//${token}/__DATE_TOKEN_${i}__}"
-      (( i+=1 ))
-      continue
+    # Resolve <num> and <name> tokens (simple replacements)
+    if [[ "${str_ref}" == *"<num>"* ]]; then
+      if [[ -n "${NUM}" ]]; then
+        str_ref="${str_ref//<num>/${NUM}}"
+      else
+        log_warn "$(printf "${MSG_TOKEN_NUM_NO_HOST}" "<num>")"
+        str_ref="${str_ref//<num>/}"
+      fi
     fi
+    if [[ "${str_ref}" == *"<name>"* ]]; then
+      if [[ -n "${NUM}" && "${NUM}" =~ ^[1-9][0-9]*$ ]]; then
+        str_ref="${str_ref//<name>/${HOSTS[${NUM}-1]%%::*}}"
+      else
+        log_warn "$(printf "${MSG_TOKEN_NUM_NO_HOST}" "<name>")"
+        str_ref="${str_ref//<name>/}"
+      fi
+    fi
+    while [[ "${str_ref}" =~ (<[^<>]*>) ]]; do
+      local token="${BASH_REMATCH[1]}"
 
-    # normal case, replace directly
-    log_debug "Processing token: ${token}"
-    special_string_parser "${token:1:-1}"
-    if [[ "${REPLY_TYPE}" == "suffix" ]]; then
-      REPLY_SUFFIX="${REPLY_STR}"
-      log_debug "Suffix set to: ${REPLY_SUFFIX}"
-      str="${str//${token}/}"
-      continue
-    fi
-    str="${str//${token}/${REPLY_STR}}"
+      # special case for date, need to process later
+      if [[ "${token}" == "<date:"*">" ]]; then
+        log_debug "Date token process later: ${token}"
+        date_tokens+=("${token}")
+        str_ref="${str_ref//${token}/__DATE_TOKEN_${i}__}"
+        (( i+=1 ))
+        continue
+      fi
+
+      # normal case, replace directly
+      log_debug "Processing token: ${token}"
+      special_string_parser "${token:1:-1}"
+      if [[ "${REPLY_TYPE}" == "suffix" ]]; then
+        REPLY_SUFFIX="${REPLY_STR}"
+        log_debug "Suffix set to: ${REPLY_SUFFIX}"
+        str_ref="${str_ref//${token}/}"
+        continue
+      fi
+      str_ref="${str_ref//${token}/${REPLY_STR}}"
+    done
+
+    local j
+    for j in "${!date_tokens[@]}"; do
+      str_ref="${str_ref/__DATE_TOKEN_${j}__/${date_tokens["${j}"]}}"
+    done
   done
 
-  local j
-  for j in "${!date_tokens[@]}"; do
-    str="${str/__DATE_TOKEN_${j}__/${date_tokens["${j}"]}}"
-  done
-
-  REPLY_PATH="${str%%::*}"
-  REPLY_PREFIX="${str##*::}"
+  REPLY_PATH="${path_str}"
+  REPLY_PREFIX="${pattern_str}"
 }
 
 # Resolves <date:format> tokens remaining in REPLY_PATH using START_TIME.
@@ -1624,9 +1632,13 @@ save_script_data() {
 
   remote_cmd+="printf '\nLOG_PATHS:\n' >> ${script_log}; "
 
-  for string in "${LOG_PATHS[@]}"; do
-    escaped="${string//\'/\'\\\'\'}"
-    remote_cmd+="printf '  %s\n' '${escaped}' >> ${script_log}; "
+  local lp_i
+  for (( lp_i=0; lp_i<${#LOG_PATHS[@]}; lp_i+=2 )); do
+    local lp_path="${LOG_PATHS[lp_i]}"
+    local lp_pattern="${LOG_PATHS[lp_i+1]}"
+    local escaped_path="${lp_path//\'/\'\\\'\'}"
+    local escaped_pattern="${lp_pattern//\'/\'\\\'\'}"
+    remote_cmd+="printf '  %s :: %s\n' '${escaped_path}' '${escaped_pattern}' >> ${script_log}; "
   done
 
   log_info "-------------------------------"
@@ -1824,16 +1836,19 @@ file_sender() {
 
 # Dry-run variant of get_log: finds and lists files without copying.
 get_log_dry_run() {
-  local log_path=""
-  local total=${#LOG_PATHS[@]}
+  local log_path="" log_pattern=""
+  local total=$(( ${#LOG_PATHS[@]} / 2 ))
   local idx=0
   local grand_total=0
+  local i
 
-  for log_path in "${LOG_PATHS[@]}"; do
+  for (( i=0; i<${#LOG_PATHS[@]}; i+=2 )); do
+    log_path="${LOG_PATHS[i]}"
+    log_pattern="${LOG_PATHS[i+1]}"
     (( ++idx ))
 
-    log_info "$(printf "${MSG_PROCESSING}" "${idx}" "${total}" "${log_path}")"
-    string_handler "${log_path}"
+    log_info "$(printf "${MSG_PROCESSING}" "${idx}" "${total}" "${log_path}" "${log_pattern}")"
+    string_handler "${log_path}" "${log_pattern}"
     resolve_path_dates
     local path="${REPLY_PATH}" prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
     log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${path}" "${prefix}" "${suffix}")"
@@ -1875,15 +1890,18 @@ get_log_dry_run() {
 # This function iterates over the `LOG_PATHS` array, finds the log files, and
 # copies them to the output folder.
 get_log() {
-  local log_path=""
-  local total=${#LOG_PATHS[@]}
+  local log_path="" log_pattern=""
+  local total=$(( ${#LOG_PATHS[@]} / 2 ))
   local idx=0
+  local i
 
-  for log_path in "${LOG_PATHS[@]}"; do
+  for (( i=0; i<${#LOG_PATHS[@]}; i+=2 )); do
+    log_path="${LOG_PATHS[i]}"
+    log_pattern="${LOG_PATHS[i+1]}"
     (( ++idx ))
 
-    log_info "$(printf "${MSG_PROCESSING}" "${idx}" "${total}" "${log_path}")"
-    string_handler "${log_path}"
+    log_info "$(printf "${MSG_PROCESSING}" "${idx}" "${total}" "${log_path}" "${log_pattern}")"
+    string_handler "${log_path}" "${log_pattern}"
     resolve_path_dates
     local path="${REPLY_PATH}" prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
     log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${path}" "${prefix}" "${suffix}")"

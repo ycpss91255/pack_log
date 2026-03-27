@@ -69,8 +69,8 @@ teardown() {
 
 @test "remote: full main() pipeline with rsync transfers config files" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::shelf.ini"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "shelf.ini"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -88,7 +88,7 @@ teardown() {
 
 @test "remote: full pipeline with rsync transfers date-filtered files" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"
+        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -118,7 +118,7 @@ teardown() {
     get_tools_checker() { GET_LOG_TOOL="scp"; }
 
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -140,7 +140,7 @@ teardown() {
     get_tools_checker() { GET_LOG_TOOL="sftp"; }
 
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::shelf.ini"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "shelf.ini"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -159,7 +159,7 @@ teardown() {
 
 @test "remote: cmd token resolves remote hostname" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<cmd:whoami>.log.INFO.<date:%Y%m%d-%H%M%S>*"
+        "<env:HOME>/ros-docker/AMR/myuser/log_core" "corenavi_auto.<cmd:hostname>.<cmd:whoami>.log.INFO.<date:%Y%m%d-%H%M%S>*"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -179,9 +179,9 @@ teardown() {
 
 @test "remote: mixed LOG_PATHS with config and date-based entries" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
-        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"
-        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog::detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
+        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"
+        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog" "detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -210,7 +210,7 @@ teardown() {
 
 @test "remote: no files in range warns but succeeds" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"
+        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -226,7 +226,7 @@ teardown() {
 
 @test "remote: SAVE_FOLDER is preserved in /tmp after successful transfer" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -249,7 +249,7 @@ teardown() {
 
 @test "remote: script.log exists in transferred output" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -273,7 +273,7 @@ teardown() {
 
 @test "remote: transferred files have correct content" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -294,7 +294,7 @@ teardown() {
 
 @test "remote: suffix token filters only .pcd files (not .dat)" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"
+        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -316,7 +316,7 @@ teardown() {
 
 @test "remote: out-of-range files are NOT transferred" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<cmd:whoami>.log.INFO.<date:%Y%m%d-%H%M%S>*"
+        "<env:HOME>/ros-docker/AMR/myuser/log_core" "corenavi_auto.<cmd:hostname>.<cmd:whoami>.log.INFO.<date:%Y%m%d-%H%M%S>*"
     )
 
     # Narrow range: only 20260115-120000 ~ 20260115-160000
@@ -343,7 +343,7 @@ teardown() {
     get_tools_checker() { GET_LOG_TOOL="scp"; }
 
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::shelf.ini"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "shelf.ini"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -366,7 +366,7 @@ teardown() {
     get_tools_checker() { GET_LOG_TOOL="sftp"; }
 
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -387,7 +387,7 @@ teardown() {
 
 @test "remote: epoch date format filters slam logs correctly" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_slam::coreslam_2D_<date:%s>*<suffix:.log>"
+        "<env:HOME>/ros-docker/AMR/myuser/log_slam" "coreslam_2D_<date:%s>*<suffix:.log>"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -413,8 +413,8 @@ teardown() {
 
 @test "remote: directory structure is preserved in local output" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
-        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog::detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
+        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog" "detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -448,7 +448,7 @@ teardown() {
 
 @test "remote: each transferred dated file has correct content" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog::detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"
+        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog" "detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -473,7 +473,7 @@ teardown() {
 
 @test "remote: Y-m-d-H-M-S date format filters .rec files correctly" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_slam/record::coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"
+        "<env:HOME>/ros-docker/AMR/myuser/log_slam/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -505,7 +505,7 @@ teardown() {
 
 @test "remote: file_copier strips /home/ prefix from save paths" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::run_config.yaml"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "run_config.yaml"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -530,7 +530,7 @@ teardown() {
 
 @test "remote: all-files-older scenario returns no files" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_old::app_<date:%Y%m%d%H%M%S>*<suffix:.log>"
+        "<env:HOME>/ros-docker/AMR/myuser/log_old" "app_<date:%Y%m%d%H%M%S>*<suffix:.log>"
     )
 
     # Query range is far in the future — all files are from 2025-01-01
@@ -564,7 +564,7 @@ teardown() {
 
 @test "remote: symlink files are discovered and transferred" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::link_config.yaml"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "link_config.yaml"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -585,7 +585,7 @@ teardown() {
 
 @test "remote: resolved path is shown after processing" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -593,7 +593,7 @@ teardown() {
         -o "${OUTPUT_DIR}/resolved_remote"
     assert_success
     assert_output --partial "Resolved:"
-    assert_output --partial "core_storage::node_config.yaml"
+    assert_output --partial "core_storage :: node_config.yaml"
 }
 
 # ---------------------------------------------------------------------------
@@ -602,7 +602,7 @@ teardown() {
 
 @test "remote: output folder path shown at completion" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+        "<env:HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
     )
 
     run main -u "${INTEGRATION_HOST}" \

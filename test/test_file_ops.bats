@@ -93,7 +93,7 @@ setup() {
     START_TIME="260115-0800"
     END_TIME="260115-1800"
     GET_LOG_TOOL="rsync"
-    LOG_PATHS=("path1::file1" "path2::file2")
+    LOG_PATHS=("path1" "file1" "path2" "file2")
 
     save_script_data
 
@@ -106,8 +106,10 @@ setup() {
     [[ "${content}" == *"${END_TIME}"* ]]
     [[ "${content}" == *"rsync"* ]]
     [[ "${content}" == *"LOG_PATHS:"* ]]
-    [[ "${content}" == *"path1::file1"* ]]
-    [[ "${content}" == *"path2::file2"* ]]
+    [[ "${content}" == *"path1"* ]]
+    [[ "${content}" == *"file1"* ]]
+    [[ "${content}" == *"path2"* ]]
+    [[ "${content}" == *"file2"* ]]
 }
 
 @test "save_script_data: creates script.log in SAVE_FOLDER" {
@@ -355,7 +357,7 @@ setup() {
     local empty_dir="${TEST_DIR}/empty_path"
     mkdir -p "${empty_dir}"
 
-    LOG_PATHS=("${empty_dir}::nonexistent_file*.log")
+    LOG_PATHS=("${empty_dir}" "nonexistent_file*.log")
 
     run get_log
     assert_success
@@ -372,7 +374,7 @@ setup() {
     mkdir -p "${log_dir}"
     touch "${log_dir}/app.conf"
 
-    LOG_PATHS=("${log_dir}::app.conf")
+    LOG_PATHS=("${log_dir}" "app.conf")
 
     run get_log
     # Should show the resolved path::prefix after the "Processing" line
@@ -392,7 +394,7 @@ setup() {
     touch "${log_dir}/config.yaml"
 
     # Config file (no date token) - direct pass through
-    LOG_PATHS=("${log_dir}::config.yaml")
+    LOG_PATHS=("${log_dir}" "config.yaml")
 
     get_log
 
@@ -414,7 +416,7 @@ setup() {
     touch "${log_dir1}/app.conf"
     touch "${log_dir2}/settings.ini"
 
-    LOG_PATHS=("${log_dir1}::app.conf" "${log_dir2}::settings.ini")
+    LOG_PATHS=("${log_dir1}" "app.conf" "${log_dir2}" "settings.ini")
 
     get_log
 
@@ -436,7 +438,7 @@ setup() {
     touch "${log_dir}/myapp_20260115120000.log"
     touch "${log_dir}/myapp_20260116120000.log"
 
-    LOG_PATHS=("${log_dir}::myapp_<date:%Y%m%d%H%M%S>*<suffix:.log>")
+    LOG_PATHS=("${log_dir}" "myapp_<date:%Y%m%d%H%M%S>*<suffix:.log>")
 
     get_log
 
@@ -456,7 +458,7 @@ setup() {
     mkdir -p "${log_dir}"
     touch "${log_dir}/test_config.yaml"
 
-    LOG_PATHS=("<env:HOME>/test_pack_log_bats_temp::test_config.yaml")
+    LOG_PATHS=("<env:HOME>/test_pack_log_bats_temp" "test_config.yaml")
 
     get_log
 
@@ -561,7 +563,7 @@ setup() {
         GET_LOG_TOOL="rsync"
         SAVE_FOLDER="'"${BATS_TEST_TMPDIR}"'/sd_test"
         VERBOSE=0
-        LOG_PATHS=("path1::file1")
+        LOG_PATHS=("path1" "file1")
         mkdir -p "${SAVE_FOLDER}"
         save_script_data
         cat "${SAVE_FOLDER}/script.log"

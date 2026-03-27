@@ -69,7 +69,7 @@ setup() {
 
 @test "local-integration: env token resolves and finds config file" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/env_test"
@@ -94,7 +94,7 @@ setup() {
     hostname_val=$(hostname)
 
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_core::corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_core" "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/cmd_test"
@@ -113,7 +113,7 @@ setup() {
 
 @test "local-integration: date token filters files by time range" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/date_test"
@@ -132,7 +132,7 @@ setup() {
 
 @test "local-integration: epoch date format filters correctly" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam::coreslam_2D_<date:%s>*<suffix:.log>"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam" "coreslam_2D_<date:%s>*<suffix:.log>"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/epoch_test"
@@ -150,7 +150,7 @@ setup() {
 
 @test "local-integration: suffix token filters by file extension" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/suffix_test"
@@ -171,10 +171,10 @@ setup() {
 
 @test "local-integration: mixed config and date-based paths in single run" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::shelf.ini"
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection::detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog::detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage" "shelf.ini"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog" "detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/mixed_test"
@@ -206,7 +206,7 @@ setup() {
     mkdir -p "${empty_dir}"
 
     LOG_PATHS=(
-        "${empty_dir}::nonexistent_file_*.log"
+        "${empty_dir}" "nonexistent_file_*.log"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/nomatch_test"
@@ -220,7 +220,7 @@ setup() {
 
 @test "local-integration: output folder has hostname and date suffix" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/structure_test"
@@ -240,7 +240,7 @@ setup() {
 
 @test "local-integration: script.log contains user input summary" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/scriptlog_test"
@@ -263,7 +263,7 @@ setup() {
 
 @test "local-integration: copied files have correct content" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::shelf.ini"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage" "shelf.ini"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/integrity_test"
@@ -282,7 +282,7 @@ setup() {
 
 @test "local-integration: verbose mode produces debug output" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
     )
 
     run main -l -v -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/verbose_test"
@@ -299,7 +299,7 @@ setup() {
     mkdir -p "${empty_dir}"
 
     LOG_PATHS=(
-        "${empty_dir}::some_pattern_<date:%Y%m%d%H%M%S>*<suffix:.log>"
+        "${empty_dir}" "some_pattern_<date:%Y%m%d%H%M%S>*<suffix:.log>"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/empty_test"
@@ -318,7 +318,7 @@ setup() {
     touch "${log_dir}/mylog_data_20260116080000.log"
 
     LOG_PATHS=(
-        "${log_dir}::mylog_data_*<date:%Y%m%d%H%M%S>*.log"
+        "${log_dir}" "mylog_data_*<date:%Y%m%d%H%M%S>*.log"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/suffixdate_test"
@@ -341,7 +341,7 @@ setup() {
     ln -s "${link_dir}/real_config.yaml" "${link_dir}/link_config.yaml"
 
     LOG_PATHS=(
-        "${link_dir}::link_config.yaml"
+        "${link_dir}" "link_config.yaml"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/symlink_test"
@@ -360,7 +360,7 @@ setup() {
 
 @test "local-integration: output folder is created under /tmp" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "localtest_tmp"
@@ -377,11 +377,11 @@ setup() {
 
 @test "local-integration: resolved path is displayed after processing" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage::node_config.yaml"
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml"
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/resolved_test"
     assert_success
     assert_output --partial "Resolved:"
-    assert_output --partial "core_storage::node_config.yaml"
+    assert_output --partial "core_storage :: node_config.yaml"
 }

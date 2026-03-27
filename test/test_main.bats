@@ -77,7 +77,7 @@ setup() {
     echo "key: value" > "${test_dir}/test.yaml"
 
     # Override LOG_PATHS to use the test directory with a simple config file
-    LOG_PATHS=("${test_dir}::test.yaml")
+    LOG_PATHS=("${test_dir}" "test.yaml")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output"
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output"
@@ -90,7 +90,7 @@ setup() {
     mkdir -p "${test_dir}"
     echo "data" > "${test_dir}/config.txt"
 
-    LOG_PATHS=("${test_dir}::config.txt")
+    LOG_PATHS=("${test_dir}" "config.txt")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output2"
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output2"
@@ -106,7 +106,7 @@ setup() {
     mkdir -p "${test_dir}"
     echo "content123" > "${test_dir}/myfile.conf"
 
-    LOG_PATHS=("${test_dir}::myfile.conf")
+    LOG_PATHS=("${test_dir}" "myfile.conf")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output3"
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output3"
@@ -128,7 +128,7 @@ setup() {
     mkdir -p "${test_dir}"
 
     # Point to a non-existent file pattern
-    LOG_PATHS=("${test_dir}::nonexistent_file.log")
+    LOG_PATHS=("${test_dir}" "nonexistent_file.log")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output4"
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output4"
@@ -144,8 +144,8 @@ setup() {
     echo "bbb" > "${test_dir2}/b.conf"
 
     LOG_PATHS=(
-        "${test_dir1}::a.conf"
-        "${test_dir2}::b.conf"
+        "${test_dir1}" "a.conf"
+        "${test_dir2}" "b.conf"
     )
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output5"
 
@@ -163,7 +163,7 @@ setup() {
     mkdir -p "${test_dir}"
     echo "data" > "${test_dir}/v.yaml"
 
-    LOG_PATHS=("${test_dir}::v.yaml")
+    LOG_PATHS=("${test_dir}" "v.yaml")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output_v"
 
     run main -l -v -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_v"
@@ -189,7 +189,7 @@ setup() {
     mkdir -p "${test_dir}"
     echo "data" > "${test_dir}/file.yaml"
 
-    LOG_PATHS=("${test_dir}::file.yaml")
+    LOG_PATHS=("${test_dir}" "file.yaml")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output_nossh"
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_nossh"
@@ -226,7 +226,7 @@ setup() {
     mkdir -p "${test_dir}"
     echo "key: value" > "${test_dir}/file.yaml"
 
-    LOG_PATHS=("${test_dir}::file.yaml")
+    LOG_PATHS=("${test_dir}" "file.yaml")
 
     run main -u "testuser@fakehost" -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/remote_out"
     assert_success
@@ -253,7 +253,7 @@ setup() {
     mkdir -p "${test_dir}"
     echo "data" > "${test_dir}/conf.yaml"
 
-    LOG_PATHS=("${test_dir}::conf.yaml")
+    LOG_PATHS=("${test_dir}" "conf.yaml")
 
     run main -u "testuser@fakehost" -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/remote_trap_out"
     assert_success
@@ -277,7 +277,7 @@ _setup_transfer_fail_test() {
     local test_dir="${BATS_TEST_TMPDIR}/transfer_fail"
     mkdir -p "${test_dir}"
     echo "data" > "${test_dir}/file.yaml"
-    LOG_PATHS=("${test_dir}::file.yaml")
+    LOG_PATHS=("${test_dir}" "file.yaml")
 }
 
 @test "main: transfer failure with 'k' preserves remote and exits" {
@@ -326,7 +326,7 @@ _setup_transfer_fail_test() {
     mkdir -p "${test_dir}"
     echo "data" > "${test_dir}/out.yaml"
 
-    LOG_PATHS=("${test_dir}::out.yaml")
+    LOG_PATHS=("${test_dir}" "out.yaml")
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/custom_output"
     assert_success
@@ -344,7 +344,7 @@ _setup_transfer_fail_test() {
     mkdir -p "${test_dir}"
     echo "data" > "${test_dir}/test.yaml"
 
-    LOG_PATHS=("${test_dir}::test.yaml")
+    LOG_PATHS=("${test_dir}" "test.yaml")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output_dry"
 
     run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry"
@@ -358,7 +358,7 @@ _setup_transfer_fail_test() {
     mkdir -p "${test_dir}"
     echo "data" > "${test_dir}/file.conf"
 
-    LOG_PATHS=("${test_dir}::file.conf")
+    LOG_PATHS=("${test_dir}" "file.conf")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output_dry2"
 
     run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry2"
@@ -384,7 +384,7 @@ _setup_transfer_fail_test() {
     mkdir -p "${test_dir}"
     echo "data" > "${test_dir}/file.yaml"
 
-    LOG_PATHS=("${test_dir}::file.yaml")
+    LOG_PATHS=("${test_dir}" "file.yaml")
 
     run main --dry-run -u "testuser@fakehost" -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/remote_dry_out"
     assert_success
@@ -400,7 +400,7 @@ _setup_transfer_fail_test() {
     echo "a" > "${test_dir}/a.conf"
     echo "b" > "${test_dir}/b.conf"
 
-    LOG_PATHS=("${test_dir}::*.conf")
+    LOG_PATHS=("${test_dir}" "*.conf")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output_dry3"
 
     run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry3"
@@ -413,7 +413,7 @@ _setup_transfer_fail_test() {
     mkdir -p "${test_dir}"
     echo "data" > "${test_dir}/app.log"
 
-    LOG_PATHS=("${test_dir}::app.log")
+    LOG_PATHS=("${test_dir}" "app.log")
 
     run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry4"
     assert_success
@@ -423,7 +423,7 @@ _setup_transfer_fail_test() {
 }
 
 @test "main: --dry-run shows directory not found for missing paths" {
-    LOG_PATHS=("/nonexistent/path/abc123::some_file.log")
+    LOG_PATHS=("/nonexistent/path/abc123" "some_file.log")
 
     run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry5"
     assert_success
@@ -432,7 +432,7 @@ _setup_transfer_fail_test() {
 
 @test "main: --dry-run skips empty resolved path with warning" {
     NUM=""
-    LOG_PATHS=("<name>::*")
+    LOG_PATHS=("<name>" "*")
 
     run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry_emptypath"
     assert_success
@@ -441,7 +441,7 @@ _setup_transfer_fail_test() {
 
 @test "main: normal mode skips empty resolved path with warning" {
     NUM=""
-    LOG_PATHS=("<name>::*")
+    LOG_PATHS=("<name>" "*")
     SAVE_FOLDER="${BATS_TEST_TMPDIR}/output_emptypath"
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_emptypath"
@@ -453,7 +453,7 @@ _setup_transfer_fail_test() {
     local test_dir="${BATS_TEST_TMPDIR}/dry_empty_dir"
     mkdir -p "${test_dir}"
 
-    LOG_PATHS=("${test_dir}::nonexistent_file.log")
+    LOG_PATHS=("${test_dir}" "nonexistent_file.log")
 
     run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry_empty"
     assert_success
@@ -470,9 +470,9 @@ _setup_transfer_fail_test() {
     echo "c" > "${dir3}/c.log"
 
     LOG_PATHS=(
-        "${dir1}::a.log"
-        "${dir2}::b.log"
-        "${dir3}::c.log"
+        "${dir1}" "a.log"
+        "${dir2}" "b.log"
+        "${dir3}" "c.log"
     )
 
     run main --dry-run -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/output_dry_multi"
