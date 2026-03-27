@@ -16,12 +16,22 @@ setup() {
 # folder_creator
 # =============================================================================
 
-@test "folder_creator: creates folder with hostname and date in name" {
-    SAVE_FOLDER="${TEST_DIR}/test_output"
+@test "folder_creator: creates folder under /tmp when path is relative" {
+    SAVE_FOLDER="test_output"
     folder_creator
 
-    # SAVE_FOLDER should now be test_output_<hostname>_<date>
-    [[ "${SAVE_FOLDER}" == *"test_output_"* ]]
+    [[ "${SAVE_FOLDER}" == /tmp/test_output_* ]]
+    [ -d "${SAVE_FOLDER}" ]
+    rm -rf "${SAVE_FOLDER}"
+}
+
+@test "folder_creator: keeps absolute path as-is without adding /tmp prefix" {
+    SAVE_FOLDER="${TEST_DIR}/abs_output"
+    folder_creator
+
+    # Should start with the original absolute path, not /tmp/<original>
+    [[ "${SAVE_FOLDER}" == "${TEST_DIR}/abs_output_"* ]]
+    [[ "${SAVE_FOLDER}" != "/tmp/${TEST_DIR}/"* ]]
     [ -d "${SAVE_FOLDER}" ]
 }
 

@@ -234,10 +234,10 @@ setup() {
 }
 
 # ---------------------------------------------------------------------------
-# 8. Remote mode sets trap with EXIT (L1201)
+# 8. Remote mode trap does NOT include EXIT (preserves /tmp folder)
 # ---------------------------------------------------------------------------
 
-@test "main: remote mode trap includes EXIT signal" {
+@test "main: remote mode trap does not include EXIT signal" {
     ssh_handler() { :; }
     get_tools_checker() { GET_LOG_TOOL="rsync"; }
     file_sender() { :; }

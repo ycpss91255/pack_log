@@ -353,6 +353,7 @@ load_lang() {
       MSG_STEP4='=== 步骤 4/5: 收集 log 文件 ==='
       MSG_STEP5_TRANSFER='=== 步骤 5/5: 传输文件到本机 (%s) ==='
       MSG_STEP5_LOCAL='=== 步骤 5/5: 文件已在本机收集完成 ==='
+      MSG_OUTPUT_FOLDER='输出文件夹: %s'
       MSG_SUCCESS='打包 log 完成。'
       MSG_DRY_RUN_BANNER='*** 模拟执行模式 — 不会复制或传输任何文件 ***'
       MSG_DRY_RUN_RESOLVED='[模拟] 解析后路径：%s'
@@ -452,6 +453,7 @@ load_lang() {
       MSG_STEP4='=== ステップ 4/5: ログファイルの収集 ==='
       MSG_STEP5_TRANSFER='=== ステップ 5/5: ローカルへファイル転送中 (%s) ==='
       MSG_STEP5_LOCAL='=== ステップ 5/5: ローカルでファイル収集完了 ==='
+      MSG_OUTPUT_FOLDER='出力フォルダ: %s'
       MSG_SUCCESS='ログのパッケージングが正常に完了しました。'
       MSG_DRY_RUN_BANNER='*** ドライランモード — ファイルのコピー・転送は行いません ***'
       MSG_DRY_RUN_RESOLVED='[ドライラン] 解決済みパス：%s'
@@ -551,6 +553,7 @@ load_lang() {
       MSG_STEP4='=== Step 4/5: Collecting log files ==='
       MSG_STEP5_TRANSFER='=== Step 5/5: Transferring files to local (%s) ==='
       MSG_STEP5_LOCAL='=== Step 5/5: Files collected locally ==='
+      MSG_OUTPUT_FOLDER='Output folder: %s'
       MSG_SUCCESS='Packaging log completed successfully.'
       MSG_DRY_RUN_BANNER='*** DRY RUN MODE — no files will be copied or transferred ***'
       MSG_DRY_RUN_RESOLVED='[dry-run] Resolved path: %s'
@@ -1578,6 +1581,11 @@ folder_creator() {
     SAVE_FOLDER="${SAVE_FOLDER}_${host_label}_${timestamp}"
   fi
 
+  # Place in /tmp when SAVE_FOLDER is a relative path (no -o with absolute path)
+  if [[ "${SAVE_FOLDER}" != /* ]]; then
+    SAVE_FOLDER="/tmp/${SAVE_FOLDER}"
+  fi
+
   create_folder "${SAVE_FOLDER}"
 }
 
@@ -1936,11 +1944,8 @@ main() {
     folder_creator
     init_log_file
 
-    if [[ "${HOST}" == "local" ]]; then
-      trap file_cleaner SIGINT SIGTERM
-    else
-      trap file_cleaner EXIT SIGINT SIGTERM
-    fi
+    # Trap only signals, not EXIT — preserve /tmp folder for debug after completion
+    trap file_cleaner SIGINT SIGTERM
 
     save_script_data
     get_log
@@ -1956,10 +1961,10 @@ main() {
         case "${choice,,}" in
           k|keep)
             log_info "$(printf "${MSG_REMOTE_PRESERVED}" "${HOST}" "${SAVE_FOLDER}")"
-            trap - EXIT; close_log_file; exit 1 ;;
+            close_log_file; exit 1 ;;
           c|clean)
             file_cleaner
-            trap - EXIT; close_log_file; exit 1 ;;
+            close_log_file; exit 1 ;;
           *)  # retry (default: empty or 'r')
             log_info "[R]etry: restarting transfer..."
             continue ;;
@@ -1970,6 +1975,7 @@ main() {
       log_info "${MSG_STEP5_LOCAL}"
     fi
 
+    log_info "$(printf "${MSG_OUTPUT_FOLDER}" "${SAVE_FOLDER}")"
     log_info "${MSG_SUCCESS}"
     close_log_file
   fi
