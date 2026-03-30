@@ -6,10 +6,10 @@
 
 | 類別 | 數量 | 說明 |
 |------|-----:|------|
-| 單元測試 | 278 | 個別函式測試 |
-| 本機整合測試 | 17 | 完整 `main()` 流程（本機模式） |
+| 單元測試 | 277 | 個別函式測試 |
+| 本機整合測試 | 21 | 完整 `main()` 流程（本機模式） |
 | 遠端整合測試 | 30 | 完整流程（透過 SSH 連線至 Docker sshd） |
-| **合計** | **325** | **100% 程式碼覆蓋率** |
+| **合計** | **328** | **100% 程式碼覆蓋率** |
 
 ## 執行測試
 
@@ -49,7 +49,7 @@ bats test/test_option_parser.bats -f "parses -n flag"
 | `test_option_parser.bats` | 48 | 命令列參數解析、`SAVE_FOLDER` 預設值、`--dry-run`、`--extra-verbose` |
 | `test_host_handler.bats` | 21 | 主機解析（`-n`、`-u`、`-l`）、互動模式 |
 | `test_string_handler.bats` | 37 | Token 解析（`<env:>`、`<cmd:>`、`<date:>`、`<suffix:>`）、路徑切割 |
-| `test_file_finder.bats` | 26 | 日期篩選、邊界擴展、時間容差、symlink 支援 |
+| `test_file_finder.bats` | 29 | 日期篩選、邊界擴展、時間容差、symlink 支援 |
 | `test_file_ops.bats` | 42 | `folder_creator`、`file_copier`、`file_sender`、`get_log`、`file_cleaner` |
 | `test_ssh_handler.bats` | 13 | SSH 金鑰建立、金鑰複製、host key 輪替、重試機制 |
 | `test_main.bats` | 30 | 完整流程（本機/遠端）、dry-run、傳輸失敗互動提示 |
@@ -87,7 +87,7 @@ bats test/test_option_parser.bats -f "parses -n flag"
 graph LR
     S["ci.sh unit"]:::entry --> SC["ShellCheck\n靜態分析 pack_log.sh"]:::step
     SC --> USER["建立非 root\ntestrunner 使用者"]:::step
-    USER --> BT["Bats + Kcov\n291 個測試 + 覆蓋率"]:::step
+    USER --> BT["Bats + Kcov\n298 個測試 + 覆蓋率"]:::step
     BT --> CC["Codecov\n上傳報告"]:::step
 
     S2["ci.sh integration"]:::entry --> SSHD["啟動 sshd\nDocker 容器"]:::step

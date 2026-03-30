@@ -25,13 +25,14 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 - **Flexible Transfer**: Supports rsync, scp, and sftp with automatic tool detection and fallback. Shows overall transfer progress by default (`--info=progress2`), per-file detail in verbose mode.
 - **Large Transfer Warning**: When remote folder exceeds `TRANSFER_SIZE_WARN_MB` (default 300MB), prompts for confirmation before transferring.
 - **Transfer Failure Recovery**: Automatically retries failed transfers up to 3 times. When all retries fail, interactively prompts to **[R]etry**, **[K]eep** remote data, or **[C]lean** remote data.
+- **Continuous Log Support**: `<mtime>` flag per LOG_PATH entry catches files still being written to — matches by file modification time when filename timestamp is outside the search range.
 - **Resolved Path Display**: Shows the actual resolved path (with tokens expanded) alongside the original LOG_PATHS entry during processing.
 - **Local Mode**: Run without SSH for local log collection.
 - **i18n Support**: English, Traditional Chinese, Simplified Chinese, and Japanese via `--lang` or `$LANG`.
 - **Log File Output**: All operations logged to `pack_log.log` in the output folder.
 - **Dry-Run Mode**: Preview which files would be collected without any copying or transferring (`--dry-run`).
 - **Dynamic Output Naming**: Output folder is named after the script basename (e.g., `pack_log_<host>_<YYMMDD-HHMMSS>`). Uses HOSTS display name for `-n` mode, hostname for `-l`/`-u` mode.
-- **100% Test Coverage**: 318 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
+- **100% Test Coverage**: 328 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
 
 ## Quick Start
 
@@ -143,11 +144,12 @@ declare -a HOSTS=(
   "server02::myuser@10.90.68.191"
 )
 
-# Log paths: consecutive pairs of (PATH, FILE_PATTERN)
+# Log paths: consecutive triplets of (PATH, FILE_PATTERN, FLAGS)
 declare -a LOG_PATHS=(
-  # PATH                                    FILE_PATTERN
-  '<env:HOME>/logs'                         'app_<date:%Y%m%d%H%M%S>*<suffix:.log>'
-  '<env:HOME>/config'                       'node_config.yaml'
+  # PATH                                    FILE_PATTERN                              FLAGS
+  '<env:HOME>/logs'                         'app_<date:%Y%m%d%H%M%S>*<suffix:.log>'  ''
+  '<env:HOME>/log_core'                     'corenavi_auto...<date:%Y%m%d-%H%M%S>*'  '<mtime>'
+  '<env:HOME>/config'                       'node_config.yaml'                        ''
 )
 ```
 
@@ -165,7 +167,7 @@ declare -a LOG_PATHS=(
 
 ```text
 .
-├── pack_log.sh                          # Main script (~2060 lines)
+├── pack_log.sh                          # Main script (~2090 lines)
 ├── ci.sh                                # CI entry point (unit / integration / all)
 ├── docker-compose.yaml                  # Docker services (ci + sshd + integration)
 ├── .codecov.yaml                        # Codecov configuration
@@ -182,11 +184,11 @@ declare -a LOG_PATHS=(
 │   ├── test_option_parser.bats          # Option parser tests (48)
 │   ├── test_host_handler.bats           # Host handler tests (21)
 │   ├── test_string_handler.bats         # String/token handler tests (37)
-│   ├── test_file_finder.bats            # File finder tests (26)
+│   ├── test_file_finder.bats            # File finder tests (29)
 │   ├── test_file_ops.bats              # File operation tests (42)
 │   ├── test_ssh_handler.bats            # SSH handler tests (13)
 │   ├── test_main.bats                   # Main pipeline tests (30)
-│   ├── test_integration_local.bats      # Local integration tests (17)
+│   ├── test_integration_local.bats      # Local integration tests (21)
 │   ├── Dockerfile.sshd                  # SSH server for remote tests
 │   ├── setup_remote_logs.sh             # Remote test data seeder
 │   ├── lib/bats-mock                    # Bats mock library (symlink)
@@ -209,7 +211,7 @@ declare -a LOG_PATHS=(
 
 ## Testing
 
-325 tests (278 unit + 17 local integration + 30 remote integration) with **100% code coverage**. See **[TEST.md](TEST.md)** for full details.
+328 tests (277 unit + 21 local integration + 30 remote integration) with **100% code coverage**. See **[TEST.md](TEST.md)** for full details.
 
 ```bash
 ./ci.sh              # All tests (Docker required)

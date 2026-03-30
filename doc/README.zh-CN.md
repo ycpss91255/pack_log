@@ -28,7 +28,7 @@
 - **Log 文件输出**：所有操作记录写入 `pack_log.log`。
 - **模拟执行模式**：预览会收集哪些文件，不做任何复制或传输（`--dry-run`）。
 - **传输重试与保留**：文件传输（rsync/scp/sftp）失败时自动重试，最多 3 次，每次间隔 5 秒，能处理 broken pipe 或网络中断等暂时性错误。若全部重试失败，远程临时文件夹会保留以供手动取回。
-- **100% 测试覆盖率**：318 个测试，涵盖单元测试、本机集成测试、远程集成测试。
+- **100% 测试覆盖率**：328 个测试，涵盖单元测试、本机集成测试、远程集成测试。
 
 ## 快速开始
 
@@ -151,7 +151,7 @@ declare -a LOG_PATHS=(
 
 ```text
 .
-├── pack_log.sh                          # 主脚本（约 2060 行）
+├── pack_log.sh                          # 主脚本（约 2090 行）
 ├── ci.sh                                # CI 入口（unit / integration / all）
 ├── docker-compose.yaml                  # Docker 服务（ci + sshd + integration）
 ├── .codecov.yaml                        # Codecov 配置
@@ -190,7 +190,7 @@ declare -a LOG_PATHS=(
 
 ## 测试
 
-325 个测试（278 单元 + 17 本机集成 + 30 远程集成），**100% 代码覆盖率**。详见 **[TEST.zh-CN.md](../TEST.zh-CN.md)**。
+328 个测试（277 单元 + 21 本机集成 + 30 远程集成），**100% 代码覆盖率**。详见 **[TEST.zh-CN.md](../TEST.zh-CN.md)**。
 
 ```bash
 ./ci.sh              # 全部测试（需要 Docker）
