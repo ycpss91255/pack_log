@@ -16,7 +16,7 @@ setup() {
     touch "${TEST_LOG_DIR}/shelf.ini"
     touch "${TEST_LOG_DIR}/other.txt"
 
-    file_finder "${TEST_LOG_DIR}" "node_config.yaml" "" "260115-0000" "260115-2359"
+    file_finder "${TEST_LOG_DIR}" "node_config.yaml" "" "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
     assert_equal "${REPLY_FILES[0]}" "${TEST_LOG_DIR}/node_config.yaml"
@@ -26,7 +26,7 @@ setup() {
     touch "${TEST_LOG_DIR}/real_config.yaml"
     ln -s "${TEST_LOG_DIR}/real_config.yaml" "${TEST_LOG_DIR}/link_config.yaml"
 
-    file_finder "${TEST_LOG_DIR}" "link_config.yaml" "" "260115-0000" "260115-2359"
+    file_finder "${TEST_LOG_DIR}" "link_config.yaml" "" "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
     [[ "${REPLY_FILES[0]}" == *"link_config.yaml" ]]
@@ -39,7 +39,7 @@ setup() {
     echo "map yaml" > "${real_dir}/uimap.yaml"
     ln -s "${real_dir}" "${TEST_LOG_DIR}/default"
 
-    file_finder "${TEST_LOG_DIR}/default" "uimap.png" "" "260115-0000" "260115-2359"
+    file_finder "${TEST_LOG_DIR}/default" "uimap.png" "" "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
     [[ "$(cat "${REPLY_FILES[0]}")" == "map data" ]]
@@ -51,7 +51,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "app_<date:%Y%m%d%H%M%S>*" ".log" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
 }
@@ -61,7 +61,7 @@ setup() {
     touch "${TEST_LOG_DIR}/config_b.yaml"
     touch "${TEST_LOG_DIR}/unrelated.txt"
 
-    file_finder "${TEST_LOG_DIR}" "config_*" ".yaml" "260115-0000" "260115-2359"
+    file_finder "${TEST_LOG_DIR}" "config_*" ".yaml" "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 2
 }
@@ -77,7 +77,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     # Should include files within range plus boundary expansion
     # Timestamps: 20260114100000, 20260115080000, 20260115103000, 20260115120000, 20260116080000
@@ -96,7 +96,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "corenavi_auto.host.user.log.INFO.<date:%Y%m%d-%H%M%S>*" "" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     # Timestamps: 20260114-100000, 20260115-080000, 20260115-120000, 20260116-080000
     # In range: 20260115-080000, 20260115-120000
@@ -112,7 +112,7 @@ setup() {
 
     file_finder "${empty_dir}" \
         "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 0
 }
@@ -125,7 +125,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 0
 }
@@ -141,7 +141,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     # In range: 20260115100000
     # s_idx=2, e_idx=2, expansion: s_idx=1 (20260114100000), e_idx=3 (20260116100000)
@@ -161,7 +161,7 @@ setup() {
     FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     # All files are 3+ days older than range → beyond 30 min tolerance
     assert_equal "${#REPLY_FILES[@]}" 0
@@ -177,7 +177,7 @@ setup() {
     FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     # All files are 5+ days newer than range → beyond 30 min tolerance
     assert_equal "${#REPLY_FILES[@]}" 0
@@ -191,7 +191,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "260117-0000" "260114-2359"
+        "260117-0000" "260114-2359" "false"
 
     # start > end: s_idx=-1 (no file >= 20260117000000), e_idx=0..1 (files < 20260114235959? no, they're > end)
     # Actually e_idx=-1 too since no file <= 20260114235959
@@ -206,7 +206,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     # Single file in range, s_idx=0, e_idx=0
     # Expansion: can't expand (already at boundaries)
@@ -246,7 +246,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "coreslam_2D_<date:%s>*" ".log" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     # epoch_in_range is within range
     # expansion should include neighbors
@@ -262,7 +262,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "log_<date:%Y%m%d%H%M%S>*" ".dat" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     # Both timestamps in range, no expansion possible (at boundaries)
     assert_equal "${#REPLY_FILES[@]}" 3
@@ -276,7 +276,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "detect_shelf_<date:%Y%m%d%H%M%S>*" ".pcd" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
     [[ "${REPLY_FILES[0]}" == *".pcd" ]]
@@ -290,7 +290,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "mylog_data_*" "<date:%Y%m%d%H%M%S>*.log" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     # In-range file plus boundary expansion includes adjacent file
     [[ "${#REPLY_FILES[@]}" -ge 1 ]]
@@ -306,7 +306,7 @@ setup() {
     # Override execute_cmd to fail
     execute_cmd() { return 1; }
 
-    file_finder "${TEST_LOG_DIR}" "some_prefix" "" "260115-0000" "260115-2359"
+    file_finder "${TEST_LOG_DIR}" "some_prefix" "" "260115-0000" "260115-2359" "false"
     assert_equal "${#REPLY_FILES[@]}" 0
 
     # Restore original
@@ -322,7 +322,7 @@ setup() {
 
     file_finder "${TEST_LOG_DIR}" \
         "app_<date:>*" ".log" \
-        "260115-0000" "260115-2359"
+        "260115-0000" "260115-2359" "false"
 
     # With empty format, the raw start/end times are used for comparison
     # Files should still be found based on timestamp ordering
@@ -339,7 +339,7 @@ setup() {
     FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
         "near_<date:%Y%m%d%H%M%S>*" ".log" \
-        "260117-0000" "260117-2359"
+        "260117-0000" "260117-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
 }
@@ -351,7 +351,7 @@ setup() {
     FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
         "far_<date:%Y%m%d%H%M%S>*" ".log" \
-        "260117-0000" "260117-2359"
+        "260117-0000" "260117-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 0
 }
@@ -363,7 +363,45 @@ setup() {
     FILE_TIME_TOLERANCE_MIN=0
     file_finder "${TEST_LOG_DIR}" \
         "zero_<date:%Y%m%d%H%M%S>*" ".log" \
-        "260117-0000" "260117-2359"
+        "260117-0000" "260117-2359" "false"
+
+    assert_equal "${#REPLY_FILES[@]}" 0
+}
+
+# --- mtime flag support ---
+
+@test "file_finder: mtime flag includes file with recent mtime but old filename timestamp" {
+    # File with old filename timestamp (2025) but recent mtime (in range)
+    touch "${TEST_LOG_DIR}/app_20250101120000.log"
+    # Set mtime to be within the search range
+    touch -t 202601151200 "${TEST_LOG_DIR}/app_20250101120000.log"
+
+    file_finder "${TEST_LOG_DIR}" \
+        "app_<date:%Y%m%d%H%M%S>*" ".log" \
+        "260115-0000" "260115-2359" "true"
+
+    [[ "${#REPLY_FILES[@]}" -ge 1 ]]
+}
+
+@test "file_finder: without mtime flag, old filename timestamp is excluded" {
+    touch "${TEST_LOG_DIR}/app_20250101120000.log"
+    touch -t 202601151200 "${TEST_LOG_DIR}/app_20250101120000.log"
+
+    file_finder "${TEST_LOG_DIR}" \
+        "app_<date:%Y%m%d%H%M%S>*" ".log" \
+        "260115-0000" "260115-2359" "false"
+
+    assert_equal "${#REPLY_FILES[@]}" 0
+}
+
+@test "file_finder: mtime flag does not include file with old mtime" {
+    touch "${TEST_LOG_DIR}/app_20250101120000.log"
+    # mtime is also old (2025)
+    touch -t 202501011200 "${TEST_LOG_DIR}/app_20250101120000.log"
+
+    file_finder "${TEST_LOG_DIR}" \
+        "app_<date:%Y%m%d%H%M%S>*" ".log" \
+        "260115-0000" "260115-2359" "true"
 
     assert_equal "${#REPLY_FILES[@]}" 0
 }

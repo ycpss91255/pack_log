@@ -55,11 +55,11 @@ declare -a HOSTS=(
 )
 # KCOV_EXCL_STOP
 
-# Log paths format: consecutive pairs of (PATH, FILE_PATTERN).
+# Log paths format: consecutive triplets of (PATH, FILE_PATTERN, FLAGS).
 #
-# To get all files in a folder, just use the folder path with '*' as pattern,
-# for example:
-#   "/home/user/logs"  "*"
+# To get all files in a folder, just use the folder path with '*' as pattern
+# and empty flags, for example:
+#   "/home/user/logs"  "*"  ""
 #
 # Special formats are also supported:
 #
@@ -75,47 +75,52 @@ declare -a HOSTS=(
 # 4. Set a date format for time-range filtering: <date:format>
 #    Supports any strftime format, e.g. %Y%m%d%H%M%S, %Y-%m-%d-%H-%M-%S, %s (epoch)
 #    e.g. "<date:%Y%m%d>" or "<date:%Y%m%d-%H%M%S>"
+#
+# 5. FLAGS column (third element):
+#    - ''        : no special flags (default)
+#    - '<mtime>' : also select files whose mtime falls in the requested range,
+#                  even when their filename timestamp does not match
 # KCOV_EXCL_START
 declare -a LOG_PATHS=(
-  # PATH                                                                                          FILE_PATTERN
+  # PATH                                                                                          FILE_PATTERN                                                            FLAGS
   # AvoidStop (pana-04, local test with symlink dirs)
-  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/core_storage/default'              'uimap.png'
-  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/core_storage/default'              'uimap.yaml'
-  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>'     '<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>'
-  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log_core'                          'corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*'
-  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log_slam/record'                   'coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/core_storage/default'              'uimap.png'                                                             ''
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/core_storage/default'              'uimap.yaml'                                                            ''
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>'     '<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>'                         ''
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log_core'                          'corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*'           '<mtime>'
+  '<env:HOME>/Desktop/pack_log/log/avoid/ros-docker/AMR/myuser/log_slam/record'                   'coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'                    ''
 
   # # Panasonic
   # # LiDAR Detection shelf log path (docker)
-  # '<env:HOME>/ros-docker/AMR/myuser/log_core'                                                   'corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection'                                   'detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection'                                   'detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog'                              'detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_slam'                                                   'coreslam_2D_<date:%s>*<suffix:.log>'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record'                                            'coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
-  # '<env:HOME>/ros-docker/AMR/myuser/core_storage'                                               'node_config.yaml'
-  # '<env:HOME>/ros-docker/AMR/myuser/core_storage'                                               'shelf.ini'
-  # '<env:HOME>/ros-docker/AMR/myuser/core_storage'                                               'external_param.launch'
-  # '<env:HOME>/ros-docker/AMR/myuser/core_storage'                                               'run_config.yaml'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_core'                                                   'corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'  ''
+  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection'                                   'detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>'        ''
+  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection'                                   'detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>'                         ''
+  # '<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog'                              'detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*'                    ''
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam'                                                   'coreslam_2D_<date:%s>*<suffix:.log>'                                    ''
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record'                                            'coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'                     ''
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage'                                               'node_config.yaml'                                                       ''
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage'                                               'shelf.ini'                                                              ''
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage'                                               'external_param.launch'                                                  ''
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage'                                               'run_config.yaml'                                                        ''
 
   # # 2D LiDAR SLAM log path(docker)
-  # '<env:HOME>/ros-docker/AMR/myuser/log_core'                                                   'corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_slam'                                                   'coreslam_2D_<date:%s>*<suffix:.log>'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record'                                            'coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
+  # '<env:HOME>/ros-docker/AMR/myuser/log_core'                                                   'corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'  ''
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam'                                                   'coreslam_2D_<date:%s>*<suffix:.log>'                                    ''
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record'                                            'coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'                     ''
 
   # # 2D LiDAR AvoidStop log path(docker)
-  # '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default'                               'uimap.png'
-  # '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default'                               'uimap.yaml'
-  # '<env:HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>'                              '<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_core'                                                   'corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'
-  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record'                                            'coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default'                               'uimap.png'                                                              ''
+  # '<env:HOME>/ros-docker/AMR/myuser/core_storage/mapfile/default'                               'uimap.yaml'                                                             ''
+  # '<env:HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>'                              '<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>'                          ''
+  # '<env:HOME>/ros-docker/AMR/myuser/log_core'                                                   'corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*'  ''
+  # '<env:HOME>/ros-docker/AMR/myuser/log_slam/record'                                            'coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>'                     ''
 
   # # ASE Us
   # # LiDAR Detection pallet log path
-  # '<env:HOME>/log_data/lidar_detection'                                                         'detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.dat>'
-  # '<env:HOME>/log_data/lidar_detection'                                                         'detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.pcd>'
-  # '<env:HOME>/log_data/lidar_detection/glog'                                                    'detect_pallet_node-DetectPallet-<date:%Y%m%d-%H%M%S>*'
-  # '<env:HOME>/coretronic_amr_navi_install/share/lidar_detection_pkg/config'                     'pallet.ini'
+  # '<env:HOME>/log_data/lidar_detection'                                                         'detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.dat>'      ''
+  # '<env:HOME>/log_data/lidar_detection'                                                         'detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.pcd>'      ''
+  # '<env:HOME>/log_data/lidar_detection/glog'                                                    'detect_pallet_node-DetectPallet-<date:%Y%m%d-%H%M%S>*'                  ''
+  # '<env:HOME>/coretronic_amr_navi_install/share/lidar_detection_pkg/config'                     'pallet.ini'                                                             ''
 )
 # KCOV_EXCL_STOP
 
@@ -1390,6 +1395,7 @@ file_finder() {
   local file_suffix="${1:-}"; shift
   local start_time="${1:?"${FUNCNAME[0]} need start time."}"; shift
   local end_time="${1:?"${FUNCNAME[0]} need end time."}"; shift
+  local use_mtime="${1:-false}"; shift || true
 
   log_verbose "${FUNCNAME[0]} input: Path=${folder_path}, Prefix=${file_prefix}"
 
@@ -1523,55 +1529,69 @@ file_finder() {
   else
     # --- Tolerance path: no exact match → check nearby files ---
     if [[ "${FILE_TIME_TOLERANCE_MIN:-0}" -le 0 ]]; then
-      log_warn "$(printf "${MSG_NO_FILES_IN_RANGE}" "${formatted_start_ts}" "${formatted_end_ts}")"
       REPLY_FILES=()
-      return 0
+    else
+      local tolerance_sec=$(( FILE_TIME_TOLERANCE_MIN * 60 ))
+      local start_epoch end_epoch
+      date_format "${start_time}" "%s"; start_epoch="${REPLY}"
+      date_format "${end_time}" "%s"; end_epoch="${REPLY}"
+
+      local -a selected=()
+      for i in "${!all_files[@]}"; do
+        ts="${file_timestamps[i]}"
+        local file_epoch
+        file_epoch=$(date -d "$(
+          local y="${ts:0:4}" m="${ts:4:2}" d="${ts:6:2}"
+          local rest="${ts:8}"
+          local H="${rest:0:2}" M="${rest:2:2}" S="${rest:4:2}"
+          printf '%s-%s-%s %s:%s:%s' "$y" "$m" "$d" "$H" "$M" "${S:-00}"
+        )" '+%s' 2>/dev/null) || continue
+
+        local diff_start diff_end min_diff
+        diff_start=$(( start_epoch - file_epoch ))
+        diff_end=$(( file_epoch - end_epoch ))
+        if [[ $diff_start -gt 0 ]]; then
+          min_diff=$diff_start
+        elif [[ $diff_end -gt 0 ]]; then
+          min_diff=$diff_end
+        else
+          min_diff=0
+        fi
+
+        if [[ $min_diff -le $tolerance_sec ]]; then
+          selected+=( "${all_files[${i}]}" )
+        fi
+      done
+      REPLY_FILES=("${selected[@]+"${selected[@]}"}")
     fi
-
-    local tolerance_sec=$(( FILE_TIME_TOLERANCE_MIN * 60 ))
-    local start_epoch end_epoch
-    date_format "${start_time}" "%s"; start_epoch="${REPLY}"
-    date_format "${end_time}" "%s"; end_epoch="${REPLY}"
-
-    local -a selected=()
-    for i in "${!all_files[@]}"; do
-      ts="${file_timestamps[i]}"
-      # Convert file timestamp to epoch using the same date format
-      local file_epoch
-      file_epoch=$(date -d "$(
-        # Reconstruct date string from formatted timestamp using format pattern
-        local y="${ts:0:4}" m="${ts:4:2}" d="${ts:6:2}"
-        local rest="${ts:8}"
-        local H="${rest:0:2}" M="${rest:2:2}" S="${rest:4:2}"
-        printf '%s-%s-%s %s:%s:%s' "$y" "$m" "$d" "$H" "$M" "${S:-00}"
-      )" '+%s' 2>/dev/null) || continue
-
-      local diff_start diff_end min_diff
-      diff_start=$(( start_epoch - file_epoch ))
-      diff_end=$(( file_epoch - end_epoch ))
-      # Distance = max(0, distance before start) or max(0, distance after end)
-      if [[ $diff_start -gt 0 ]]; then
-        min_diff=$diff_start
-      elif [[ $diff_end -gt 0 ]]; then
-        min_diff=$diff_end
-      else
-        min_diff=0  # within range (shouldn't happen since has_exact_match=false)
-      fi
-
-      if [[ $min_diff -le $tolerance_sec ]]; then
-        selected+=( "${all_files[${i}]}" )
-      fi
-    done
-
-    if [[ ${#selected[@]} -eq 0 ]]; then
-      log_warn "$(printf "${MSG_NO_FILES_IN_RANGE}" "${formatted_start_ts}" "${formatted_end_ts}")"
-      REPLY_FILES=()
-      return 0
-    fi
-    REPLY_FILES=("${selected[@]}")
   fi
 
-  log_info "$(printf "${MSG_FILES_SELECTED}" "${#REPLY_FILES[@]}" "${#all_files[@]}")"
+  # [6] mtime fallback: check unselected files by modification time
+  if [[ "${use_mtime}" == "true" && ${#raw_files[@]} -gt 0 ]]; then
+    local mtime_start_epoch mtime_end_epoch
+    date_format "${start_time}" "%s"; mtime_start_epoch="${REPLY}"
+    date_format "${end_time}" "%s"; mtime_end_epoch="${REPLY}"
+
+    local -A selected_set=()
+    local f
+    for f in "${REPLY_FILES[@]+"${REPLY_FILES[@]}"}"; do
+      selected_set["${f}"]=1
+    done
+
+    for f in "${raw_files[@]}"; do
+      [[ -n "${selected_set["${f}"]+set}" ]] && continue
+
+      local file_mtime
+      file_mtime=$(execute_cmd "stat -c %Y $(printf '%q' "${f}")") || continue
+      if [[ "${file_mtime}" -ge "${mtime_start_epoch}" && "${file_mtime}" -le "${mtime_end_epoch}" ]]; then
+        REPLY_FILES+=("${f}")
+      fi
+    done
+  fi
+
+  if [[ "${#REPLY_FILES[@]}" -gt 0 ]]; then
+    log_info "$(printf "${MSG_FILES_SELECTED}" "${#REPLY_FILES[@]}" "${#raw_files[@]}")"
+  fi
 }
 
 # Creates the output folder.
@@ -1673,12 +1693,14 @@ save_script_data() {
   remote_cmd+="printf '\nLOG_PATHS:\n' >> ${script_log}; "
 
   local lp_i
-  for (( lp_i=0; lp_i<${#LOG_PATHS[@]}; lp_i+=2 )); do
+  for (( lp_i=0; lp_i<${#LOG_PATHS[@]}; lp_i+=3 )); do
     local lp_path="${LOG_PATHS[lp_i]}"
     local lp_pattern="${LOG_PATHS[lp_i+1]}"
+    local lp_flags="${LOG_PATHS[lp_i+2]}"
     local escaped_path="${lp_path//\'/\'\\\'\'}"
     local escaped_pattern="${lp_pattern//\'/\'\\\'\'}"
-    remote_cmd+="printf '  %s :: %s\n' '${escaped_path}' '${escaped_pattern}' >> ${script_log}; "
+    local escaped_flags="${lp_flags//\'/\'\\\'\'}"
+    remote_cmd+="printf '  %s :: %s :: %s\n' '${escaped_path}' '${escaped_pattern}' '${escaped_flags}' >> ${script_log}; "
   done
 
   log_info "-------------------------------"
@@ -1876,15 +1898,18 @@ file_sender() {
 
 # Dry-run variant of get_log: finds and lists files without copying.
 get_log_dry_run() {
-  local log_path="" log_pattern=""
-  local total=$(( ${#LOG_PATHS[@]} / 2 ))
+  local log_path="" log_pattern="" log_flags=""
+  local total=$(( ${#LOG_PATHS[@]} / 3 ))
   local idx=0
   local grand_total=0
   local i
 
-  for (( i=0; i<${#LOG_PATHS[@]}; i+=2 )); do
+  for (( i=0; i<${#LOG_PATHS[@]}; i+=3 )); do
     log_path="${LOG_PATHS[i]}"
     log_pattern="${LOG_PATHS[i+1]}"
+    log_flags="${LOG_PATHS[i+2]}"
+    local use_mtime=false
+    [[ "${log_flags}" == *"<mtime>"* ]] && use_mtime=true
     (( ++idx ))
 
     log_info "$(printf "${MSG_PROCESSING}" "${idx}" "${total}" "${log_path}" "${log_pattern}")"
@@ -1910,7 +1935,7 @@ get_log_dry_run() {
         continue
       fi
 
-      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}"
+      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_mtime}"
       local -a files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
 
       if [[ "${#files[@]}" -gt 0 ]]; then
@@ -1937,14 +1962,17 @@ get_log_dry_run() {
 # This function iterates over the `LOG_PATHS` array, finds the log files, and
 # copies them to the output folder.
 get_log() {
-  local log_path="" log_pattern=""
-  local total=$(( ${#LOG_PATHS[@]} / 2 ))
+  local log_path="" log_pattern="" log_flags=""
+  local total=$(( ${#LOG_PATHS[@]} / 3 ))
   local idx=0
   local i
 
-  for (( i=0; i<${#LOG_PATHS[@]}; i+=2 )); do
+  for (( i=0; i<${#LOG_PATHS[@]}; i+=3 )); do
     log_path="${LOG_PATHS[i]}"
     log_pattern="${LOG_PATHS[i+1]}"
+    log_flags="${LOG_PATHS[i+2]}"
+    local use_mtime=false
+    [[ "${log_flags}" == *"<mtime>"* ]] && use_mtime=true
     (( ++idx ))
 
     log_info "$(printf "${MSG_PROCESSING}" "${idx}" "${total}" "${log_path}" "${log_pattern}")"
@@ -1962,7 +1990,7 @@ get_log() {
         continue
       fi
 
-      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}"
+      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_mtime}"
       if [[ "${#REPLY_FILES[@]}" -gt 0 ]]; then
         all_found_files+=("${REPLY_FILES[@]}")
         file_copier "${rpath}" "${REPLY_FILES[@]}"
