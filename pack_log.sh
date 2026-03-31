@@ -263,6 +263,7 @@ load_lang() {
       MSG_STEP4='=== 步驟 4/5: 收集 log 檔案 ==='
       MSG_STEP5_TRANSFER='=== 步驟 5/5: 傳輸檔案到本機 (%s) ==='
       MSG_STEP5_LOCAL='=== 步驟 5/5: 檔案已在本機收集完成 ==='
+      MSG_OUTPUT_FOLDER='輸出資料夾: %s'
       MSG_SUCCESS='打包 log 完成。'
       MSG_DRY_RUN_BANNER='*** 模擬執行模式 — 不會複製或傳輸任何檔案 ***'
       MSG_DRY_RUN_RESOLVED='[模擬] 解析後路徑：%s'
@@ -1461,7 +1462,7 @@ file_finder() {
   for i in "${!raw_files[@]}"; do
     local filename="${raw_files[${i}]##*/}"
     if [[ "${filename}" =~ (${regex_pattern}) ]]; then
-      all_files+=("${raw_files[i]}")
+      all_files+=("${raw_files[${i}]}")
       file_timestamps+=("${BASH_REMATCH[1]}")
     fi
   done
@@ -2066,7 +2067,6 @@ main() {
     if [[ "${HOST}" != "local" ]]; then
       log_info "$(printf "${MSG_STEP5_TRANSFER}" "${GET_LOG_TOOL}")" # KCOV_EXCL_LINE
       # KCOV_EXCL_START — file_sender only runs in remote integration tests
-      local _transfer_ok=false
       while ! file_sender; do
         local choice=""
         log_warn "${MSG_TRANSFER_CHOICE}"

@@ -151,7 +151,7 @@ declare -a LOG_PATHS=(
 
 ```text
 .
-├── pack_log.sh                          # メインスクリプト（約 2120 行）
+├── pack_log.sh                          # メインスクリプト
 ├── ci.sh                                # CI エントリポイント（unit / integration / all）
 ├── docker-compose.yaml                  # Docker サービス（ci + sshd + integration）
 ├── .codecov.yaml                        # Codecov 設定
@@ -190,7 +190,7 @@ declare -a LOG_PATHS=(
 
 ## テスト
 
-330 テスト（279 ユニット + 21 ローカル結合 + 30 リモート結合）、**100% コードカバレッジ**。詳細は **[TEST.ja.md](../test/TEST.ja.md)** を参照。
+330 テスト（279 ユニット + 21 ローカル結合 + 30 リモート結合）、**100% コードカバレッジ**。詳細は **[TEST.md](../test/TEST.md)** を参照。
 
 ```bash
 ./ci.sh              # 全テスト（Docker が必要）

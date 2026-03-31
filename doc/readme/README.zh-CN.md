@@ -151,7 +151,7 @@ declare -a LOG_PATHS=(
 
 ```text
 .
-├── pack_log.sh                          # 主脚本（约 2120 行）
+├── pack_log.sh                          # 主脚本
 ├── ci.sh                                # CI 入口（unit / integration / all）
 ├── docker-compose.yaml                  # Docker 服务（ci + sshd + integration）
 ├── .codecov.yaml                        # Codecov 配置
@@ -190,7 +190,7 @@ declare -a LOG_PATHS=(
 
 ## 测试
 
-330 个测试（277 单元 + 21 本机集成 + 30 远程集成），**100% 代码覆盖率**。详见 **[TEST.zh-CN.md](../test/TEST.zh-CN.md)**。
+330 个测试（279 单元 + 21 本机集成 + 30 远程集成），**100% 代码覆盖率**。详见 **[TEST.md](../test/TEST.md)**。
 
 ```bash
 ./ci.sh              # 全部测试（需要 Docker）

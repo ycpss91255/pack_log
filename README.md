@@ -212,7 +212,7 @@ declare -a LOG_PATHS=(
 
 ```text
 .
-├── pack_log.sh                          # Main script (~2120 lines)
+├── pack_log.sh                          # Main script
 ├── ci.sh                                # CI entry point (unit / integration / all)
 ├── docker-compose.yaml                  # Docker services (ci + sshd + integration)
 ├── .codecov.yaml                        # Codecov configuration

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 概述
 
-`pack_log.sh` 是一個單檔 Bash 腳本（約 2120 行），用於透過 SSH 連線到遠端主機，依照指定時間範圍尋找 log 檔案，複製到遠端暫存資料夾後，再用 rsync/scp/sftp 傳回本機。支援 i18n（en/zh-TW/zh-CN/ja），所有翻譯內嵌於腳本中（無外部語言檔）。
+`pack_log.sh` 是一個單檔 Bash 腳本，用於透過 SSH 連線到遠端主機，依照指定時間範圍尋找 log 檔案，複製到遠端暫存資料夾後，再用 rsync/scp/sftp 傳回本機。支援 i18n（en/zh-TW/zh-CN/ja），所有翻譯內嵌於腳本中（無外部語言檔）。
 
 ## 執行方式
 
