@@ -147,9 +147,54 @@ declare -a HOSTS=(
 # Log paths: consecutive triplets of (PATH, FILE_PATTERN, FLAGS)
 declare -a LOG_PATHS=(
   # PATH                                    FILE_PATTERN                              FLAGS
-  '<env:HOME>/logs'                         'app_<date:%Y%m%d%H%M%S>*<suffix:.log>'  ''
-  '<env:HOME>/log_core'                     'corenavi_auto...<date:%Y%m%d-%H%M%S>*'  '<mtime>'
   '<env:HOME>/config'                       'node_config.yaml'                        ''
+  '<env:HOME>/log_core'                     'app.<cmd:hostname>.log.<date:%Y%m%d-%H%M%S>*'  '<mtime>'
+)
+```
+
+### LOG_PATHS Format
+
+Each entry is three elements: `"path"  "file_pattern"  "flags"`
+
+**Tokens** (resolved at runtime on the target host):
+
+| Token | Description | Example |
+|-------|-------------|---------|
+| `<env:VAR>` | Environment variable | `<env:HOME>/logs` |
+| `<cmd:command>` | Shell command output | `<cmd:hostname>` |
+| `<date:format>` | strftime date format for time filtering | `<date:%Y%m%d-%H%M%S>` |
+| `<suffix:ext>` | File extension filter | `<suffix:.log>` |
+
+**Flags** (third element):
+
+| Flag | Description |
+|------|-------------|
+| `""` | No special flags (default) |
+| `"<mtime>"` | Also match by file modification time — for logs created once but written to continuously until node restart |
+
+**Examples**:
+
+```bash
+declare -a LOG_PATHS=(
+  # PATH                                         FILE_PATTERN                                                    FLAGS
+
+  # Config file (no date token, always collected)
+  "<env:HOME>/core_storage"                       "node_config.yaml"                                              ""
+
+  # Date-filtered files with suffix
+  "<env:HOME>/log_data/detection"                 "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"                ""
+
+  # Epoch-based timestamp
+  "<env:HOME>/log_slam"                           "coreslam_2D_<date:%s>*<suffix:.log>"                           ""
+
+  # Cross-date folder (path contains <date:>, expands all dates in range)
+  "<env:HOME>/log/AvoidStop_<date:%Y-%m-%d>"      "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"                ""
+
+  # Continuous log with <mtime> (created once, written until restart)
+  "<env:HOME>/log_core"                           "app.<cmd:hostname>.<env:USER>.log.<date:%Y%m%d-%H%M%S>*"      "<mtime>"
+
+  # Using shell variables (defined at script top, expanded at source time)
+  "${MY_LOG_PATH}"                                "app_<date:%Y%m%d%H%M%S>*<suffix:.log>"                        ""
 )
 ```
 

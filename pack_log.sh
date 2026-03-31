@@ -56,44 +56,11 @@ declare -a HOSTS=(
 # KCOV_EXCL_STOP
 
 # Log paths format: consecutive triplets of (PATH, FILE_PATTERN, FLAGS).
-#
-# Each entry is three elements:
-#   "path"  "file_pattern"  "flags"
-#
-# Tokens (resolved at runtime on the target host):
-#   <env:VAR>       — environment variable    e.g. <env:HOME>/logs
-#   <cmd:command>   — shell command output     e.g. <cmd:hostname>
-#   <date:format>   — strftime date format     e.g. <date:%Y%m%d-%H%M%S>
-#   <suffix:ext>    — file extension filter    e.g. <suffix:.log>
-#
-# Flags (third element):
-#   ""        — no special flags (default)
-#   "<mtime>" — also match files by modification time, for logs that are
-#               created once but written to continuously until node restart
+# See README.md for full token reference and examples.
 #
 # Examples:
-#   # PATH                              FILE_PATTERN                                         FLAGS
-#
-#   # All files in a folder
-#   "/home/user/logs"                   "*"                                                  ""
-#
-#   # Config file (no date token, always collected)
-#   "<env:HOME>/core_storage"           "node_config.yaml"                                   ""
-#
-#   # Date-filtered files with suffix
-#   "<env:HOME>/log_data/detection"     "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"    ""
-#
-#   # Epoch-based timestamp
-#   "<env:HOME>/log_slam"               "coreslam_2D_<date:%s>*<suffix:.log>"                ""
-#
-#   # Cross-date folder (path contains <date:>, expands all dates in range)
-#   "<env:HOME>/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"  ""
-#
-#   # Continuous log with <mtime> (created once, written until restart)
-#   "<env:HOME>/log_core"               "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
-#
-#   # Using shell variables (defined above, expanded at source time)
-#   "${COREROBOT_DOCKER_LOG_CORE}"      "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+#   "<env:HOME>/config"                "node_config.yaml"                      ""
+#   "<env:HOME>/log_core"              "app.<cmd:hostname>.log.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
 # KCOV_EXCL_START
 
 # Coretronic path shortcuts (non-Docker)
