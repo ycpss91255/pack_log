@@ -175,6 +175,41 @@ setup() {
   [[ "${LANG_CODE}" == "en" ]]
 }
 
+# --- locale auto-detection ---
+
+@test "option_parser: auto-detects zh-TW from LANG environment" {
+    run env -u LD_PRELOAD -u BASH_ENV LANG=zh_TW.UTF-8 bash -c '
+        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
+        set +u +o pipefail
+        LANG_CODE=""
+        main --help
+    '
+    assert_success
+    assert_output --partial "選項"
+}
+
+@test "option_parser: auto-detects ja from LANG environment" {
+    run env -u LD_PRELOAD -u BASH_ENV LANG=ja_JP.UTF-8 bash -c '
+        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
+        set +u +o pipefail
+        LANG_CODE=""
+        main --help
+    '
+    assert_success
+    assert_output --partial "オプション"
+}
+
+@test "option_parser: defaults to English for unknown LANG" {
+    run env -u LD_PRELOAD -u BASH_ENV LANG=fr_FR.UTF-8 bash -c '
+        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
+        set +u +o pipefail
+        LANG_CODE=""
+        main --help
+    '
+    assert_success
+    assert_output --partial "Options"
+}
+
 # --- --dry-run ---
 
 @test "option_parser: --dry-run sets DRY_RUN to true" {

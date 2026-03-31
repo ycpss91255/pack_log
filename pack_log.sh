@@ -1718,6 +1718,10 @@ save_script_data() {
 
   remote_cmd+="printf '\nLOG_PATHS:\n' >> ${script_log}; "
 
+  if (( ${#LOG_PATHS[@]} % 3 != 0 )); then
+    log_warn "LOG_PATHS has ${#LOG_PATHS[@]} elements (not a multiple of 3). Check configuration."
+  fi
+
   local lp_i
   for (( lp_i=0; lp_i<${#LOG_PATHS[@]}; lp_i+=3 )); do
     local lp_path="${LOG_PATHS[lp_i]}"
@@ -1924,6 +1928,10 @@ file_sender() {
 
 # Dry-run variant of get_log: finds and lists files without copying.
 get_log_dry_run() {
+  if (( ${#LOG_PATHS[@]} % 3 != 0 )); then
+    log_warn "LOG_PATHS has ${#LOG_PATHS[@]} elements (not a multiple of 3). Check configuration."
+  fi
+
   local log_path="" log_pattern="" log_flags=""
   local total=$(( ${#LOG_PATHS[@]} / 3 ))
   local idx=0
@@ -1988,6 +1996,10 @@ get_log_dry_run() {
 # This function iterates over the `LOG_PATHS` array, finds the log files, and
 # copies them to the output folder.
 get_log() {
+  if (( ${#LOG_PATHS[@]} % 3 != 0 )); then
+    log_warn "LOG_PATHS has ${#LOG_PATHS[@]} elements (not a multiple of 3). Check configuration."
+  fi
+
   local log_path="" log_pattern="" log_flags=""
   local total=$(( ${#LOG_PATHS[@]} / 3 ))
   local idx=0

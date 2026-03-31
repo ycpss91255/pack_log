@@ -610,3 +610,20 @@ setup() {
     assert_failure
     assert_output --partial "No file transfer tools"
 }
+
+# =============================================================================
+# get_log: LOG_PATHS element count validation
+# =============================================================================
+
+@test "get_log: warns when LOG_PATHS element count is not multiple of 3" {
+    SAVE_FOLDER="${TEST_DIR}/bad_logpaths"
+    mkdir -p "${SAVE_FOLDER}"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
+
+    # 4 elements = not multiple of 3
+    LOG_PATHS=("${TEST_DIR}" "*.txt" "" "${TEST_DIR}")
+
+    run get_log
+    assert_output --partial "LOG_PATHS"
+}

@@ -678,3 +678,23 @@ teardown() {
     # rec files
     [[ -n "$(find "${out_dirs[0]}" -name "*.rec" \( -type f -o -type l \))" ]]
 }
+
+# ---------------------------------------------------------------------------
+# 31. mtime flag includes continuous log with old filename but recent mtime
+# ---------------------------------------------------------------------------
+
+@test "remote: mtime flag includes file with old filename but recent mtime" {
+    LOG_PATHS=(
+        "<env:HOME>/ros-docker/AMR/myuser/log_core"  "corenavi_auto.<cmd:hostname>.<cmd:whoami>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+    )
+    run main -u "${INTEGRATION_HOST}" \
+        -s 260115-0000 -e 260115-2359 \
+        -o "${OUTPUT_DIR}/mtime_remote"
+    assert_success
+
+    local -a out_dirs=("${OUTPUT_DIR}"/mtime_remote_*)
+    # Should find the old-named file because its mtime is in range
+    local count
+    count=$(find "${out_dirs[0]}" -name "*.999" \( -type f -o -type l \) | wc -l)
+    [[ "${count}" -ge 1 ]]
+}

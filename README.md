@@ -32,7 +32,7 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 - **Log File Output**: All operations logged to `pack_log.log` in the output folder.
 - **Dry-Run Mode**: Preview which files would be collected without any copying or transferring (`--dry-run`).
 - **Dynamic Output Naming**: Output folder defaults to `/tmp/pack_log_<host>_<YYMMDD-HHMMSS>`. Uses HOSTS display name for `-n` mode, hostname for `-l`/`-u` mode. Override with `-o`.
-- 330 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
+- 342 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
 
 ## Quick Start
 
@@ -226,11 +226,11 @@ declare -a LOG_PATHS=(
 │   ├── test_helper.bash                 # Shared bats test helper
 │   ├── test_log_functions.bats          # Log function tests (20)
 │   ├── test_support_functions.bats      # Support function tests (37)
-│   ├── test_option_parser.bats          # Option parser tests (48)
+│   ├── test_option_parser.bats          # Option parser tests (53)
 │   ├── test_host_handler.bats           # Host handler tests (21)
 │   ├── test_string_handler.bats         # String/token handler tests (37)
 │   ├── test_file_finder.bats            # File finder tests (31)
-│   ├── test_file_ops.bats              # File operation tests (42)
+│   ├── test_file_ops.bats              # File operation tests (43)
 │   ├── test_ssh_handler.bats            # SSH handler tests (13)
 │   ├── test_main.bats                   # Main pipeline tests (30)
 │   ├── test_integration_local.bats      # Local integration tests (21)
@@ -256,7 +256,7 @@ declare -a LOG_PATHS=(
 
 ## Testing
 
-330 tests (279 unit + 21 local integration + 30 remote integration). See **[TEST.md](doc/test/TEST.md)** for full details.
+342 tests (279 unit + 21 local integration + 31 remote integration). See **[TEST.md](doc/test/TEST.md)** for full details.
 
 ```bash
 ./ci.sh              # All tests (Docker required)

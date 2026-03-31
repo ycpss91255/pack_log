@@ -71,4 +71,8 @@ echo "avoid 15" > "${BASE}/log/AvoidStop_2026-01-15/2026-01-15-10.00.00_111_avoi
 echo "avoid 15b" > "${BASE}/log/AvoidStop_2026-01-15/2026-01-15-14.00.00_222_avoid.png"
 echo "avoid 16" > "${BASE}/log/AvoidStop_2026-01-16/2026-01-16-09.00.00_333_avoid.png"
 
+# mtime test: file with old filename but recent mtime (simulates continuous log)
+echo "continuous log" > "${BASE}/log_core/corenavi_auto.test-sshd.testuser.log.INFO.20250101-120000.999"
+touch -t 202601151200 "${BASE}/log_core/corenavi_auto.test-sshd.testuser.log.INFO.20250101-120000.999"
+
 echo "Remote log setup complete: $(find "${BASE}" \( -type f -o -type l \) | wc -l) files created."
