@@ -218,3 +218,60 @@ setup() {
     load_lang
     [[ "${MSG_SUCCESS}" == "Packaging log completed successfully." ]]
 }
+
+# --- i18n completeness: all MSGs defined and format args consistent ---
+
+@test "load_lang: all languages define the same MSG variables" {
+    # Collect MSG names from English
+    LANG_CODE="en"
+    load_lang
+    local -a en_msgs=()
+    local var
+    for var in $(compgen -v MSG_); do
+        en_msgs+=("${var}")
+    done
+
+    # Check each language has the same set
+    for lang in zh-TW zh-CN ja; do
+        LANG_CODE="${lang}"
+        load_lang
+        for var in "${en_msgs[@]}"; do
+            [[ -n "${!var+set}" ]] || { echo "MISSING: ${var} in ${lang}"; return 1; }
+        done
+    done
+
+    # Restore
+    LANG_CODE="en"
+    load_lang
+}
+
+@test "load_lang: format arg counts match across all languages" {
+    # Get English format arg counts
+    LANG_CODE="en"
+    load_lang
+    local -A en_fmt_counts=()
+    local var val count
+    for var in $(compgen -v MSG_); do
+        val="${!var}"
+        count=$(echo "${val}" | grep -oP '%[sd]' | wc -l)
+        en_fmt_counts["${var}"]="${count}"
+    done
+
+    # Compare each language
+    for lang in zh-TW zh-CN ja; do
+        LANG_CODE="${lang}"
+        load_lang
+        for var in "${!en_fmt_counts[@]}"; do
+            val="${!var}"
+            count=$(echo "${val}" | grep -oP '%[sd]' | wc -l)
+            if [[ "${count}" -ne "${en_fmt_counts["${var}"]}" ]]; then
+                echo "MISMATCH: ${var} in ${lang}: expected ${en_fmt_counts["${var}"]} format args, got ${count}"
+                return 1
+            fi
+        done
+    done
+
+    # Restore
+    LANG_CODE="en"
+    load_lang
+}
