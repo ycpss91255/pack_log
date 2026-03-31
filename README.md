@@ -201,11 +201,10 @@ declare -a LOG_PATHS=(
 │   │   ├── README.zh-TW.md
 │   │   ├── README.zh-CN.md
 │   │   └── README.ja.md
-│   └── test/                            # Test documentation
-│       ├── TEST.md                      # English
-│       ├── TEST.zh-TW.md
-│       ├── TEST.zh-CN.md
-│       └── TEST.ja.md
+│   ├── test/
+│   │   └── TEST.md                      # Test item list
+│   └── changelog/
+│       └── CHANGELOG.md                 # Version history
 │
 └── bash_test_helper/                    # Reference submodule
 ```
