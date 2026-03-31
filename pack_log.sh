@@ -56,7 +56,6 @@ declare -a HOSTS=(
 # KCOV_EXCL_STOP
 
 # Log paths format: consecutive triplets of (PATH, FILE_PATTERN, FLAGS).
-# See README.md for full token reference and examples.
 #
 # Examples:
 #   "<env:HOME>/config"                "node_config.yaml"                      ""
