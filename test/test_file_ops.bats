@@ -221,6 +221,20 @@ setup() {
     assert_output --partial "MB"
 }
 
+@test "file_sender: proceeds when user confirms large transfer with Enter" {
+    GET_LOG_TOOL="rsync"
+    SAVE_FOLDER="${TEST_DIR}/large_yes"
+    mkdir -p "${SAVE_FOLDER}"
+    dd if=/dev/zero of="${SAVE_FOLDER}/bigfile" bs=1M count=2 2>/dev/null
+    TRANSFER_SIZE_WARN_MB=1
+
+    # User presses Enter (empty = yes, proceed)
+    run file_sender <<< ""
+    # Should proceed past the prompt (will fail at rsync since HOST=local, but that's OK)
+    # The key is it does NOT show "cancelled"
+    refute_output --partial "cancelled"
+}
+
 @test "file_sender: skips prompt when size below threshold" {
     GET_LOG_TOOL="rsync"
     SAVE_FOLDER="${TEST_DIR}/small_folder"

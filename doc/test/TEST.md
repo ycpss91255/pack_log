@@ -1,6 +1,6 @@
 # Tests
 
-342 tests (280 unit + 21 local integration + 31 remote integration)
+344 tests (282 unit + 21 local integration + 31 remote integration)
 
 ## Unit Tests
 
@@ -11,8 +11,8 @@
 | `test_option_parser.bats` | 53 | CLI argument parsing, `SAVE_FOLDER` default, `--dry-run`, `--extra-verbose` |
 | `test_host_handler.bats` | 21 | Host resolution (`-n`, `-u`, `-l`), interactive mode |
 | `test_string_handler.bats` | 37 | Token parsing (`<env:>`, `<cmd:>`, `<date:>`, `<suffix:>`), path splitting |
-| `test_file_finder.bats` | 31 | Date filtering, boundary expansion, time tolerance, symlink, mtime, epoch support |
-| `test_file_ops.bats` | 43 | `folder_creator`, `file_copier`, `file_sender`, `get_log`, `file_cleaner` |
+| `test_file_finder.bats` | 32 | Date filtering, boundary expansion, time tolerance, symlink, mtime, epoch support |
+| `test_file_ops.bats` | 44 | `folder_creator`, `file_copier`, `file_sender`, `get_log`, `file_cleaner` |
 | `test_ssh_handler.bats` | 13 | SSH key creation, key copy, host key rotation, retry logic |
 | `test_main.bats` | 30 | Full pipeline (local/remote), dry-run, transfer failure prompt |
 

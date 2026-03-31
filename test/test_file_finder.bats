@@ -384,6 +384,20 @@ setup() {
     assert_equal "${#REPLY_FILES[@]}" 1
 }
 
+@test "file_finder: epoch format includes nearby file BEFORE range within tolerance" {
+    # Epoch for 2026-01-15 10:57:00 (3 min before range start)
+    local epoch_near
+    epoch_near=$(date -d "2026-01-15 10:57:00" "+%s")
+    touch "${TEST_LOG_DIR}/coreslam_2D_${epoch_near}.log"
+
+    FILE_TIME_TOLERANCE_MIN=30
+    file_finder "${TEST_LOG_DIR}" \
+        "coreslam_2D_<date:%s>*" ".log" \
+        "260115-1100" "260115-1200" "false"
+
+    assert_equal "${#REPLY_FILES[@]}" 1
+}
+
 @test "file_finder: epoch format excludes file beyond tolerance" {
     # Epoch for 2026-01-15 14:00:00 (2h after range end)
     local epoch_far
