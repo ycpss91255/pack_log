@@ -102,35 +102,35 @@ declare -a LOG_PATHS=(
   "<env:HOME>/Desktop/pack_log/log/avoid/log_slam/record"                "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"               ""
 
 
-  # Panasonic — LiDAR Detection shelf log path (docker)
-  "${COREROBOT_DOCKER_LOG_CORE}"                      "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
-  "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"         ""
-  "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"                          ""
-  "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection/glog" "detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"                     ""
-  "${COREROBOT_DOCKER_LOG_SLAM}"                      "coreslam_2D_<date:%s>*<suffix:.log>"                                     ""
-  "${COREROBOT_DOCKER_LOG_SLAM}/record"               "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
-  "${COREROBOT_DOCKER_STORAGE}"                       "node_config.yaml"                                                        ""
-  "${COREROBOT_DOCKER_STORAGE}"                       "shelf.ini"                                                               ""
-  "${COREROBOT_DOCKER_STORAGE}"                       "external_param.launch"                                                   ""
-  "${COREROBOT_DOCKER_STORAGE}"                       "run_config.yaml"                                                         ""
+  # # Panasonic — LiDAR Detection shelf log path (docker)
+  # "${COREROBOT_DOCKER_LOG_CORE}"                      "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"         ""
+  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"                          ""
+  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection/glog" "detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"                     ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}"                      "coreslam_2D_<date:%s>*<suffix:.log>"                                     ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}/record"               "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
+  # "${COREROBOT_DOCKER_STORAGE}"                       "node_config.yaml"                                                        ""
+  # "${COREROBOT_DOCKER_STORAGE}"                       "shelf.ini"                                                               ""
+  # "${COREROBOT_DOCKER_STORAGE}"                       "external_param.launch"                                                   ""
+  # "${COREROBOT_DOCKER_STORAGE}"                       "run_config.yaml"                                                         ""
 
-  # 2D LiDAR SLAM log path (docker)
-  "${COREROBOT_DOCKER_LOG_CORE}"        "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
-  "${COREROBOT_DOCKER_LOG_SLAM}"        "coreslam_2D_<date:%s>*<suffix:.log>"                                     ""
-  "${COREROBOT_DOCKER_LOG_SLAM}/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
+  # # 2D LiDAR SLAM log path (docker)
+  # "${COREROBOT_DOCKER_LOG_CORE}"        "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+  # "${COREROBOT_DOCKER_LOG_SLAM}"        "coreslam_2D_<date:%s>*<suffix:.log>"                                     ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
 
-  # 2D LiDAR AvoidStop log path (docker)
-  "${COREROBOT_DOCKER_STORAGE}/mapfile/default"  "uimap.png"                                                              ""
-  "${COREROBOT_DOCKER_STORAGE}/mapfile/default"  "uimap.yaml"                                                             ""
-  "${COREROBOT_DOCKER_LOG}/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"                    ""
-  "${COREROBOT_DOCKER_LOG_CORE}"                 "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
-  "${COREROBOT_DOCKER_LOG_SLAM}/record"          "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
+  # # 2D LiDAR AvoidStop log path (docker)
+  # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"  "uimap.png"                                                              ""
+  # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"  "uimap.yaml"                                                             ""
+  # "${COREROBOT_DOCKER_LOG}/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"                    ""
+  # "${COREROBOT_DOCKER_LOG_CORE}"                 "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+  # "${COREROBOT_DOCKER_LOG_SLAM}/record"          "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
 
-  # ASE Us — LiDAR Detection pallet log path
-  "${COREROBOT_LOG_DATA}/lidar_detection"                                          "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.dat>"  ""
-  "${COREROBOT_LOG_DATA}/lidar_detection"                                          "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"  ""
-  "${COREROBOT_LOG_DATA}/lidar_detection/glog"                                     "detect_pallet_node-DetectPallet-<date:%Y%m%d-%H%M%S>*"              ""
-  "${COREROBOT_CORETRONIC_AMR_NAVI_INSTALL}/share/lidar_detection_pkg/config"      "pallet.ini"                                                        ""
+  # # ASE Us — LiDAR Detection pallet log path
+  # "${COREROBOT_LOG_DATA}/lidar_detection"                                          "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.dat>"  ""
+  # "${COREROBOT_LOG_DATA}/lidar_detection"                                          "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"  ""
+  # "${COREROBOT_LOG_DATA}/lidar_detection/glog"                                     "detect_pallet_node-DetectPallet-<date:%Y%m%d-%H%M%S>*"              ""
+  # "${COREROBOT_CORETRONIC_AMR_NAVI_INSTALL}/share/lidar_detection_pkg/config"      "pallet.ini"                                                        ""
 )
 # KCOV_EXCL_STOP
 
@@ -267,7 +267,7 @@ load_lang() {
       MSG_EMPTY_PATH='[%d/%d] 解析後路徑為空，跳過。'
       MSG_PROCESSING='[%d/%d] 處理中: %s :: %s'
       MSG_NO_FILES_FOUND='[%d/%d] 找不到檔案。'
-      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s :: %s%s'
+      MSG_RESOLVED_PATH='[%d/%d] 解析結果: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 個檔案，複製中...'
       MSG_STEP1='=== 步驟 1/5: 解析目標主機 ==='
       MSG_STEP2='=== 步驟 2/5: 驗證時間範圍 ==='
@@ -367,7 +367,7 @@ load_lang() {
       MSG_EMPTY_PATH='[%d/%d] 解析后路径为空，跳过。'
       MSG_PROCESSING='[%d/%d] 处理中: %s :: %s'
       MSG_NO_FILES_FOUND='[%d/%d] 未找到文件。'
-      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s :: %s%s'
+      MSG_RESOLVED_PATH='[%d/%d] 解析结果: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 个文件，复制中...'
       MSG_STEP1='=== 步骤 1/5: 解析目标主机 ==='
       MSG_STEP2='=== 步骤 2/5: 验证时间范围 ==='
@@ -467,7 +467,7 @@ load_lang() {
       MSG_EMPTY_PATH='[%d/%d] 解決済みパスが空です。スキップします。'
       MSG_PROCESSING='[%d/%d] 処理中: %s :: %s'
       MSG_NO_FILES_FOUND='[%d/%d] ファイルが見つかりません。'
-      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s :: %s%s'
+      MSG_RESOLVED_PATH='[%d/%d] 解決済み: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] %d 個のファイルが見つかりました。コピー中...'
       MSG_STEP1='=== ステップ 1/5: ターゲットホストの解決 ==='
       MSG_STEP2='=== ステップ 2/5: 時間範囲の検証 ==='

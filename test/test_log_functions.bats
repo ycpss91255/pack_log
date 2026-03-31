@@ -186,6 +186,33 @@ setup() {
     load_lang
 }
 
+@test "load_lang: MSG_RESOLVED_PATH is translated for zh-TW" {
+    LANG_CODE="zh-TW"
+    load_lang
+    [[ "${MSG_RESOLVED_PATH}" == *"解析結果"* ]]
+    # Restore
+    LANG_CODE="en"
+    load_lang
+}
+
+@test "load_lang: MSG_RESOLVED_PATH is translated for zh-CN" {
+    LANG_CODE="zh-CN"
+    load_lang
+    [[ "${MSG_RESOLVED_PATH}" == *"解析结果"* ]]
+    # Restore
+    LANG_CODE="en"
+    load_lang
+}
+
+@test "load_lang: MSG_RESOLVED_PATH is translated for ja" {
+    LANG_CODE="ja"
+    load_lang
+    [[ "${MSG_RESOLVED_PATH}" == *"解決済み"* ]]
+    # Restore
+    LANG_CODE="en"
+    load_lang
+}
+
 @test "load_lang: falls back to English for unknown language" {
     LANG_CODE="xx-UNKNOWN"
     load_lang
