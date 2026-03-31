@@ -62,18 +62,26 @@ bats test/test_option_parser.bats -f "parses -n flag"
 3. **`host_handler`** — 解析目標主機（編號 → HOSTS 陣列查詢、user@host、或 "local"）
 4. **`time_handler`** — 驗證起訖時間格式（`YYMMDD-HHMM`），確認 START < END
 5. **`ssh_handler`** — 建立 SSH 連線，自動建立/複製金鑰（最多重試 3 次）
-6. **`folder_creator`** — 建立暫存資料夾（`<script_name>_<host_label>_<YYMMDD-HHMMSS>`，`-n` 用 HOSTS 顯示名，其他用 hostname）
+6. **`folder_creator`** — 在 `/tmp` 下建立暫存資料夾（`/tmp/<script_name>_<host_label>_<YYMMDD-HHMMSS>`，`-n` 用 HOSTS 顯示名，其他用 hostname）
 7. **`init_log_file`** — 開啟 log 檔案寫入（`pack_log.log`）
 8. **`get_log`** — 遍歷 `LOG_PATHS`，解析特殊 token，依時間範圍篩選檔案並複製到暫存資料夾
 9. **`file_sender`** — 透過 rsync/scp/sftp 將暫存資料夾傳回本機（失敗後互動式選擇 retry/keep/clean）
 
-### LOG_PATHS 特殊 Token 系統
+### LOG_PATHS 格式
 
-Log 路徑字串支援在執行時對遠端主機解析的 token：
+三欄格式：`"path"  "file_pattern"  "flags"`，每三個元素為一組。
+
+Token（在遠端主機解析）：
 - `<env:VAR>` — 遠端環境變數
 - `<cmd:command>` — 遠端 shell 指令輸出
-- `<date:format>` — 時間範圍篩選用的日期格式（如 `<date:%Y%m%d-%H%M%S>`）
+- `<date:format>` — 時間範圍篩選用的日期格式（如 `<date:%Y%m%d-%H%M%S>`、`<date:%s>` epoch）
 - `<suffix:ext>` — 副檔名篩選
+
+Flags（第三欄）：
+- `""` — 無特殊行為
+- `"<mtime>"` — 同時以檔案修改時間篩選（用於持續寫入的 log）
+
+路徑中的 `<date:>` token 會展開跨日期資料夾（如 `AvoidStop_<date:%Y-%m-%d>` 自動搜尋 START 到 END 之間的所有日期）。
 
 處理鏈：`string_handler` → `special_string_parser` → `get_remote_value`（處理 env/cmd token）
 
@@ -83,7 +91,7 @@ Log 路徑字串支援在執行時對遠端主機解析的 token：
 
 ## 設定
 
-`pack_log.sh` 頂部的 `HOSTS` 和 `LOG_PATHS` 陣列是主要設定點，目前寫死為特定部署站點（Panasonic AMR 車隊）。如需變更目標主機或 log 路徑，直接編輯這兩個陣列。
+`pack_log.sh` 頂部的 `HOSTS` 和 `LOG_PATHS` 陣列是主要設定點，目前寫死為特定部署站點（Panasonic AMR 車隊）。`COREROBOT_*` 路徑變數可簡化 LOG_PATHS 的路徑。如需變更目標主機或 log 路徑，直接編輯這些陣列和變數。
 
 可調參數也在腳本頂部：`SSH_KEY`、`SSH_TIMEOUT`、`TRANSFER_MAX_RETRIES`、`TRANSFER_RETRY_DELAY`、`TRANSFER_SIZE_WARN_MB`、`FILE_TIME_TOLERANCE_MIN`。
 
@@ -100,7 +108,7 @@ Log 路徑字串支援在執行時對遠端主機解析的 token：
 ### 每次改動後的檢查清單
 
 1. **測試**：`bats test/` 本地通過 + `./ci.sh unit` CI 通過
-2. **文件更新**：README（4 語言）、CLAUDE.md、TEST.md（4 語言）的測試數量、行數、功能描述是否同步
+2. **文件更新**：README（4 語言）、CLAUDE.md、TEST.md 的測試數量、功能描述是否同步
 3. **過時檔案**：確認沒有引用已刪除的檔案（如舊的 `doc/lang/`）或過時的格式描述
 
 ## 重要慣例
