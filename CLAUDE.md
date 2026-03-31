@@ -106,7 +106,7 @@ Log 路徑字串支援在執行時對遠端主機解析的 token：
 - 腳本使用 `set -euo pipefail`，所有錯誤皆為致命錯誤
 - 函式使用 REPLY 慣例作為輸出（`REPLY`, `REPLY_TYPE`, `REPLY_STR` 等）
 - SSH 金鑰路徑固定為 `~/.ssh/get_log`
-- CI 中強制執行 ShellCheck（`shellcheck -x -S error pack_log.sh`）
+- CI 中強制執行 ShellCheck（`shellcheck -x -S warning pack_log.sh`）
 - Source guard 使腳本可被 source 而不執行 `main()`：`(return 0 2>/dev/null) || main "$@"`
 - 測試中 `declare` 的變數（HOSTS、LOG_PATHS 等）在 source 時會變成 local scope，需在每個 test 的 `setup()` 中重新初始化
 - 覆蓋率排除標記：`# KCOV_EXCL_START` / `# KCOV_EXCL_STOP`（區塊排除）、`# KCOV_EXCL_LINE`（單行排除）——用於部署特定設定和 runtime-only 分支

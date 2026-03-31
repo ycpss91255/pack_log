@@ -19,7 +19,9 @@
 # Version: 1.5.0
 
 set +u 2>/dev/null # KCOV_EXCL_LINE
-declare -r _PACK_LOG_SCRIPT_NAME="$(basename "${BASH_SOURCE[0]:-$0}" .sh)" # KCOV_EXCL_LINE
+declare _PACK_LOG_SCRIPT_NAME # KCOV_EXCL_LINE
+_PACK_LOG_SCRIPT_NAME="$(basename "${BASH_SOURCE[0]:-$0}" .sh)" # KCOV_EXCL_LINE
+readonly _PACK_LOG_SCRIPT_NAME # KCOV_EXCL_LINE
 
 set -euo pipefail
 
@@ -63,15 +65,22 @@ declare -a HOSTS=(
 # KCOV_EXCL_START
 
 # Coretronic path shortcuts (non-Docker)
+# shellcheck disable=SC2034
 declare COREROBOT_CORETRONIC_AMR_NAVI_INSTALL="<env:HOME>/coretronic_amr_navi_install"
+# shellcheck disable=SC2034
 declare COREROBOT_STORAGE="<env:HOME>/core_storage"
+# shellcheck disable=SC2034
 declare COREROBOT_LOG="<env:HOME>/log"
+# shellcheck disable=SC2034
 declare COREROBOT_LOG_CORE="<env:HOME>/log_core"
+# shellcheck disable=SC2034
 declare COREROBOT_LOG_DATA="<env:HOME>/log_data"
+# shellcheck disable=SC2034
 declare COREROBOT_LOG_SLAM="<env:HOME>/log_slam"
 
 # Coretronic path shortcuts (Docker)
 declare COREROBOT_DOCKER_HOME="<env:HOME>/ros-docker/AMR/myuser"
+# shellcheck disable=SC2034
 declare COREROBOT_DOCKER_CORETRONIC_AMR_NAVI_INSTALL="${COREROBOT_DOCKER_HOME}/coretronic_amr_navi_install"
 declare COREROBOT_DOCKER_STORAGE="${COREROBOT_DOCKER_HOME}/core_storage"
 declare COREROBOT_DOCKER_LOG="${COREROBOT_DOCKER_HOME}/log"
