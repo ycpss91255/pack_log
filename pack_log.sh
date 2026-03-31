@@ -959,7 +959,12 @@ option_parser() {
       --dry-run)
         DRY_RUN=true; shift ;;
       --lang)
-        LANG_CODE="$2"; shift 2 ;;
+        case "$2" in
+          en|zh-TW|zh-CN|ja) LANG_CODE="$2" ;;
+          *) echo "[WARN]  Unknown language '$2', supported: en, zh-TW, zh-CN, ja. Falling back to en." >&2
+             LANG_CODE="en" ;;
+        esac
+        shift 2 ;;
       -h | --help)
         # KCOV_EXCL_START — locale auto-detection depends on runtime $LANG
         if [[ -z "${LANG_CODE}" ]]; then
