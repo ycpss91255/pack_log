@@ -4,7 +4,7 @@
 ![Testing](https://img.shields.io/badge/Testing-Bats-orange?style=flat-square)
 ![ShellCheck](https://img.shields.io/badge/ShellCheck-Compliant-brightgreen?style=flat-square)
 
-> **語言**: [English](../README.md) | 繁體中文 | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
+> **語言**: [English](../../README.md) | 繁體中文 | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
 
 > **TL;DR** — 單檔 Bash 腳本，透過 SSH 連線到遠端主機，依時間範圍尋找 log 檔案，再用 rsync/scp/sftp 傳回本機。100% 測試覆蓋率（Bats + Kcov）。
 >
@@ -190,7 +190,7 @@ declare -a LOG_PATHS=(
 
 ## 測試
 
-328 個測試（277 單元 + 21 本機整合 + 30 遠端整合），**100% 程式碼覆蓋率**。詳見 **[TEST.zh-TW.md](../TEST.zh-TW.md)**。
+328 個測試（277 單元 + 21 本機整合 + 30 遠端整合），**100% 程式碼覆蓋率**。詳見 **[TEST.zh-TW.md](../test/TEST.zh-TW.md)**。
 
 ```bash
 ./ci.sh              # 全部測試（需要 Docker）

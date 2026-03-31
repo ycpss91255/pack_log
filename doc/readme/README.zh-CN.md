@@ -4,7 +4,7 @@
 ![Testing](https://img.shields.io/badge/Testing-Bats-orange?style=flat-square)
 ![ShellCheck](https://img.shields.io/badge/ShellCheck-Compliant-brightgreen?style=flat-square)
 
-> **语言**: [English](../README.md) | [繁體中文](README.zh-TW.md) | 简体中文 | [日本語](README.ja.md)
+> **语言**: [English](../../README.md) | [繁體中文](README.zh-TW.md) | 简体中文 | [日本語](README.ja.md)
 
 > **TL;DR** — 单文件 Bash 脚本，通过 SSH 连接到远程主机，按时间范围查找 log 文件，再用 rsync/scp/sftp 传回本机。100% 测试覆盖率（Bats + Kcov）。
 >
@@ -190,7 +190,7 @@ declare -a LOG_PATHS=(
 
 ## 测试
 
-328 个测试（277 单元 + 21 本机集成 + 30 远程集成），**100% 代码覆盖率**。详见 **[TEST.zh-CN.md](../TEST.zh-CN.md)**。
+328 个测试（277 单元 + 21 本机集成 + 30 远程集成），**100% 代码覆盖率**。详见 **[TEST.zh-CN.md](../test/TEST.zh-CN.md)**。
 
 ```bash
 ./ci.sh              # 全部测试（需要 Docker）

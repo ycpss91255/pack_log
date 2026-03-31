@@ -1,6 +1,6 @@
 # Pack Log [![Test Status](https://github.com/ycpss91255/pack_log/workflows/Main%20CI/CD%20Pipeline/badge.svg)](https://github.com/ycpss91255/pack_log/actions) [![Code Coverage](https://codecov.io/gh/ycpss91255/pack_log/branch/main/graph/badge.svg)](https://codecov.io/gh/ycpss91255/pack_log)
 
-> **Language**: English | [繁體中文](doc/README.zh-TW.md) | [简体中文](doc/README.zh-CN.md) | [日本語](doc/README.ja.md)
+> **Language**: English | [繁體中文](doc/readme/README.zh-TW.md) | [简体中文](doc/readme/README.zh-CN.md) | [日本語](doc/readme/README.ja.md)
 
 ![Language](https://img.shields.io/badge/Language-Bash-blue?style=flat-square)
 ![Testing](https://img.shields.io/badge/Testing-Bats-orange?style=flat-square)
@@ -196,22 +196,23 @@ declare -a LOG_PATHS=(
 │       ├── test_helper.bash             # Remote test helper
 │       └── test_remote.bats             # Remote integration tests (30)
 │
-├── TEST.md                              # Test documentation (English)
-│
 ├── doc/
-│   ├── TEST.zh-TW.md                    # Test documentation (Traditional Chinese)
-│   ├── TEST.zh-CN.md                    # Test documentation (Simplified Chinese)
-│   ├── TEST.ja.md                       # Test documentation (Japanese)
-│   ├── README.zh-TW.md                  # Traditional Chinese README
-│   ├── README.zh-CN.md                  # Simplified Chinese README
-│   └── README.ja.md                     # Japanese README
+│   ├── readme/                          # README translations
+│   │   ├── README.zh-TW.md
+│   │   ├── README.zh-CN.md
+│   │   └── README.ja.md
+│   └── test/                            # Test documentation
+│       ├── TEST.md                      # English
+│       ├── TEST.zh-TW.md
+│       ├── TEST.zh-CN.md
+│       └── TEST.ja.md
 │
 └── bash_test_helper/                    # Reference submodule
 ```
 
 ## Testing
 
-328 tests (277 unit + 21 local integration + 30 remote integration) with **100% code coverage**. See **[TEST.md](TEST.md)** for full details.
+328 tests (277 unit + 21 local integration + 30 remote integration) with **100% code coverage**. See **[TEST.md](doc/test/TEST.md)** for full details.
 
 ```bash
 ./ci.sh              # All tests (Docker required)

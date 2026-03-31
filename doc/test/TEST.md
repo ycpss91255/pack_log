@@ -1,6 +1,6 @@
 # Testing
 
-> **Language**: English | [繁體中文](doc/TEST.zh-TW.md) | [简体中文](doc/TEST.zh-CN.md) | [日本語](doc/TEST.ja.md)
+> **Language**: English | [繁體中文](TEST.zh-TW.md) | [简体中文](TEST.zh-CN.md) | [日本語](TEST.ja.md)
 
 ## Test Summary
 

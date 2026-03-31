@@ -4,7 +4,7 @@
 ![Testing](https://img.shields.io/badge/Testing-Bats-orange?style=flat-square)
 ![ShellCheck](https://img.shields.io/badge/ShellCheck-Compliant-brightgreen?style=flat-square)
 
-> **言語**: [English](../README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md) | 日本語
+> **言語**: [English](../../README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md) | 日本語
 
 > **概要** — 単一ファイルの Bash スクリプトで、SSH 経由でリモートホストに接続し、時間範囲に基づいて log ファイルを検索し、rsync/scp/sftp でローカルに転送します。Bats + Kcov による 100% テストカバレッジ。
 >
@@ -190,7 +190,7 @@ declare -a LOG_PATHS=(
 
 ## テスト
 
-328 テスト（277 ユニット + 21 ローカル結合 + 30 リモート結合）、**100% コードカバレッジ**。詳細は **[TEST.ja.md](../TEST.ja.md)** を参照。
+328 テスト（277 ユニット + 21 ローカル結合 + 30 リモート結合）、**100% コードカバレッジ**。詳細は **[TEST.ja.md](../test/TEST.ja.md)** を参照。
 
 ```bash
 ./ci.sh              # 全テスト（Docker が必要）

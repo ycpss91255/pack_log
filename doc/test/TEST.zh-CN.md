@@ -1,6 +1,6 @@
 # 测试
 
-> **语言**: [English](../TEST.md) | [繁體中文](TEST.zh-TW.md) | 简体中文 | [日本語](TEST.ja.md)
+> **语言**: [English](TEST.md) | [繁體中文](TEST.zh-TW.md) | 简体中文 | [日本語](TEST.ja.md)
 
 ## 测试总览
 
