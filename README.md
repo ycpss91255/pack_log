@@ -6,7 +6,7 @@
 ![Testing](https://img.shields.io/badge/Testing-Bats-orange?style=flat-square)
 ![ShellCheck](https://img.shields.io/badge/ShellCheck-Compliant-brightgreen?style=flat-square)
 
-> **TL;DR** — Single-file Bash script that connects to remote hosts via SSH, finds log files by time range, and transfers them back locally via rsync/scp/sftp. 100% test coverage with Bats + Kcov.
+> **TL;DR** — Single-file Bash script that connects to remote hosts via SSH, finds log files by time range, and transfers them back locally via rsync/scp/sftp.
 >
 > ```bash
 > ./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359   # By host number
@@ -31,8 +31,8 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 - **i18n Support**: English, Traditional Chinese, Simplified Chinese, and Japanese via `--lang` or `$LANG`.
 - **Log File Output**: All operations logged to `pack_log.log` in the output folder.
 - **Dry-Run Mode**: Preview which files would be collected without any copying or transferring (`--dry-run`).
-- **Dynamic Output Naming**: Output folder is named after the script basename (e.g., `pack_log_<host>_<YYMMDD-HHMMSS>`). Uses HOSTS display name for `-n` mode, hostname for `-l`/`-u` mode.
-- **100% Test Coverage**: 330 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
+- **Dynamic Output Naming**: Output folder defaults to `/tmp/pack_log_<host>_<YYMMDD-HHMMSS>`. Uses HOSTS display name for `-n` mode, hostname for `-l`/`-u` mode. Override with `-o`.
+- 330 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
 
 ## Quick Start
 
@@ -256,7 +256,7 @@ declare -a LOG_PATHS=(
 
 ## Testing
 
-330 tests (279 unit + 21 local integration + 30 remote integration) with **100% code coverage**. See **[TEST.md](doc/test/TEST.md)** for full details.
+330 tests (279 unit + 21 local integration + 30 remote integration). See **[TEST.md](doc/test/TEST.md)** for full details.
 
 ```bash
 ./ci.sh              # All tests (Docker required)

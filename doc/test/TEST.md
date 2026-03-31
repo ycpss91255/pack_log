@@ -1,6 +1,6 @@
 # Tests
 
-330 tests (279 unit + 21 local integration + 30 remote integration) — **100% code coverage**.
+330 tests (279 unit + 21 local integration + 30 remote integration)
 
 ## Unit Tests
 
