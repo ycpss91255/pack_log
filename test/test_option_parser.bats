@@ -163,6 +163,18 @@ setup() {
   [[ "${LANG_CODE}" == "ja" ]]
 }
 
+@test "option_parser: --lang with invalid code warns and falls back to en" {
+  run option_parser --lang tw -l -s 260101-0000 -e 260101-2359
+  assert_success
+  assert_output --partial "Unknown language"
+  assert_output --partial "tw"
+}
+
+@test "option_parser: --lang with invalid code sets LANG_CODE to en" {
+  option_parser --lang foo -l -s 260101-0000 -e 260101-2359
+  [[ "${LANG_CODE}" == "en" ]]
+}
+
 # --- --dry-run ---
 
 @test "option_parser: --dry-run sets DRY_RUN to true" {

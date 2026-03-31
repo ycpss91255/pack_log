@@ -89,11 +89,13 @@ Log 路徑字串支援在執行時對遠端主機解析的 token：
 
 ## 開發流程
 
-本專案採用 TDD（Test-Driven Development）：
+本專案**所有改動**（新功能、bug 修復、重構）都必須採用 TDD（Test-Driven Development）：
 1. **先寫測試**：在對應的 `test/test_*.bats` 中新增或修改測試案例
 2. **確認測試失敗**：執行 `bats test/test_xxx.bats` 確認新測試為紅燈
 3. **實作功能**：修改 `pack_log.sh` 使測試通過
 4. **執行完整測試**：`./ci.sh unit` 確認所有測試通過且 ShellCheck 合規
+
+**Bug 修復也不例外**：先寫能重現 bug 的測試（紅燈），再修 code（綠燈）。
 
 ### 每次改動後的檢查清單
 
