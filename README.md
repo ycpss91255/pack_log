@@ -269,7 +269,7 @@ declare -a LOG_PATHS=(
 - Script uses `set -euo pipefail` — all errors are fatal
 - Functions use REPLY convention for output (`REPLY`, `REPLY_TYPE`, `REPLY_STR`, etc.)
 - SSH key path is fixed at `~/.ssh/get_log`
-- ShellCheck compliance enforced in CI (`-S error` level)
+- ShellCheck compliance enforced in CI (`-S style` level)
 - Source guard uses `(return 0 2>/dev/null) || main "$@"` for testability and kcov compatibility
 - CI unit tests run as non-root user (`testrunner`) for realistic permission testing
 - TDD workflow: write tests first, confirm red, implement, confirm green

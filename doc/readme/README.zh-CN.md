@@ -203,7 +203,7 @@ declare -a LOG_PATHS=(
 - 脚本使用 `set -euo pipefail`，所有错误均为致命错误
 - 函数使用 REPLY 惯例作为输出（`REPLY`, `REPLY_TYPE`, `REPLY_STR` 等）
 - SSH 密钥路径固定为 `~/.ssh/get_log`
-- CI 中强制执行 ShellCheck 合规检查（`-S error` 等级）
+- CI 中强制执行 ShellCheck 合规检查（`-S style` 等级）
 - 使用 `BASH_SOURCE` 守卫模式确保可测试性：
   ```bash
   if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

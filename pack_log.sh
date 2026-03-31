@@ -18,6 +18,10 @@
 # Date: 2026-03-25
 # Version: 1.5.0
 
+# shellcheck disable=SC2059  # i18n: MSG_* variables used as printf format strings by design
+# shellcheck disable=SC2029  # SSH commands piped via stdin, not affected
+# shellcheck disable=SC2016  # Single-quoted <env:> tokens are resolved by string_handler, not bash
+
 set +u 2>/dev/null # KCOV_EXCL_LINE
 declare _PACK_LOG_SCRIPT_NAME # KCOV_EXCL_LINE
 _PACK_LOG_SCRIPT_NAME="$(basename "${BASH_SOURCE[0]:-$0}" .sh)" # KCOV_EXCL_LINE

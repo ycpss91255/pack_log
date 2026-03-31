@@ -203,7 +203,7 @@ declare -a LOG_PATHS=(
 - スクリプトは `set -euo pipefail` を使用 - すべてのエラーは致命的エラーとして扱われます
 - 関数は出力パラメータとして REPLY 規約を使用（`REPLY`、`REPLY_TYPE`、`REPLY_STR` など）
 - SSH 鍵パスは `~/.ssh/get_log` に固定
-- CI では ShellCheck 準拠を強制（`-S error` レベル）
+- CI では ShellCheck 準拠を強制（`-S style` レベル）
 - テスト容易性のための `BASH_SOURCE` ガードパターン：
   ```bash
   if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

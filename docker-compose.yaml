@@ -27,7 +27,7 @@ services:
             sudo
 
         echo "--- Running ShellCheck ---"
-        shellcheck -x -S warning pack_log.sh
+        shellcheck -x -S style pack_log.sh
 
         echo "--- Creating test user ---"
         groupadd -g "${HOST_GID}" testrunner 2>/dev/null || true
