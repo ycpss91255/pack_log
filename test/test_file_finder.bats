@@ -507,3 +507,25 @@ setup() {
     # Restore
     eval "${_orig_exec}"
 }
+
+# --- sudo flag support ---
+
+@test "file_finder: sudo flag accepted as parameter" {
+    local test_dir="${BATS_TEST_TMPDIR}/sudo_param"
+    mkdir -p "${test_dir}"
+    touch "${test_dir}/syslog"
+
+    # use_sudo=false should work without sudo
+    file_finder "${test_dir}" "syslog" "" "260115-0000" "260115-2359" "false" "false"
+    assert_equal "${#REPLY_FILES[@]}" 1
+}
+
+@test "file_finder: sudo flag with sudo available finds files" {
+    sudo -n true 2>/dev/null || skip "sudo requires password"
+    local test_dir="${BATS_TEST_TMPDIR}/sudo_find"
+    mkdir -p "${test_dir}"
+    touch "${test_dir}/syslog"
+
+    file_finder "${test_dir}" "syslog" "" "260115-0000" "260115-2359" "false" "true"
+    assert_equal "${#REPLY_FILES[@]}" 1
+}

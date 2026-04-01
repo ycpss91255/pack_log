@@ -171,6 +171,8 @@ Each entry is three elements: `"path"  "file_pattern"  "flags"`
 |------|-------------|
 | `""` | No special flags (default) |
 | `"<mtime>"` | Also match by file modification time — for logs created once but written to continuously until node restart |
+| `"<sudo>"` | Use `sudo` for find/cp commands — for files requiring root permission (e.g., `/var/log/syslog`) |
+| `"<mtime><sudo>"` | Combine multiple flags |
 
 **Examples**:
 
@@ -192,6 +194,10 @@ declare -a LOG_PATHS=(
 
   # Continuous log with <mtime> (created once, written until restart)
   "<env:HOME>/log_core"                           "app.<cmd:hostname>.<env:USER>.log.<date:%Y%m%d-%H%M%S>*"      "<mtime>"
+
+  # System logs requiring sudo (e.g., /var/log/syslog)
+  "/var/log"                                      "syslog*"                                                       "<sudo>"
+  "/var/log"                                      "kern.log*"                                                     "<sudo>"
 
   # Using shell variables (defined at script top, expanded at source time)
   "${MY_LOG_PATH}"                                "app_<date:%Y%m%d%H%M%S>*<suffix:.log>"                        ""

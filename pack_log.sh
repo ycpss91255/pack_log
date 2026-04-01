@@ -73,6 +73,8 @@ declare -a HOSTS=(
 # Examples:
 #   "<env:HOME>/config"                "node_config.yaml"                      ""
 #   "<env:HOME>/log_core"              "app.<cmd:hostname>.log.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+#   "/var/log"                         "syslog*"                               "<sudo>"
+#   "<env:HOME>/log_core"              "app.*.<date:%Y%m%d-%H%M%S>*"           "<mtime><sudo>"
 # KCOV_EXCL_START
 
 # Coretronic path shortcuts (non-Docker)
@@ -126,6 +128,7 @@ declare -a LOG_PATHS=(
   # "${COREROBOT_DOCKER_STORAGE}"                       "external_param.launch"                                                   ""
   # "${COREROBOT_DOCKER_STORAGE}"                       "run_config.yaml"                                                         ""
 
+  # sys_log kernal_log
   # # 2D LiDAR SLAM log path (docker)
   "${COREROBOT_DOCKER_LOG_CORE}"        "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
   "${COREROBOT_DOCKER_LOG_SLAM}"        "coreslam_2D_<date:%s>*<suffix:.log>"                                     ""
@@ -285,6 +288,8 @@ load_lang() {
       MSG_STEP2='=== 步驟 2/5: 驗證時間範圍 ==='
       MSG_STEP3_SSH='=== 步驟 3/5: 建立 SSH 連線 ==='
       MSG_STEP3_LOCAL='=== 步驟 3/5: 本機模式 (略過 SSH) ==='
+      MSG_SUDO_REQUIRED='路徑 %s 不在 HOME 底下，需要 sudo 權限。'
+      MSG_SUDO_FAILED='sudo 驗證失敗，路徑 %s 可能無法存取。'
       MSG_STEP4='=== 步驟 4/5: 收集 log 檔案 ==='
       MSG_STEP5_TRANSFER='=== 步驟 5/5: 傳輸檔案到本機 (%s) ==='
       MSG_STEP5_LOCAL='=== 步驟 5/5: 檔案已在本機收集完成 ==='
@@ -385,6 +390,8 @@ load_lang() {
       MSG_STEP2='=== 步骤 2/5: 验证时间范围 ==='
       MSG_STEP3_SSH='=== 步骤 3/5: 建立 SSH 连接 ==='
       MSG_STEP3_LOCAL='=== 步骤 3/5: 本机模式 (跳过 SSH) ==='
+      MSG_SUDO_REQUIRED='路径 %s 不在 HOME 底下，需要 sudo 权限。'
+      MSG_SUDO_FAILED='sudo 验证失败，路径 %s 可能无法访问。'
       MSG_STEP4='=== 步骤 4/5: 收集 log 文件 ==='
       MSG_STEP5_TRANSFER='=== 步骤 5/5: 传输文件到本机 (%s) ==='
       MSG_STEP5_LOCAL='=== 步骤 5/5: 文件已在本机收集完成 ==='
@@ -485,6 +492,8 @@ load_lang() {
       MSG_STEP2='=== ステップ 2/5: 時間範囲の検証 ==='
       MSG_STEP3_SSH='=== ステップ 3/5: SSH 接続の確立 ==='
       MSG_STEP3_LOCAL='=== ステップ 3/5: ローカルモード (SSH スキップ) ==='
+      MSG_SUDO_REQUIRED='パス %s は HOME 外のため、sudo 権限が必要です。'
+      MSG_SUDO_FAILED='sudo 認証に失敗しました。パス %s にアクセスできない可能性があります。'
       MSG_STEP4='=== ステップ 4/5: ログファイルの収集 ==='
       MSG_STEP5_TRANSFER='=== ステップ 5/5: ローカルへファイル転送中 (%s) ==='
       MSG_STEP5_LOCAL='=== ステップ 5/5: ローカルでファイル収集完了 ==='
@@ -585,6 +594,8 @@ load_lang() {
       MSG_STEP2='=== Step 2/5: Validating time range ==='
       MSG_STEP3_SSH='=== Step 3/5: Establishing SSH connection ==='
       MSG_STEP3_LOCAL='=== Step 3/5: Local mode (skipping SSH) ==='
+      MSG_SUDO_REQUIRED='Path %s is outside HOME, sudo permission required.'
+      MSG_SUDO_FAILED='sudo authentication failed, path %s may be inaccessible.'
       MSG_STEP4='=== Step 4/5: Collecting log files ==='
       MSG_STEP5_TRANSFER='=== Step 5/5: Transferring files to local (%s) ==='
       MSG_STEP5_LOCAL='=== Step 5/5: Files collected locally ==='
@@ -856,6 +867,39 @@ get_remote_value() {
   _TOKEN_CACHE["${cache_key}"]="${REPLY}"
 
   log_verbose "--------------------"
+}
+
+# Checks if a path requires sudo to access.
+# Returns 0 (true) if sudo is needed, 1 (false) otherwise.
+#
+# Sudo is needed when:
+#   - The <sudo> flag is explicitly set, OR
+#   - The resolved path is NOT under the user's HOME directory
+#
+# Arguments:
+#   path:  The resolved file path to check.
+#   flags: The FLAGS column from LOG_PATHS (may contain "<sudo>").
+_needs_sudo() {
+  local path="${1:-}" flags="${2:-}"
+
+  # Explicit <sudo> flag always triggers sudo
+  [[ "${flags}" == *"<sudo>"* ]] && return 0
+
+  # Determine HOME directory (local or remote)
+  local home_dir
+  if [[ "${HOST}" == "local" ]]; then
+    home_dir="${HOME}"
+  else
+    home_dir=$(execute_cmd 'printf "%s" "${HOME}"') || return 1
+  fi
+
+  # Public directories don't need sudo
+  [[ "${path}" == /tmp/* ]] && return 1
+
+  # Path outside HOME → needs sudo
+  [[ "${path}" != "${home_dir}"* ]] && return 0
+
+  return 1
 }
 
 # Creates a folder on the local or remote machine.
@@ -1424,6 +1468,9 @@ file_finder() {
   local start_time="${1:?"${FUNCNAME[0]} need start time."}"; shift
   local end_time="${1:?"${FUNCNAME[0]} need end time."}"; shift
   local use_mtime="${1:-false}"; shift || true
+  local use_sudo="${1:-false}"; shift || true
+  local sudo_prefix=""
+  [[ "${use_sudo}" == "true" ]] && sudo_prefix="sudo "
 
   log_verbose "${FUNCNAME[0]} input: Path=${folder_path}, Prefix=${file_prefix}"
 
@@ -1450,8 +1497,8 @@ file_finder() {
   name_pattern="${name_pattern//\*\*/*}"
 
   local find_cmd
-  printf -v find_cmd "find -L %q -maxdepth 1 \\( -type f -o -type l \\) -name '%s' 2>/dev/null | sort" \
-    "${folder_path}" "${name_pattern}"
+  printf -v find_cmd "%sfind -L %q -maxdepth 1 \\( -type f -o -type l \\) -name '%s' 2>/dev/null | sort" \
+    "${sudo_prefix}" "${folder_path}" "${name_pattern}"
 
   # get file list
   local -a raw_files=()
@@ -1619,7 +1666,7 @@ file_finder() {
       [[ -n "${selected_set["${f}"]+set}" ]] && continue
 
       local file_mtime
-      file_mtime=$(execute_cmd "stat -c %Y $(printf '%q' "${f}")") || continue
+      file_mtime=$(execute_cmd "${sudo_prefix}stat -c %Y $(printf '%q' "${f}")") || continue
       if [[ "${file_mtime}" -ge "${mtime_start_epoch}" && "${file_mtime}" -le "${mtime_end_epoch}" ]]; then
         REPLY_FILES+=("${f}")
       fi
@@ -1811,9 +1858,9 @@ file_copier() {
     cp_opts+=("-v")
   fi
 
-  # Construct the xargs command
+  # Construct the xargs command (use _SUDO_PREFIX if set by get_log)
   local xargs_cmd
-  printf -v xargs_cmd "xargs -0 -r cp %s -t %q" "${cp_opts[*]}" "${save_path}/"
+  printf -v xargs_cmd "xargs -0 -r %scp %s -t %q" "${_SUDO_PREFIX:-}" "${cp_opts[*]}" "${save_path}/"
 
   # Execute by piping the array directly (avoiding variable truncation)
   if ! execute_cmd_from_array "${xargs_cmd}" "${fc_log_files[@]}"; then
@@ -1953,8 +2000,9 @@ get_log_dry_run() {
     log_path="${LOG_PATHS[i]}"
     log_pattern="${LOG_PATHS[i+1]}"
     log_flags="${LOG_PATHS[i+2]}"
-    local use_mtime=false
+    local use_mtime=false use_sudo=false
     [[ "${log_flags}" == *"<mtime>"* ]] && use_mtime=true
+    [[ "${log_flags}" == *"<sudo>"* ]] && use_sudo=true
     (( ++idx ))
 
     log_info "$(printf "${MSG_PROCESSING}" "${idx}" "${total}" "${log_path}" "${log_pattern}")"
@@ -1980,7 +2028,7 @@ get_log_dry_run() {
         continue
       fi
 
-      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_mtime}"
+      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_mtime}" "${use_sudo}"
       local -a files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
 
       if [[ "${#files[@]}" -gt 0 ]]; then
@@ -2016,6 +2064,25 @@ get_log() {
   local idx=0
   local i
 
+  # Pre-scan: check if any path needs sudo, authenticate once if so
+  local _sudo_authenticated=false
+  for (( i=0; i<${#LOG_PATHS[@]}; i+=3 )); do
+    string_handler "${LOG_PATHS[i]}" "${LOG_PATHS[i+1]}"
+    resolve_path_dates
+    local rp=""
+    for rp in "${REPLY_PATHS[@]}"; do
+      if _needs_sudo "${rp}" "${LOG_PATHS[i+2]}"; then
+        log_info "$(printf "${MSG_SUDO_REQUIRED}" "${rp}")" # KCOV_EXCL_LINE
+        if execute_cmd "sudo -v"; then # KCOV_EXCL_LINE
+          _sudo_authenticated=true # KCOV_EXCL_LINE
+        else
+          log_warn "$(printf "${MSG_SUDO_FAILED}" "${rp}")" # KCOV_EXCL_LINE
+        fi
+        break 2 # KCOV_EXCL_LINE
+      fi
+    done
+  done
+
   for (( i=0; i<${#LOG_PATHS[@]}; i+=3 )); do
     log_path="${LOG_PATHS[i]}"
     log_pattern="${LOG_PATHS[i+1]}"
@@ -2032,6 +2099,10 @@ get_log() {
     local -a all_found_files=()
     local rpath=""
     for rpath in "${REPLY_PATHS[@]}"; do
+      # Auto-detect sudo based on path
+      local use_sudo=false
+      _needs_sudo "${rpath}" "${log_flags}" && use_sudo=true
+
       log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${rpath}" "${prefix}" "${suffix}")"
 
       if [[ -z "${rpath}" ]]; then
@@ -2039,10 +2110,12 @@ get_log() {
         continue
       fi
 
-      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_mtime}"
+      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_mtime}" "${use_sudo}"
       if [[ "${#REPLY_FILES[@]}" -gt 0 ]]; then
         all_found_files+=("${REPLY_FILES[@]}")
+        _SUDO_PREFIX=""; [[ "${use_sudo}" == "true" ]] && _SUDO_PREFIX="sudo "
         file_copier "${rpath}" "${REPLY_FILES[@]}"
+        _SUDO_PREFIX=""
       fi
     done
 

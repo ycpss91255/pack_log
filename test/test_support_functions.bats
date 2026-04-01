@@ -336,6 +336,36 @@ WRAPPER
     assert_output --partial "No sudo access"
 }
 
+# --- _needs_sudo: auto-detect sudo based on path ---
+
+@test "_needs_sudo: returns true for path outside HOME" {
+    HOST="local"
+    _needs_sudo "/var/log" ""
+}
+
+@test "_needs_sudo: returns false for path under HOME" {
+    HOST="local"
+    run _needs_sudo "${HOME}/logs" ""
+    assert_failure
+}
+
+@test "_needs_sudo: returns true when <sudo> flag is set even under HOME" {
+    HOST="local"
+    _needs_sudo "${HOME}/logs" "<sudo>"
+}
+
+@test "_needs_sudo: returns false for /tmp path (public directory)" {
+    HOST="local"
+    run _needs_sudo "/tmp/some_logs" ""
+    assert_failure
+}
+
+@test "_needs_sudo: returns false for HOME with trailing slash" {
+    HOST="local"
+    run _needs_sudo "${HOME}/ros-docker/AMR" ""
+    assert_failure
+}
+
 # --- date_format: date command failure (L282) ---
 
 @test "date_format: log_error when date command fails" {
