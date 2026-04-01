@@ -88,15 +88,31 @@ setup() {
 
 # --- Wildcard pattern matches multiple log levels ---
 
-@test "file_finder: wildcard pattern matches INFO, WARNING, and ERROR files" {
+@test "file_finder: wildcard pattern matches all log levels" {
     local test_dir="${BATS_TEST_TMPDIR}/wildcard_test"
     mkdir -p "${test_dir}"
-    touch "${test_dir}/corenavi_auto.host.user.log.INFO.20260115-120000.1"
-    touch "${test_dir}/corenavi_auto.host.user.log.WARNING.20260115-130000.2"
-    touch "${test_dir}/corenavi_auto.host.user.log.ERROR.20260115-140000.3"
+    touch "${test_dir}/corenavi_auto.host.user.log.DEBUG.20260115-120000.1"
+    touch "${test_dir}/corenavi_auto.host.user.log.INFO.20260115-120100.2"
+    touch "${test_dir}/corenavi_auto.host.user.log.WARNING.20260115-120200.3"
+    touch "${test_dir}/corenavi_auto.host.user.log.ERROR.20260115-120300.4"
+    touch "${test_dir}/corenavi_auto.host.user.log.FATAL.20260115-120400.5"
 
     file_finder "${test_dir}" \
         "corenavi_auto.host.user.*.<date:%Y%m%d-%H%M%S>*" "" \
+        "260115-0000" "260115-2359" "false"
+
+    assert_equal "${#REPLY_FILES[@]}" 5
+}
+
+@test "file_finder: prefix wildcard matches multiple node names" {
+    local test_dir="${BATS_TEST_TMPDIR}/prefix_wildcard"
+    mkdir -p "${test_dir}"
+    touch "${test_dir}/corenavi_auto.host.user.log.INFO.20260115-120000.1"
+    touch "${test_dir}/corenavi_slam.host.user.log.INFO.20260115-130000.2"
+    touch "${test_dir}/corenavi_nav.host.user.log.WARNING.20260115-140000.3"
+
+    file_finder "${test_dir}" \
+        "corenavi_*.host.user.*.<date:%Y%m%d-%H%M%S>*" "" \
         "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 3
