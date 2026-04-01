@@ -511,3 +511,50 @@ setup() {
     # rec files
     [[ -n "$(find "${out_dirs[0]}" -name "*.rec" \( -type f -o -type l \))" ]]
 }
+
+# ---------------------------------------------------------------------------
+# 22. Auto sudo for paths outside HOME
+# ---------------------------------------------------------------------------
+
+@test "local-integration: auto sudo finds files in /var/log" {
+    sudo -n true 2>/dev/null || skip "sudo requires password"
+
+    # /var/log is outside HOME → auto sudo
+    LOG_PATHS=(
+        "/var/log"  "syslog"  ""
+    )
+
+    run main -l -s 260101-0000 -e 260101-2359 -o "${OUTPUT_DIR}/sudo_test"
+    assert_success
+    assert_output --partial "sudo"
+}
+
+# ---------------------------------------------------------------------------
+# 23. Auto sudo + mtime + multiple wildcards
+# ---------------------------------------------------------------------------
+
+@test "local-integration: auto sudo with mtime and wildcards" {
+    sudo -n true 2>/dev/null || skip "sudo requires password"
+
+    # Create test files in a non-HOME, non-/tmp directory
+    local test_dir="/var/tmp/pack_log_sudo_test_$$"
+    sudo mkdir -p "${test_dir}"
+    sudo bash -c "echo 'test' > '${test_dir}/corenavi_auto.host.user.log.INFO.20250101-120000.1'"
+    sudo touch -t 202601151200 "${test_dir}/corenavi_auto.host.user.log.INFO.20250101-120000.1"
+    sudo bash -c "echo 'test2' > '${test_dir}/corenavi_slam.host.user.log.WARNING.20260115-130000.2'"
+
+    LOG_PATHS=(
+        "${test_dir}"  "corenavi_*.host.user.*.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+    )
+
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/sudo_mtime"
+    assert_success
+
+    local -a out_dirs=("${OUTPUT_DIR}"/sudo_mtime_*)
+    local count
+    count=$(find "${out_dirs[0]}" -name "corenavi_*" \( -type f -o -type l \) 2>/dev/null | wc -l)
+    [[ "${count}" -ge 2 ]]
+
+    # Cleanup
+    sudo rm -rf "${test_dir}"
+}
