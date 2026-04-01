@@ -31,7 +31,7 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 - **i18n Support**: English, Traditional Chinese, Simplified Chinese, and Japanese via `--lang` or `$LANG`.
 - **Log File Output**: All operations logged to `pack_log.log` in the output folder.
 - **Dry-Run Mode**: Preview which files would be collected without any copying or transferring (`--dry-run`).
-- **Dynamic Output Naming**: Output folder defaults to `/tmp/pack_log_<host>_<YYMMDD-HHMMSS>`. Uses HOSTS display name for `-n` mode, hostname for `-l`/`-u` mode. Override with `-o`.
+- **Dynamic Output Naming**: Output folder defaults to `/tmp/<script_name>_<host>_<YYMMDD-HHMMSS>`. The script name is derived from the filename (e.g., renaming `pack_log.sh` to `my_tool.sh` changes the output folder to `my_tool_<host>_...`). Uses HOSTS display name for `-n` mode, hostname for `-l`/`-u` mode. Override with `-o`.
 - 346 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
 
 ## Quick Start

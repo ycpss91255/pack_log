@@ -15,8 +15,8 @@
 # For more information, run the script with the --help option.
 #
 # Author: Yunchien.chen <yunchien.chen@coretronic-robotics.com>
-# Date: 2026-03-25
-# Version: 1.5.0
+# Date: 2026-04-01
+# Version: 1.6.0
 
 # shellcheck disable=SC2059  # i18n: MSG_* variables used as printf format strings by design
 # shellcheck disable=SC2029  # SSH commands piped via stdin, not affected
