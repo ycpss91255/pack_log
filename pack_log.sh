@@ -86,10 +86,15 @@ declare COREROBOT_LOG_SLAM="<env:HOME>/log_slam"
 declare COREROBOT_DOCKER_HOME="<env:HOME>/ros-docker/AMR/myuser"
 # shellcheck disable=SC2034
 declare COREROBOT_DOCKER_CORETRONIC_AMR_NAVI_INSTALL="${COREROBOT_DOCKER_HOME}/coretronic_amr_navi_install"
+# shellcheck disable=SC2034
 declare COREROBOT_DOCKER_STORAGE="${COREROBOT_DOCKER_HOME}/core_storage"
+# shellcheck disable=SC2034
 declare COREROBOT_DOCKER_LOG="${COREROBOT_DOCKER_HOME}/log"
+# shellcheck disable=SC2034
 declare COREROBOT_DOCKER_LOG_CORE="${COREROBOT_DOCKER_HOME}/log_core"
+# shellcheck disable=SC2034
 declare COREROBOT_DOCKER_LOG_DATA="${COREROBOT_DOCKER_HOME}/log_data"
+# shellcheck disable=SC2034
 declare COREROBOT_DOCKER_LOG_SLAM="${COREROBOT_DOCKER_HOME}/log_slam"
 
 declare -a LOG_PATHS=(
