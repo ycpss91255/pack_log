@@ -1667,7 +1667,10 @@ file_finder() {
 
       local file_mtime
       file_mtime=$(execute_cmd "${sudo_prefix}stat -c %Y $(printf '%q' "${f}")") || continue
-      if [[ "${file_mtime}" -ge "${mtime_start_epoch}" && "${file_mtime}" -le "${mtime_end_epoch}" ]]; then
+      # A file with mtime >= start means it was still being written during the range.
+      # We don't check <= end because a continuously written log that spans past the
+      # range end was clearly also active during the range.
+      if [[ "${file_mtime}" -ge "${mtime_start_epoch}" ]]; then
         REPLY_FILES+=("${f}")
       fi
     done

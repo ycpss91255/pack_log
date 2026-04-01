@@ -470,6 +470,32 @@ setup() {
     assert_equal "${#REPLY_FILES[@]}" 0
 }
 
+@test "file_finder: mtime includes file created before range with mtime past range end" {
+    # Scenario 3: created 2025-01-01, mtime 2026-01-16 (past range end 2026-01-15)
+    # File was being written THROUGH the entire range → should be included
+    touch "${TEST_LOG_DIR}/app_20250101120000.log"
+    touch -t 202601161200 "${TEST_LOG_DIR}/app_20250101120000.log"
+
+    file_finder "${TEST_LOG_DIR}" \
+        "app_<date:%Y%m%d%H%M%S>*" ".log" \
+        "260115-0000" "260115-2359" "true"
+
+    [[ "${#REPLY_FILES[@]}" -ge 1 ]]
+}
+
+@test "file_finder: mtime includes file created in range with mtime past range end" {
+    # Scenario 1: created 2026-01-15 12:00, mtime 2026-01-16 (past end)
+    # Filename timestamp in range → selected by normal path regardless of mtime
+    touch "${TEST_LOG_DIR}/app_20260115120000.log"
+    touch -t 202601161200 "${TEST_LOG_DIR}/app_20260115120000.log"
+
+    file_finder "${TEST_LOG_DIR}" \
+        "app_<date:%Y%m%d%H%M%S>*" ".log" \
+        "260115-0000" "260115-2359" "true"
+
+    [[ "${#REPLY_FILES[@]}" -ge 1 ]]
+}
+
 @test "file_finder: mtime flag does not include file with old mtime" {
     touch "${TEST_LOG_DIR}/app_20250101120000.log"
     # mtime is also old (2025)
