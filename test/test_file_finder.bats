@@ -86,6 +86,22 @@ setup() {
     assert_equal "${#REPLY_FILES[@]}" 5
 }
 
+# --- Wildcard pattern matches multiple log levels ---
+
+@test "file_finder: wildcard pattern matches INFO, WARNING, and ERROR files" {
+    local test_dir="${BATS_TEST_TMPDIR}/wildcard_test"
+    mkdir -p "${test_dir}"
+    touch "${test_dir}/corenavi_auto.host.user.log.INFO.20260115-120000.1"
+    touch "${test_dir}/corenavi_auto.host.user.log.WARNING.20260115-130000.2"
+    touch "${test_dir}/corenavi_auto.host.user.log.ERROR.20260115-140000.3"
+
+    file_finder "${test_dir}" \
+        "corenavi_auto.host.user.*.<date:%Y%m%d-%H%M%S>*" "" \
+        "260115-0000" "260115-2359" "false"
+
+    assert_equal "${#REPLY_FILES[@]}" 3
+}
+
 # --- Date-based files with %Y%m%d-%H%M%S format ---
 
 @test "file_finder: selects files within date range using %Y%m%d-%H%M%S format" {

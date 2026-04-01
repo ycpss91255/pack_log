@@ -107,11 +107,11 @@ declare COREROBOT_DOCKER_LOG_SLAM="${COREROBOT_DOCKER_HOME}/log_slam"
 declare -a LOG_PATHS=(
   # PATH                                                                  FILE_PATTERN                                                      FLAGS
   # AvoidStop (pana-04, local test with symlink dirs)
-  "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default"           "uimap.png"                                                        ""
-  "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default2"          "uimap.yaml"                                                       ""
-  "<env:HOME>/Desktop/pack_log/log/avoid/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"                    ""
-  "<env:HOME>/Desktop/pack_log/log/avoid/log_core"                       "corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*"      "<mtime>"
-  "<env:HOME>/Desktop/pack_log/log/avoid/log_slam/record"                "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"               ""
+  # "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default"           "uimap.png"                                                        ""
+  # "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default2"          "uimap.yaml"                                                       ""
+  # "<env:HOME>/Desktop/pack_log/log/avoid/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"                    ""
+  # "<env:HOME>/Desktop/pack_log/log/avoid/log_core"                       "corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*"      "<mtime>"
+  # "<env:HOME>/Desktop/pack_log/log/avoid/log_slam/record"                "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"               ""
 
 
   # # Panasonic — LiDAR Detection shelf log path (docker)
@@ -127,9 +127,9 @@ declare -a LOG_PATHS=(
   # "${COREROBOT_DOCKER_STORAGE}"                       "run_config.yaml"                                                         ""
 
   # # 2D LiDAR SLAM log path (docker)
-  # "${COREROBOT_DOCKER_LOG_CORE}"        "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
-  # "${COREROBOT_DOCKER_LOG_SLAM}"        "coreslam_2D_<date:%s>*<suffix:.log>"                                     ""
-  # "${COREROBOT_DOCKER_LOG_SLAM}/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
+  "${COREROBOT_DOCKER_LOG_CORE}"        "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+  "${COREROBOT_DOCKER_LOG_SLAM}"        "coreslam_2D_<date:%s>*<suffix:.log>"                                     ""
+  "${COREROBOT_DOCKER_LOG_SLAM}/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
 
   # # 2D LiDAR AvoidStop log path (docker)
   # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"  "uimap.png"                                                              ""
@@ -1452,7 +1452,6 @@ file_finder() {
   local find_cmd
   printf -v find_cmd "find -L %q -maxdepth 1 \\( -type f -o -type l \\) -name '%s' 2>/dev/null | sort" \
     "${folder_path}" "${name_pattern}"
-  readonly find_cmd
 
   # get file list
   local -a raw_files=()
@@ -1502,15 +1501,15 @@ file_finder() {
     return 0
   fi
 
-  # [4] Unique Timestamps & Index Boundaries
+  # [4] Unique Timestamps & Index Boundaries (sorted)
   local -a uniq_ts=()
   local ts="" last_ts=""
-  for ts in "${file_timestamps[@]}"; do
+  while IFS= read -r ts; do
     if [[ "$ts" != "$last_ts" ]]; then
       uniq_ts+=( "$ts" )
       last_ts="$ts"
     fi
-  done
+  done < <(printf '%s\n' "${file_timestamps[@]}" | sort)
 
   local s_idx=-1 e_idx=-1
   for i in "${!uniq_ts[@]}"; do
