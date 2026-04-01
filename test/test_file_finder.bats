@@ -449,3 +449,29 @@ setup() {
 
     assert_equal "${#REPLY_FILES[@]}" 0
 }
+
+@test "file_finder: mtime flag gracefully skips file when stat fails" {
+    touch "${TEST_LOG_DIR}/stat_fail_20250101120000.log"
+    touch -t 202601151200 "${TEST_LOG_DIR}/stat_fail_20250101120000.log"
+
+    # Override execute_cmd to make stat fail
+    local _orig_exec
+    _orig_exec=$(declare -f execute_cmd)
+
+    execute_cmd() {
+        if [[ "$1" == stat* ]]; then
+            return 1
+        fi
+        printf '%s' "$1" | bash -ls
+    }
+
+    file_finder "${TEST_LOG_DIR}" \
+        "stat_fail_<date:%Y%m%d%H%M%S>*" ".log" \
+        "260115-0000" "260115-2359" "true"
+
+    # stat fails → file skipped gracefully, no crash
+    assert_equal "${#REPLY_FILES[@]}" 0
+
+    # Restore
+    eval "${_orig_exec}"
+}
