@@ -198,6 +198,49 @@ declare -a LOG_PATHS=(
 )
 ```
 
+### HOSTS Format
+
+Each entry is `"display_name::user@host"`:
+- `display_name` — a short name for this host (shown in selection menu and output folder)
+- `user@host` — SSH login target
+
+#### How to get host information
+
+1. **Find the IP address** — on the remote machine, open a terminal and run:
+   ```bash
+   hostname -I
+   # or
+   ip addr show | grep "inet "
+   ```
+   The IP address looks like `10.90.68.188` or `192.168.1.100`.
+
+2. **Find the username** — on the remote machine, run:
+   ```bash
+   whoami
+   ```
+   This gives you the username (e.g., `myuser`).
+
+3. **Test the connection** — on your local machine, run:
+   ```bash
+   ssh myuser@10.90.68.188
+   ```
+   If this connects successfully, you have the correct `user@host`.
+
+4. **Add to HOSTS array** — edit `pack_log.sh` and add an entry:
+   ```bash
+   declare -a HOSTS=(
+     "robot-01::myuser@10.90.68.188"
+   )
+   ```
+
+When running without `-n`, `-u`, or `-l`, the script shows an interactive menu:
+```
+Select target host:
+  1. [robot-01] myuser@10.90.68.188
+  2. [robot-02] myuser@10.90.68.191
+Enter number, user@host, or 'local':
+```
+
 ### Tunable Parameters
 
 | Parameter | Default | Description |

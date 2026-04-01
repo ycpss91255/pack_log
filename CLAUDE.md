@@ -93,6 +93,8 @@ Flags（第三欄）：
 
 `pack_log.sh` 頂部的 `HOSTS` 和 `LOG_PATHS` 陣列是主要設定點，目前寫死為特定部署站點（Panasonic AMR 車隊）。`COREROBOT_*` 路徑變數可簡化 LOG_PATHS 的路徑。如需變更目標主機或 log 路徑，直接編輯這些陣列和變數。
 
+HOSTS 格式為 `"display_name::user@host"`，display_name 用於顯示和輸出資料夾命名，user@host 用於 SSH 連線。取得方式：在遠端主機執行 `hostname -I`（IP）和 `whoami`（使用者名稱）。
+
 可調參數也在腳本頂部：`SSH_KEY`、`SSH_TIMEOUT`、`TRANSFER_MAX_RETRIES`、`TRANSFER_RETRY_DELAY`、`TRANSFER_SIZE_WARN_MB`、`FILE_TIME_TOLERANCE_MIN`。
 
 ## 開發流程

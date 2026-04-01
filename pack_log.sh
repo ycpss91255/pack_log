@@ -33,6 +33,13 @@ set -euo pipefail
 # User Configuration (frequently adjusted per deployment site)
 # ==============================================================================
 
+# Target hosts: "display_name::user@host"
+#
+# How to get host information:
+#   1. On the remote machine, run: hostname -I  (to get IP)
+#   2. On the remote machine, run: whoami       (to get username)
+#   3. Test connection: ssh user@IP
+#   4. Add entry below: "my-robot::user@IP"
 # KCOV_EXCL_START
 declare -a HOSTS=(
   # # lixing
