@@ -1,6 +1,6 @@
 # Tests
 
-345 tests (283 unit + 21 local integration + 31 remote integration)
+346 tests (283 unit + 21 local integration + 32 remote integration)
 
 ## Unit Tests
 
@@ -32,7 +32,7 @@
 
 ## Remote Integration Tests
 
-`test/integration/test_remote.bats` (31 tests):
+`test/integration/test_remote.bats` (32 tests):
 
 - SSH connectivity, remote command execution
 - File transfer with rsync, scp, sftp (content verification)

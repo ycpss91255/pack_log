@@ -698,3 +698,24 @@ teardown() {
     count=$(find "${out_dirs[0]}" -name "*.999" \( -type f -o -type l \) | wc -l)
     [[ "${count}" -ge 1 ]]
 }
+
+# ---------------------------------------------------------------------------
+# 32. mtime flag gracefully handles stat failure on remote
+# ---------------------------------------------------------------------------
+
+@test "remote: mtime flag skips broken symlink gracefully when stat fails" {
+    # Create a broken symlink on remote that matches find pattern but stat -c %Y fails
+    execute_cmd "ln -sf /nonexistent/path '${HOME}/ros-docker/AMR/myuser/log_core/corenavi_auto.${REMOTE_HOSTNAME}.${REMOTE_USER}.log.INFO.20250101-120000.broken'"
+
+    LOG_PATHS=(
+        "<env:HOME>/ros-docker/AMR/myuser/log_core"  "corenavi_auto.<cmd:hostname>.<cmd:whoami>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+    )
+    # Should not crash even though stat fails on the broken symlink
+    run main -u "${INTEGRATION_HOST}" \
+        -s 260115-0000 -e 260115-2359 \
+        -o "${OUTPUT_DIR}/mtime_stat_fail"
+    assert_success
+
+    # Clean up
+    execute_cmd "rm -f '${HOME}/ros-docker/AMR/myuser/log_core/corenavi_auto.${REMOTE_HOSTNAME}.${REMOTE_USER}.log.INFO.20250101-120000.broken'" 2>/dev/null || true
+}
