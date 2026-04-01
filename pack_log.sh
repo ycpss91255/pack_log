@@ -163,7 +163,7 @@ declare FILE_TIME_TOLERANCE_MIN=30
 # Internal Variables (do not modify)
 # ==============================================================================
 
-declare -r VERSION="1.5.0"
+declare -r VERSION="1.6.0"
 declare VERBOSE=0
 declare NUM="" HOST="" GET_LOG_TOOL=""
 declare START_TIME="" END_TIME=""
