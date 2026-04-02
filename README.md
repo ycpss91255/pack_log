@@ -32,7 +32,7 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 - **Log File Output**: All operations logged to `pack_log.log` in the output folder.
 - **Dry-Run Mode**: Preview which files would be collected without any copying or transferring (`--dry-run`).
 - **Dynamic Output Naming**: Output folder defaults to `/tmp/<script_name>_<host>_<YYMMDD-HHMMSS>`. The script name is derived from the filename (e.g., renaming `pack_log.sh` to `my_tool.sh` changes the output folder to `my_tool_<host>_...`). Uses HOSTS display name for `-n` mode, hostname for `-l`/`-u` mode. Override with `-o`.
-- 346 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
+- 360 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
 
 ## Quick Start
 
@@ -273,22 +273,22 @@ Enter number, user@host, or 'local':
 │
 ├── test/
 │   ├── test_helper.bash                 # Shared bats test helper
-│   ├── test_log_functions.bats          # Log function tests (20)
-│   ├── test_support_functions.bats      # Support function tests (37)
+│   ├── test_log_functions.bats          # Log function tests (25)
+│   ├── test_support_functions.bats      # Support function tests (42)
 │   ├── test_option_parser.bats          # Option parser tests (53)
 │   ├── test_host_handler.bats           # Host handler tests (21)
 │   ├── test_string_handler.bats         # String/token handler tests (37)
-│   ├── test_file_finder.bats            # File finder tests (33)
+│   ├── test_file_finder.bats            # File finder tests (39)
 │   ├── test_file_ops.bats              # File operation tests (44)
 │   ├── test_ssh_handler.bats            # SSH handler tests (13)
 │   ├── test_main.bats                   # Main pipeline tests (30)
-│   ├── test_integration_local.bats      # Local integration tests (21)
+│   ├── test_integration_local.bats      # Local integration tests (23)
 │   ├── Dockerfile.sshd                  # SSH server for remote tests
 │   ├── setup_remote_logs.sh             # Remote test data seeder
 │   ├── lib/bats-mock                    # Bats mock library (symlink)
 │   └── integration/
 │       ├── test_helper.bash             # Remote test helper
-│       └── test_remote.bats             # Remote integration tests (30)
+│       └── test_remote.bats             # Remote integration tests (32)
 │
 ├── doc/
 │   ├── readme/                          # README translations
@@ -305,7 +305,7 @@ Enter number, user@host, or 'local':
 
 ## Testing
 
-346 tests (279 unit + 21 local integration + 31 remote integration). See **[TEST.md](doc/test/TEST.md)** for full details.
+360 tests (296 unit + 23 local integration + 32 remote integration). See **[TEST.md](doc/test/TEST.md)** for full details.
 
 ```bash
 ./ci.sh              # All tests (Docker required)

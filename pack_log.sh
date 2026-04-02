@@ -15,7 +15,7 @@
 # For more information, run the script with the --help option.
 #
 # Author: Yunchien.chen <yunchien.chen@coretronic-robotics.com>
-# Date: 2026-04-01
+# Date: 2026-04-02
 # Version: 1.6.0
 
 # shellcheck disable=SC2059  # i18n: MSG_* variables used as printf format strings by design
@@ -638,8 +638,11 @@ _log_to_file() {
 }
 
 # Opens the log file for writing. Call after SAVE_FOLDER is finalized.
+# In remote mode, SAVE_FOLDER exists on the remote host but not locally.
+# Create the local directory first so the log file can be written.
 init_log_file() {
   LOG_FILE="${SAVE_FOLDER}/pack_log.log"
+  mkdir -p "${SAVE_FOLDER}"
   exec {_LOG_FD}>>"${LOG_FILE}"
 }
 

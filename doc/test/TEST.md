@@ -1,24 +1,24 @@
 # Tests
 
-346 tests (283 unit + 21 local integration + 32 remote integration)
+360 tests (296 unit + 23 local integration + 32 remote integration)
 
 ## Unit Tests
 
 | Test File | Tests | Scope |
 |-----------|------:|-------|
-| `test_log_functions.bats` | 20 | Log output, verbosity, i18n, file descriptor management |
-| `test_support_functions.bats` | 37 | `have_sudo_access`, `pkg_install_handler`, `execute_cmd`, `date_format` |
+| `test_log_functions.bats` | 26 | Log output, verbosity, i18n, file descriptor management |
+| `test_support_functions.bats` | 42 | `have_sudo_access`, `pkg_install_handler`, `execute_cmd`, `date_format` |
 | `test_option_parser.bats` | 53 | CLI argument parsing, `SAVE_FOLDER` default, `--dry-run`, `--extra-verbose` |
 | `test_host_handler.bats` | 21 | Host resolution (`-n`, `-u`, `-l`), interactive mode |
 | `test_string_handler.bats` | 37 | Token parsing (`<env:>`, `<cmd:>`, `<date:>`, `<suffix:>`), path splitting |
-| `test_file_finder.bats` | 33 | Date filtering, boundary expansion, time tolerance, symlink, mtime, epoch support |
+| `test_file_finder.bats` | 39 | Date filtering, boundary expansion, time tolerance, symlink, mtime, epoch support |
 | `test_file_ops.bats` | 44 | `folder_creator`, `file_copier`, `file_sender`, `get_log`, `file_cleaner` |
 | `test_ssh_handler.bats` | 13 | SSH key creation, key copy, host key rotation, retry logic |
 | `test_main.bats` | 30 | Full pipeline (local/remote), dry-run, transfer failure prompt |
 
 ## Local Integration Tests
 
-`test/test_integration_local.bats` (21 tests):
+`test/test_integration_local.bats` (23 tests):
 
 - Config files, date-filtered files, suffix filtering
 - Multiple LOG_PATHS, empty directories, no files in range

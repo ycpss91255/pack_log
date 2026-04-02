@@ -154,6 +154,19 @@ setup() {
     refute_output --partial $'\033['
 }
 
+@test "init_log_file: creates local directory when SAVE_FOLDER does not exist" {
+    local tmpdir="${BATS_TEST_TMPDIR}/nonexistent_folder"
+    # Directory does NOT exist yet
+    [[ ! -d "${tmpdir}" ]]
+    SAVE_FOLDER="${tmpdir}"
+    init_log_file
+    # Directory should now exist and log file created
+    [[ -d "${tmpdir}" ]]
+    [[ -f "${tmpdir}/pack_log.log" ]]
+    [[ -n "${_LOG_FD}" ]]
+    close_log_file
+}
+
 @test "close_log_file: safe to call multiple times" {
     _LOG_FD=""
     close_log_file

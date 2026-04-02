@@ -40,7 +40,7 @@
 - Doc structure: `doc/readme/`, `doc/test/`, `doc/changelog/`
 
 ### Tests
-- 346 tests (283 unit + 21 local integration + 32 remote integration)
+- 360 tests (296 unit + 23 local integration + 32 remote integration)
 - Fixed 28+ false-positive tests exposed by test framework fix
 - Added: symlink dir, cross-date folder, mtime, epoch tolerance, root EUID,
   real-world scenario, stat failure, locale detection, LOG_PATHS validation,
@@ -78,7 +78,7 @@
 - Doc structure: `doc/readme/`, `doc/test/`, `doc/changelog/`
 
 ### Tests
-- 346 tests (283 unit + 21 local integration + 32 remote integration)
+- 360 tests (296 unit + 23 local integration + 32 remote integration)
 - Fixed 28+ false-positive tests exposed by test framework fix
 - Added: symlink dir, cross-date folder, mtime, root EUID, real-world scenario tests
 - Removed duplicate tests and empty skip placeholders
