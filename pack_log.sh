@@ -1655,9 +1655,8 @@ file_finder() {
 
   # [6] mtime fallback: check unselected files by modification time
   if [[ "${use_mtime}" == "true" && ${#raw_files[@]} -gt 0 ]]; then
-    local mtime_start_epoch mtime_end_epoch
+    local mtime_start_epoch
     date_format "${start_time}" "%s"; mtime_start_epoch="${REPLY}"
-    date_format "${end_time}" "%s"; mtime_end_epoch="${REPLY}"
 
     local -A selected_set=()
     local f
