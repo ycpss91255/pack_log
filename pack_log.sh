@@ -16,7 +16,7 @@
 #
 # Author: Yunchien.chen <yunchien.chen@coretronic-robotics.com>
 # Date: 2026-04-08
-# Version: 1.6.1
+# Version: 1.6.2
 
 # shellcheck disable=SC2059  # i18n: MSG_* variables used as printf format strings by design
 # shellcheck disable=SC2029  # SSH commands piped via stdin, not affected
@@ -40,7 +40,6 @@ set -euo pipefail
 #   2. On the remote machine, run: whoami       (to get username)
 #   3. Test connection: ssh user@IP
 #   4. Add entry below: "my-robot::user@IP"
-# KCOV_EXCL_START
 declare -a HOSTS=(
   # # lixing
   # "core-03::myuser@192.168.11.161"
@@ -66,7 +65,6 @@ declare -a HOSTS=(
   # "mr1206::myuser@10.11.199.9"
   # "t2003::myuser@10.11.199.11"
 )
-# KCOV_EXCL_STOP
 
 # Log paths format: consecutive triplets of (PATH, FILE_PATTERN, FLAGS).
 #
@@ -75,7 +73,6 @@ declare -a HOSTS=(
 #   "<env:HOME>/log_core"              "app.<cmd:hostname>.log.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
 #   "/var/log"                         "syslog*"                               "<sudo>"
 #   "<env:HOME>/log_core"              "app.*.<date:%Y%m%d-%H%M%S>*"           "<mtime><sudo>"
-# KCOV_EXCL_START
 
 # Coretronic path shortcuts (non-Docker)
 # shellcheck disable=SC2034
@@ -147,7 +144,6 @@ declare -a LOG_PATHS=(
   # "${COREROBOT_LOG_DATA}/lidar_detection/glog"                                     "detect_pallet_node-DetectPallet-<date:%Y%m%d-%H%M%S>*"              ""
   # "${COREROBOT_CORETRONIC_AMR_NAVI_INSTALL}/share/lidar_detection_pkg/config"      "pallet.ini"                                                        ""
 )
-# KCOV_EXCL_STOP
 
 declare SAVE_FOLDER="${_PACK_LOG_SCRIPT_NAME}"
 
@@ -166,7 +162,7 @@ declare FILE_TIME_TOLERANCE_MIN=30
 # Internal Variables (do not modify)
 # ==============================================================================
 
-declare -r VERSION="1.6.1"
+declare -r VERSION="1.6.2"
 declare VERBOSE=0
 declare NUM="" HOST="" GET_LOG_TOOL=""
 declare START_TIME="" END_TIME=""
@@ -174,7 +170,6 @@ declare LANG_CODE=""
 declare DRY_RUN=false
 declare LOG_FILE="" _LOG_FD=""
 
-# KCOV_EXCL_START
 declare -a SSH_OPTS=(
     -i "${SSH_KEY}"
     -o BatchMode=yes
@@ -187,7 +182,6 @@ declare -a SSH_OPTS=(
     -o ServerAliveInterval=30
     -o ServerAliveCountMax=3
   )
-# KCOV_EXCL_STOP
 
 unset HAVE_SUDO_ACCESS
 
@@ -200,7 +194,6 @@ declare -gA _TOKEN_CACHE=()
 # shellcheck disable=SC2034
 load_lang() {
   case "${LANG_CODE}" in
-    # KCOV_EXCL_START — non-English translations only used at runtime
     zh-TW)
       MSG_HELP_USAGE='用法: %s [選項]'
       MSG_HELP_OPTIONS='  選項:'
@@ -507,7 +500,7 @@ load_lang() {
       MSG_DRY_RUN_TOTAL='[ドライラン] 収集予定の合計ファイル数：%d'
       MSG_DRY_RUN_COMPLETE='*** ドライラン完了 — 変更は行われていません ***'
       ;;
-    *) # English (default) # KCOV_EXCL_STOP
+    *) # English (default)
       MSG_HELP_USAGE='Usage: %s [options]'
       MSG_HELP_OPTIONS='  Options:'
       MSG_HELP_NUMBER='    -n, --number                  Host number (1-%d)'
@@ -619,7 +612,6 @@ load_lang
 
 # --- Log functions ---
 # Color codes (disabled when stdout/stderr is not a terminal)
-# KCOV_EXCL_START — terminal color detection depends on runtime tty
 if [[ -t 2 ]]; then
   _C_RESET='\033[0m'
   _C_RED='\033[1;31m'
@@ -627,7 +619,6 @@ if [[ -t 2 ]]; then
   _C_GREEN='\033[0;32m'
   _C_CYAN='\033[0;36m'
   _C_DIM='\033[2m'
-# KCOV_EXCL_STOP
 else
   _C_RESET='' _C_RED='' _C_YELLOW='' _C_GREEN='' _C_CYAN='' _C_DIM=''
 fi
@@ -2178,11 +2169,10 @@ main() {
 
     if [[ "${HOST}" != "local" ]]; then
       log_info "$(printf "${MSG_STEP5_TRANSFER}" "${GET_LOG_TOOL}")"
-      # KCOV_EXCL_START — file_sender only runs in remote integration tests
       while ! file_sender; do
         local choice=""
         log_warn "${MSG_TRANSFER_CHOICE}"
-        read -r choice </dev/tty 2>/dev/null || read -r choice
+        read -r choice </dev/tty 2>/dev/null || read -r choice # KCOV_EXCL_LINE
         case "${choice,,}" in
           k|keep)
             log_info "$(printf "${MSG_REMOTE_PRESERVED}" "${HOST}" "${SAVE_FOLDER}")"
@@ -2195,7 +2185,6 @@ main() {
             continue ;;
         esac
       done
-      # KCOV_EXCL_STOP
     else
       log_info "${MSG_STEP5_LOCAL}"
     fi

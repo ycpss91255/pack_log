@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.6.2 (2026-04-08)
+
+### Tests / Coverage
+- **Honest coverage denominator**: removed `KCOV_EXCL` wraps around HOSTS/LOG_PATHS/SSH_OPTS arrays, i18n `load_lang` translation bodies, terminal color detection, and the file_sender retry loop. These blocks were previously hidden from the coverage report, making 100% claims misleading.
+- **Mock-based tests**: added in-process tests (not subprocess-wrapped) so kcov can track coverage: `have_sudo_access` with SUDO_ASKPASS and real sudo check, `folder_creator` hostname/date command failures, `file_copier` array-pipe failure, `get_log_dry_run` LOG_PATHS count validation, `get_log` sudo pre-scan failure branch, `file_cleaner` rm failure, `save_script_data` LOG_PATHS count validation, `option_parser` zh-CN LANG auto-detect.
+- Coverage: **94.49%** (1166/1234) on the honest denominator (was artificially 93.19% with ~353 lines excluded).
+- 380 tests (325 unit + 23 local integration + 32 remote integration).
+
+### Notes on remaining ~68 uncovered lines
+- Multi-line bash array literal elements (HOSTS/LOG_PATHS/SSH_OPTS/option_parser opt arrays) — kcov cannot instrument individual element lines inside `declare -a foo=(...)` blocks.
+- `[[ -t 2 ]]` terminal color branch — tests run without a real tty (else branch is covered).
+- `have_sudo_access` EUID=0 and sudo-missing branches — skipped locally, covered in CI Docker with NOPASSWD sudo.
+- Multi-line command substitutions in `log_error` — kcov blind to `$(...)` inner lines.
+- Interactive `read -r </dev/tty` single line — kept as `KCOV_EXCL_LINE` (genuinely untestable without a tty).
+
 ## v1.6.1 (2026-04-08)
 
 ### Bug Fixes

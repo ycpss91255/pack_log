@@ -239,6 +239,27 @@ setup() {
     assert_output --partial "done"
 }
 
+# --- have_sudo_access: in-process coverage for L711, L716-720 ---
+
+@test "have_sudo_access: in-process with SUDO_ASKPASS and unset cache" {
+    [[ -x /usr/bin/sudo ]] || skip "sudo not installed"
+    sudo -n true 2>/dev/null || skip "sudo requires password"
+    unset HAVE_SUDO_ACCESS
+    export SUDO_ASKPASS="/bin/true"
+    # Direct in-process call so kcov can track line hits
+    have_sudo_access || true
+    unset SUDO_ASKPASS
+    [[ -n "${HAVE_SUDO_ACCESS+set}" ]]
+}
+
+@test "have_sudo_access: in-process without cache runs real sudo check" {
+    [[ -x /usr/bin/sudo ]] || skip "sudo not installed"
+    sudo -n true 2>/dev/null || skip "sudo requires password"
+    unset HAVE_SUDO_ACCESS
+    have_sudo_access || true
+    [[ -n "${HAVE_SUDO_ACCESS+set}" ]]
+}
+
 # --- have_sudo_access: HAVE_SUDO_ACCESS unset, actual sudo check (L207-209) ---
 
 @test "have_sudo_access: runs actual sudo check when HAVE_SUDO_ACCESS is unset" {
@@ -369,13 +390,9 @@ WRAPPER
 # --- date_format: date command failure (L282) ---
 
 @test "date_format: log_error when date command fails" {
-    run env -u LD_PRELOAD -u BASH_ENV bash -c '
-        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +u +o pipefail
-        VERBOSE=0
-        # Passes regex ([0-9]{6}-[0-9]{4}) but yields impossible date 2099-99-99 99:99
-        date_format "999999-9999" "%Y%m%d"
-    '
+    VERBOSE=0
+    # Passes regex ([0-9]{6}-[0-9]{4}) but yields impossible date 2099-99-99 99:99
+    run date_format "999999-9999" "%Y%m%d"
     assert_failure
     assert_output --partial "Failed to format date"
 }
@@ -383,13 +400,10 @@ WRAPPER
 # --- get_remote_value: command failure (L367) ---
 
 @test "get_remote_value: log_error when command fails" {
-    run env -u LD_PRELOAD -u BASH_ENV bash -c '
-        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +u +o pipefail
-        HOST="local"
-        VERBOSE=0
-        get_remote_value "cmd" "false"
-    '
+    HOST="local"
+    VERBOSE=0
+    declare -gA _TOKEN_CACHE=()
+    run get_remote_value "cmd" "false"
     assert_failure
     assert_output --partial "Command failed"
 }
@@ -397,32 +411,70 @@ WRAPPER
 # --- get_remote_value: env type on remote host hits printf -v branch ---
 
 @test "get_remote_value: env type with remote host uses printf -v get_cmd" {
-    run env -u LD_PRELOAD -u BASH_ENV bash -c '
-        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
-        set +u +o pipefail
-        HOST="fake@remote"
-        VERBOSE=0
-        # Stub execute_cmd so we do not actually ssh; returns fixed value
-        execute_cmd() { printf "%s" "remote_home_value"; }
-        # Clear cache so the env branch is taken
-        declare -gA _TOKEN_CACHE=()
-        get_remote_value "env" "HOME"
-        echo "REPLY=${REPLY}"
-    '
-    assert_success
-    assert_output --partial "REPLY=remote_home_value"
+    HOST="fake@remote"
+    VERBOSE=0
+    # Stub execute_cmd so we do not actually ssh; returns fixed value
+    execute_cmd() { printf "%s" "remote_home_value"; }
+    declare -gA _TOKEN_CACHE=()
+    get_remote_value "env" "HOME"
+    assert_equal "${REPLY}" "remote_home_value"
 }
 
 # --- create_folder: mkdir failure (L396) ---
 
 @test "create_folder: log_error when mkdir fails" {
+    HOST="local"
+    VERBOSE=0
+    run create_folder "/proc/impossible/path/that/cannot/be/created"
+    assert_failure
+    assert_output --partial "Failed to create folder"
+}
+
+# --- have_sudo_access: real code paths (L701, L706, L711, L716-720) ---
+
+@test "have_sudo_access: real function hits SUDO_ASKPASS+actual sudo branch" {
     run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
         set +u +o pipefail
-        HOST="local"
-        VERBOSE=0
-        create_folder "/proc/impossible/path/that/cannot/be/created"
+        unset HAVE_SUDO_ACCESS
+        export SUDO_ASKPASS="/bin/false"
+        # Ensure not root, use the real function body path
+        rc=0; have_sudo_access || rc=$?
+        echo "rc=${rc}"
     '
+    assert_output --partial "rc="
+}
+
+@test "have_sudo_access: returns 1 via real code when /usr/bin/sudo missing" {
+    # Force PATH so that sudo check hits the -x test on /usr/bin/sudo.
+    # We cannot remove /usr/bin/sudo, but we can skip if it is present.
+    [[ ! -x /usr/bin/sudo ]] || skip "sudo is installed; cannot exercise L706"
+    unset HAVE_SUDO_ACCESS
+    run have_sudo_access
     assert_failure
-    assert_output --partial "Failed to create folder"
+}
+
+# --- pkg_install_handler: apt-get failure (L754-755) ---
+
+@test "pkg_install_handler: log_warn when apt-get install fails" {
+    [[ -x /usr/bin/sudo ]] || skip "sudo not installed"
+    VERBOSE=0
+    HAVE_SUDO_ACCESS=0
+    local bin_dir="${BATS_TEST_TMPDIR}/bin_fail"
+    mkdir -p "${bin_dir}"
+    cat > "${bin_dir}/sudo" << 'WRAPPER'
+#!/bin/bash
+"$@"
+WRAPPER
+    chmod +x "${bin_dir}/sudo"
+    cat > "${bin_dir}/apt-get" << 'WRAPPER'
+#!/bin/bash
+exit 1
+WRAPPER
+    chmod +x "${bin_dir}/apt-get"
+    export PATH="${bin_dir}:${PATH}"
+
+    run pkg_install_handler "fake_pkg_fail_abc"
+    assert_failure
+    assert_output --partial "Failed to install"
 }

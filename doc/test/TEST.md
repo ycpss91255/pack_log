@@ -1,18 +1,18 @@
 # Tests
 
-366 tests (311 unit + 23 local integration + 32 remote integration)
+380 tests (325 unit + 23 local integration + 32 remote integration)
 
 ## Unit Tests
 
 | Test File | Tests | Scope |
 |-----------|------:|-------|
 | `test_log_functions.bats` | 26 | Log output, verbosity, i18n, file descriptor management |
-| `test_support_functions.bats` | 43 | `have_sudo_access`, `pkg_install_handler`, `execute_cmd`, `date_format` |
-| `test_option_parser.bats` | 54 | CLI argument parsing, `SAVE_FOLDER` default, `--dry-run`, `--extra-verbose`, `$LANG` auto-detect |
-| `test_host_handler.bats` | 21 | Host resolution (`-n`, `-u`, `-l`), interactive mode |
+| `test_support_functions.bats` | 48 | `have_sudo_access`, `pkg_install_handler`, `execute_cmd`, `date_format` |
+| `test_option_parser.bats` | 55 | CLI argument parsing, `SAVE_FOLDER` default, `--dry-run`, `--extra-verbose`, `$LANG` auto-detect |
+| `test_host_handler.bats` | 22 | Host resolution (`-n`, `-u`, `-l`), interactive mode |
 | `test_string_handler.bats` | 37 | Token parsing (`<env:>`, `<cmd:>`, `<date:>`, `<suffix:>`), path splitting |
 | `test_file_finder.bats` | 39 | Date filtering, boundary expansion, time tolerance, symlink, mtime, epoch support |
-| `test_file_ops.bats` | 48 | `folder_creator`, `file_copier`, `file_sender`, `get_log` (incl. sudo pre-scan, time-range summary, rsync fallback), `file_cleaner` |
+| `test_file_ops.bats` | 55 | `folder_creator`, `file_copier`, `file_sender`, `get_log` (incl. sudo pre-scan, time-range summary, rsync fallback), `file_cleaner` |
 | `test_ssh_handler.bats` | 13 | SSH key creation, key copy, host key rotation, retry logic |
 | `test_main.bats` | 30 | Full pipeline (local/remote), dry-run, transfer failure prompt |
 

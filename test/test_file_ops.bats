@@ -70,6 +70,33 @@ setup() {
     [[ "${SAVE_FOLDER}" == *"_${expected_name}_"* ]]
 }
 
+@test "folder_creator: log_error when remote hostname command fails" {
+    HOST="fake@remote"
+    NUM=""
+    SAVE_FOLDER="${TEST_DIR}/output_hn_fail"
+    execute_cmd() {
+        [[ "$1" == "hostname" ]] && return 1
+        return 0
+    }
+    run folder_creator
+    assert_failure
+    assert_output --partial "Failed to get hostname/date"
+}
+
+@test "folder_creator: log_error when remote date command fails" {
+    HOST="fake@remote"
+    NUM=""
+    SAVE_FOLDER="${TEST_DIR}/output_dt_fail"
+    execute_cmd() {
+        [[ "$1" == "hostname" ]] && { echo "fakehost"; return 0; }
+        [[ "$1" == *"date"* ]] && return 1
+        return 0
+    }
+    run folder_creator
+    assert_failure
+    assert_output --partial "Failed to get hostname/date"
+}
+
 @test "folder_creator: appends date with 2-digit year to SAVE_FOLDER" {
     SAVE_FOLDER="${TEST_DIR}/output"
     local today_2digit today_4digit
@@ -643,6 +670,28 @@ setup() {
     assert_output --partial "Failed to remove remote folder"
 }
 
+@test "file_cleaner: in-process warns when rm -rf fails" {
+    HOST="local"
+    VERBOSE=0
+    SAVE_FOLDER="/some/path"
+    execute_cmd() { return 1; }
+    run file_cleaner
+    assert_success
+    assert_output --partial "Failed to remove remote folder"
+}
+
+@test "save_script_data: in-process warns when LOG_PATHS count not multiple of 3" {
+    SAVE_FOLDER="${TEST_DIR}/save_bad_count"
+    mkdir -p "${SAVE_FOLDER}"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
+    GET_LOG_TOOL="rsync"
+    HOST="local"
+    LOG_PATHS=("a" "b" "" "c")
+    run save_script_data
+    assert_output --partial "LOG_PATHS has 4 elements"
+}
+
 # =============================================================================
 # get_tools_checker: no tools available (L722)
 # =============================================================================
@@ -683,6 +732,46 @@ setup() {
 # =============================================================================
 # get_log: LOG_PATHS element count validation
 # =============================================================================
+
+@test "file_copier: log_error when execute_cmd_from_array fails" {
+    SAVE_FOLDER="${TEST_DIR}/copier_fail"
+    mkdir -p "${SAVE_FOLDER}"
+    local src_dir="${TEST_DIR}/copier_src"
+    mkdir -p "${src_dir}"
+    touch "${src_dir}/a.log"
+    execute_cmd_from_array() { return 1; }
+    run file_copier "${src_dir}" "${src_dir}/a.log"
+    assert_failure
+    assert_output --partial "Failed to copy"
+}
+
+@test "get_log_dry_run: warns when LOG_PATHS element count is not multiple of 3" {
+    SAVE_FOLDER="${TEST_DIR}/dry_bad"
+    mkdir -p "${SAVE_FOLDER}"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
+    LOG_PATHS=("${TEST_DIR}" "*.txt" "" "${TEST_DIR}")
+    run get_log_dry_run
+    assert_output --partial "LOG_PATHS"
+}
+
+@test "get_log: sudo pre-scan warns when sudo -v fails" {
+    SAVE_FOLDER="${TEST_DIR}/sudo_fail"
+    mkdir -p "${SAVE_FOLDER}"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
+    HOST="local"
+    local log_dir="${TEST_DIR}/sudo_fail_logs"
+    mkdir -p "${log_dir}"
+    touch "${log_dir}/app.conf"
+    LOG_PATHS=("${log_dir}" "app.conf" "<sudo>")
+    execute_cmd() {
+        [[ "$1" == "sudo -v" ]] && return 1
+        command bash -ls <<< "$1"
+    }
+    run get_log
+    assert_output --partial "sudo"
+}
 
 @test "get_log: sudo pre-scan prompts when a path needs sudo" {
     SAVE_FOLDER="${TEST_DIR}/sudo_prescan"

@@ -199,6 +199,17 @@ setup() {
     assert_output --partial "オプション"
 }
 
+@test "option_parser: auto-detects zh-CN from LANG environment" {
+    run env -u LD_PRELOAD -u BASH_ENV LANG=zh_CN.UTF-8 bash -c '
+        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
+        set +u +o pipefail
+        LANG_CODE=""
+        main --help
+    '
+    assert_success
+    assert_output --partial "选项"
+}
+
 @test "option_parser: LANG env auto-detect works without manual LANG_CODE reset" {
     # Regression: source-time LANG_CODE="en" previously defeated auto-detect.
     # This test does NOT reset LANG_CODE="" — it should still pick up zh_TW.

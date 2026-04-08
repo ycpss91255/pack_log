@@ -148,14 +148,23 @@ setup() {
 }
 
 @test "host_handler: interactive input invalid string should error" {
-    run env -u LD_PRELOAD -u BASH_ENV bash -c 'echo "garbage" | { source "'"${BATS_TEST_DIRNAME}"'/../pack_log.sh"; NUM=""; HOST=""; VERBOSE=0; host_handler; }'
+    NUM=""; HOST=""; VERBOSE=0
+    run bash -c 'echo "garbage" | { source "'"${BATS_TEST_DIRNAME}"'/../pack_log.sh"; NUM=""; HOST=""; VERBOSE=0; host_handler; }'
     assert_failure 1
     assert_output --partial "Invalid input: garbage"
 }
 
 @test "host_handler: interactive input empty string should error" {
-    run env -u LD_PRELOAD -u BASH_ENV bash -c 'echo "" | { source "'"${BATS_TEST_DIRNAME}"'/../pack_log.sh"; NUM=""; HOST=""; VERBOSE=0; host_handler; }'
+    NUM=""; HOST=""; VERBOSE=0
+    run bash -c 'echo "" | { source "'"${BATS_TEST_DIRNAME}"'/../pack_log.sh"; NUM=""; HOST=""; VERBOSE=0; host_handler; }'
     assert_failure 1
+    assert_output --partial "Invalid input"
+}
+
+@test "host_handler: invalid interactive input covers MSG_INVALID_INPUT in-process" {
+    NUM=""; HOST=""; VERBOSE=0
+    run host_handler <<< "garbage_xyz"
+    assert_failure
     assert_output --partial "Invalid input"
 }
 
