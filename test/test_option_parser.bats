@@ -115,6 +115,19 @@ setup() {
 
 # --- --extra-verbose ---
 
+@test "option_parser: --extra-verbose in-process (kcov-trackable)" {
+  VERBOSE=0
+  run option_parser --extra-verbose -l -s 260101-0000 -e 260101-2359
+  assert_success
+}
+
+@test "option_parser: --help in-process with LANG=zh_TW auto-detects (kcov-trackable)" {
+  LANG_CODE=""
+  LANG=zh_TW.UTF-8 run option_parser --help
+  assert_success
+  assert_output --partial "選項"
+}
+
 @test "option_parser: --extra-verbose sets VERBOSE to 3 (without triggering set -x)" {
   # We run in a subshell to avoid set -x polluting the test runner
   run env -u LD_PRELOAD -u BASH_ENV bash -c '

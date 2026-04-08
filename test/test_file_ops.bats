@@ -310,6 +310,29 @@ _setup_fake_transfer_bin() {
     export -f execute_cmd
 }
 
+@test "file_sender: rsync branch with VERBOSE=1 adds verbose flags" {
+    _setup_fake_transfer_bin
+    cat > "${FAKE_BIN}/rsync" <<'FAKE'
+#!/bin/bash
+echo "fake-rsync $*"
+exit 0
+FAKE
+    chmod +x "${FAKE_BIN}/rsync"
+    PATH="${FAKE_BIN}:${PATH}"
+
+    GET_LOG_TOOL="rsync"
+    SAVE_FOLDER="${TEST_DIR}/rsync_verbose"
+    mkdir -p "${SAVE_FOLDER}"
+    HOST="user@fakehost"
+    TRANSFER_SIZE_WARN_MB=0
+    VERBOSE=1
+
+    run file_sender
+    assert_success
+    assert_output --partial "fake-rsync"
+    assert_output --partial "--progress"
+}
+
 @test "file_sender: rsync branch succeeds via PATH-hijacked fake binary" {
     _setup_fake_transfer_bin
     cat > "${FAKE_BIN}/rsync" <<'FAKE'
@@ -796,6 +819,24 @@ FAKE
 # =============================================================================
 # get_tools_checker: no tools available (L722)
 # =============================================================================
+
+@test "get_tools_checker: in-process rsync fallback when remote lacks rsync" {
+    VERBOSE=0
+    HOST="fake@remote"
+    pkg_install_handler() { return 0; }
+    execute_cmd() { return 1; }
+    run get_tools_checker
+    assert_success
+    assert_output --partial "rsync not available on remote host"
+}
+
+@test "get_tools_checker: in-process log_error when no tools available" {
+    VERBOSE=0
+    pkg_install_handler() { return 1; }
+    run get_tools_checker
+    assert_failure
+    assert_output --partial "No file transfer tools"
+}
 
 @test "get_tools_checker: falls back past rsync when remote lacks rsync binary" {
     run env -u LD_PRELOAD -u BASH_ENV bash -c '
