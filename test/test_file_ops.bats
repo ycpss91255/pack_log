@@ -378,6 +378,41 @@ setup() {
     assert_output --partial "No files found"
 }
 
+@test "get_log: warns with time range summary when no files found across all paths" {
+    SAVE_FOLDER="${TEST_DIR}/get_log_summary"
+    mkdir -p "${SAVE_FOLDER}"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
+
+    local empty1="${TEST_DIR}/empty_a"
+    local empty2="${TEST_DIR}/empty_b"
+    mkdir -p "${empty1}" "${empty2}"
+
+    LOG_PATHS=("${empty1}" "nope*.log" "" "${empty2}" "nada*.log" "")
+
+    run get_log
+    assert_success
+    assert_output --partial "intersecting the time range 260115-0000 ~ 260115-2359"
+}
+
+@test "get_log: does NOT emit time range summary when at least one file found" {
+    SAVE_FOLDER="${TEST_DIR}/get_log_partial"
+    mkdir -p "${SAVE_FOLDER}"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
+
+    local log_dir="${TEST_DIR}/partial_logs"
+    local empty_dir="${TEST_DIR}/partial_empty"
+    mkdir -p "${log_dir}" "${empty_dir}"
+    touch "${log_dir}/kept.conf"
+
+    LOG_PATHS=("${log_dir}" "kept.conf" "" "${empty_dir}" "nope*.log" "")
+
+    run get_log
+    assert_success
+    refute_output --partial "intersecting the time range"
+}
+
 @test "get_log: shows resolved path after processing" {
     SAVE_FOLDER="${TEST_DIR}/get_log_resolved"
     mkdir -p "${SAVE_FOLDER}"
@@ -612,6 +647,26 @@ setup() {
 # get_tools_checker: no tools available (L722)
 # =============================================================================
 
+@test "get_tools_checker: falls back past rsync when remote lacks rsync binary" {
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
+        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
+        set +u +o pipefail
+        VERBOSE=0
+        HOST="fake@remote"
+        # rsync, scp, sftp all pass the local pkg check
+        pkg_install_handler() { return 0; }
+        # execute_cmd fails the remote rsync probe, so rsync branch continues.
+        # After fallback, scp is chosen without re-running execute_cmd
+        # (only rsync triggers the remote probe).
+        execute_cmd() { return 1; }
+        get_tools_checker
+        echo "TOOL=${GET_LOG_TOOL}"
+    '
+    assert_success
+    assert_output --partial "rsync not available on remote host"
+    assert_output --partial "TOOL=scp"
+}
+
 @test "get_tools_checker: log_error when no tools available" {
     run env -u LD_PRELOAD -u BASH_ENV bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
@@ -628,6 +683,40 @@ setup() {
 # =============================================================================
 # get_log: LOG_PATHS element count validation
 # =============================================================================
+
+@test "get_log: sudo pre-scan prompts when a path needs sudo" {
+    SAVE_FOLDER="${TEST_DIR}/sudo_prescan"
+    mkdir -p "${SAVE_FOLDER}"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
+    HOST="local"
+
+    local log_dir="${TEST_DIR}/sudo_logs"
+    mkdir -p "${log_dir}"
+    touch "${log_dir}/app.conf"
+
+    # <sudo> flag forces _needs_sudo to return true regardless of HOME
+    LOG_PATHS=("${log_dir}" "app.conf" "<sudo>")
+
+    # Stub execute_cmd to record sudo -v call and succeed
+    _SUDO_V_CALLED=0
+    execute_cmd() {
+        if [[ "$1" == "sudo -v" ]]; then
+            _SUDO_V_CALLED=1
+            return 0
+        fi
+        command bash -ls <<< "$1"
+    }
+
+    run get_log
+    assert_output --partial "sudo"
+    [[ "${_SUDO_V_CALLED}" -eq 1 ]] || {
+        # _SUDO_V_CALLED lives in subshell of `run`; re-run without `run`
+        _SUDO_V_CALLED=0
+        get_log >/dev/null 2>&1 || true
+        [[ "${_SUDO_V_CALLED}" -eq 1 ]]
+    }
+}
 
 @test "get_log: warns when LOG_PATHS element count is not multiple of 3" {
     SAVE_FOLDER="${TEST_DIR}/bad_logpaths"

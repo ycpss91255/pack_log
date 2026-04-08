@@ -373,10 +373,11 @@ WRAPPER
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
         set +u +o pipefail
         VERBOSE=0
-        # Valid format but impossible date
-        date_format "99991399-999999" "%Y%m%d"
+        # Passes regex ([0-9]{6}-[0-9]{4}) but yields impossible date 2099-99-99 99:99
+        date_format "999999-9999" "%Y%m%d"
     '
     assert_failure
+    assert_output --partial "Failed to format date"
 }
 
 # --- get_remote_value: command failure (L367) ---
@@ -391,6 +392,25 @@ WRAPPER
     '
     assert_failure
     assert_output --partial "Command failed"
+}
+
+# --- get_remote_value: env type on remote host hits printf -v branch ---
+
+@test "get_remote_value: env type with remote host uses printf -v get_cmd" {
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
+        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
+        set +u +o pipefail
+        HOST="fake@remote"
+        VERBOSE=0
+        # Stub execute_cmd so we do not actually ssh; returns fixed value
+        execute_cmd() { printf "%s" "remote_home_value"; }
+        # Clear cache so the env branch is taken
+        declare -gA _TOKEN_CACHE=()
+        get_remote_value "env" "HOME"
+        echo "REPLY=${REPLY}"
+    '
+    assert_success
+    assert_output --partial "REPLY=remote_home_value"
 }
 
 # --- create_folder: mkdir failure (L396) ---

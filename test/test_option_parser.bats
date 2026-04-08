@@ -199,6 +199,18 @@ setup() {
     assert_output --partial "オプション"
 }
 
+@test "option_parser: LANG env auto-detect works without manual LANG_CODE reset" {
+    # Regression: source-time LANG_CODE="en" previously defeated auto-detect.
+    # This test does NOT reset LANG_CODE="" — it should still pick up zh_TW.
+    run env -u LD_PRELOAD -u BASH_ENV LANG=zh_TW.UTF-8 bash -c '
+        source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"
+        set +u +o pipefail
+        main --help
+    '
+    assert_success
+    assert_output --partial "選項"
+}
+
 @test "option_parser: defaults to English for unknown LANG" {
     run env -u LD_PRELOAD -u BASH_ENV LANG=fr_FR.UTF-8 bash -c '
         source "'"${BATS_TEST_DIRNAME}/../pack_log.sh"'"

@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.6.1 (2026-04-08)
+
+### Bug Fixes
+- **`$LANG` auto-detect broken**: source-time `LANG_CODE="en"` override defeated locale auto-detection. Users had to pass `--lang` explicitly. Now empty at source time so `$LANG` (local env, not remote) is honored.
+- **Missing summary warning**: `MSG_NO_FILES_IN_RANGE` was defined in all locales but never emitted. `get_log()` now warns once at the end when no files were found across the entire time range.
+
+### Tests / Coverage
+- Audited all `KCOV_EXCL` markers. Removed exclusions on plain-logic blocks (have_sudo_access body, error log one-liners, ssh_handler failure, tool checker fallback, sudo pre-scan, LANG auto-detect, etc.) and kept exclusions only on site config data, i18n translation bodies, terminal detection, interactive prompts, integration-only file_sender loops, and source guard.
+- 366 tests (311 unit + 23 local integration + 32 remote integration).
+- New tests: sudo pre-scan branch in `get_log`, LANG env regression without manual reset, get_tools_checker rsync fallback, get_remote_value env+remote printf -v branch, time-range summary warning (positive + negative).
+
 ## v1.6.0 (2026-04-01)
 
 ### Features

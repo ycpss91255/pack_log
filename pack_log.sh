@@ -15,8 +15,8 @@
 # For more information, run the script with the --help option.
 #
 # Author: Yunchien.chen <yunchien.chen@coretronic-robotics.com>
-# Date: 2026-04-02
-# Version: 1.6.0
+# Date: 2026-04-08
+# Version: 1.6.1
 
 # shellcheck disable=SC2059  # i18n: MSG_* variables used as printf format strings by design
 # shellcheck disable=SC2029  # SSH commands piped via stdin, not affected
@@ -166,7 +166,7 @@ declare FILE_TIME_TOLERANCE_MIN=30
 # Internal Variables (do not modify)
 # ==============================================================================
 
-declare -r VERSION="1.6.0"
+declare -r VERSION="1.6.1"
 declare VERBOSE=0
 declare NUM="" HOST="" GET_LOG_TOOL=""
 declare START_TIME="" END_TIME=""
@@ -612,8 +612,9 @@ load_lang() {
   esac
 }
 
-# Load default language on source (can be overridden by --lang or $LANG in main)
-LANG_CODE="en"
+# Load default (English) messages on source so log functions work before
+# option_parser/main runs. LANG_CODE is intentionally left empty here so that
+# auto-detection from $LANG can fire later in main()/option_parser.
 load_lang
 
 # --- Log functions ---
@@ -700,7 +701,6 @@ have_sudo_access() {
     return 0
   fi
 
-  # KCOV_EXCL_START — kcov cannot instrument these bash conditionals
   # check sudo executable exists and is executable
   if [[ ! -x "/usr/bin/sudo" ]]; then
     return 1
@@ -720,9 +720,8 @@ have_sudo_access() {
       HAVE_SUDO_ACCESS=1
     fi
   fi
-  # KCOV_EXCL_STOP
 
-  return "${HAVE_SUDO_ACCESS}" # KCOV_EXCL_LINE
+  return "${HAVE_SUDO_ACCESS}"
 }
 
 # Installs a package using apt-get if it is not already installed.
@@ -756,7 +755,7 @@ pkg_install_handler() {
     return 1
   fi
 
-  log_verbose "--------------------" # KCOV_EXCL_LINE
+  log_verbose "--------------------"
 }
 
 # Converts a date string (YYYYmmdd-HHMMSS) to the given strftime format.
@@ -784,7 +783,7 @@ date_format() {
   hms="${date:7:2}:${date:9:2}:00"
 
   if ! REPLY=$(date -d "${ymd} ${hms}" "+${format}"); then
-    log_error "$(printf "${MSG_DATE_FORMAT_FAILED}" "${date}")" # KCOV_EXCL_LINE
+    log_error "$(printf "${MSG_DATE_FORMAT_FAILED}" "${date}")"
   fi
 
   log_verbose "${FUNCNAME[0]} output: ${REPLY}"
@@ -855,7 +854,7 @@ get_remote_value() {
 
   local get_cmd=""
   if [[ "${type}" == "env" ]]; then
-    printf -v get_cmd 'printf "%%s" "${%s}"' "${str}" # KCOV_EXCL_LINE
+    printf -v get_cmd 'printf "%%s" "${%s}"' "${str}"
   elif [[ "${type}" == "cmd" ]]; then
     get_cmd="${str}"
   else
@@ -865,7 +864,7 @@ get_remote_value() {
   log_debug "Executing command: ${get_cmd}"
 
   if ! REPLY=$(execute_cmd "${get_cmd}"); then
-    log_error "$(printf "${MSG_COMMAND_FAILED}" "${get_cmd}")" # KCOV_EXCL_LINE
+    log_error "$(printf "${MSG_COMMAND_FAILED}" "${get_cmd}")"
   fi
   _TOKEN_CACHE["${cache_key}"]="${REPLY}"
 
@@ -921,7 +920,7 @@ create_folder() {
   readonly mkdir_cmd
 
   if ! execute_cmd "${mkdir_cmd}"; then
-    log_error "$(printf "${MSG_FOLDER_CREATE_FAILED}" "${path}")" # KCOV_EXCL_LINE
+    log_error "$(printf "${MSG_FOLDER_CREATE_FAILED}" "${path}")"
   fi
 
   log_verbose "--------------------"
@@ -965,7 +964,6 @@ execute_cmd_from_array() {
 # Arguments:
 #   $@: The command-line options.
 option_parser() {
-  # KCOV_EXCL_START
   local -a short_opts_arr=(
     "n:" "u:" "l"
     "s:" "e:"
@@ -982,7 +980,6 @@ option_parser() {
     "dry-run"
     "help" "version"
   )
-  # KCOV_EXCL_STOP
 
   local short_opts long_opts
   short_opts=$(printf "%s" "${short_opts_arr[@]}")
@@ -1014,7 +1011,7 @@ option_parser() {
       --very-verbose)
         VERBOSE=2; shift ;;
       --extra-verbose)
-        VERBOSE=3; shift ;; # KCOV_EXCL_LINE
+        VERBOSE=3; shift ;;
       --dry-run)
         DRY_RUN=true; shift ;;
       --lang)
@@ -1025,24 +1022,22 @@ option_parser() {
         esac
         shift 2 ;;
       -h | --help)
-        # KCOV_EXCL_START — locale auto-detection depends on runtime $LANG
         if [[ -z "${LANG_CODE}" ]]; then
           case "${LANG:-}" in
             zh_TW*) LANG_CODE="zh-TW" ;; zh_CN*|zh_SG*) LANG_CODE="zh-CN" ;;
             ja*) LANG_CODE="ja" ;; *) LANG_CODE="en" ;;
           esac
         fi
-        # KCOV_EXCL_STOP
         load_lang; print_help; exit 0 ;;
       --version)
         printf "%s\n" "${VERSION}"; exit 0 ;;
       --) shift; break ;;
-      *) break ;; # KCOV_EXCL_LINE
+      *) break ;;
     esac
   done
 
   if [[ "${VERBOSE:-0}" -ge 3 ]]; then
-    set -x # KCOV_EXCL_LINE
+    set -x
   fi
 }
 
@@ -1097,7 +1092,7 @@ host_handler() {
       HOST="${input}"
       NUM=""
     else
-      log_error "$(printf "${MSG_INVALID_INPUT}" "${input}")" # KCOV_EXCL_LINE
+      log_error "$(printf "${MSG_INVALID_INPUT}" "${input}")"
     fi
   fi
 
@@ -1242,12 +1237,10 @@ ssh_handler() {
     (( attempt+=1 ))
   done
 
-  # KCOV_EXCL_START — kcov cannot instrument multi-line command substitution
   log_error "$(
     printf "${MSG_SSH_FINAL_FAILURE}\n" "${max_retries}"
     printf '  %s\n' "${err_msgs[@]}"
   )"
-  # KCOV_EXCL_STOP
 }
 
 # Selects the best available file transfer tool.
@@ -1260,24 +1253,22 @@ get_tools_checker() {
   local tool=""
   for tool in "${tools[@]}"; do
     if ! pkg_install_handler "${tool}"; then
-      continue # KCOV_EXCL_LINE
+      continue
     fi
 
     # rsync requires the binary on BOTH local and remote hosts
     if [[ "${tool}" == "rsync" && "${HOST}" != "local" ]]; then
-      # KCOV_EXCL_START — only triggered when remote lacks rsync
       if ! execute_cmd "command -v rsync >/dev/null 2>&1"; then
         log_warn "${MSG_RSYNC_NOT_AVAILABLE}"
         continue
       fi
-      # KCOV_EXCL_STOP
     fi
 
     GET_LOG_TOOL="${tool}"
     return 0
   done
 
-  log_error "$(printf "${MSG_NO_TRANSFER_TOOLS}" "${tools[*]}")" # KCOV_EXCL_LINE
+  log_error "$(printf "${MSG_NO_TRANSFER_TOOLS}" "${tools[*]}")"
 }
 
 # Parses a special string.
@@ -1506,8 +1497,8 @@ file_finder() {
   # get file list
   local -a raw_files=()
   if ! mapfile -t raw_files < <(execute_cmd "${find_cmd}"); then
-    REPLY_FILES=() # KCOV_EXCL_LINE
-    return 0 # KCOV_EXCL_LINE
+    REPLY_FILES=()
+    return 0
   fi
 
   # [1] Configuration Files Direct Pass
@@ -1733,13 +1724,13 @@ folder_creator() {
     else
       # -l or -u mode: use hostname
       if ! host_label=$(execute_cmd "hostname"); then
-        log_error "$(printf "${MSG_HOSTNAME_DATE_FAILED}" "${HOST}")" # KCOV_EXCL_LINE
+        log_error "$(printf "${MSG_HOSTNAME_DATE_FAILED}" "${HOST}")"
       fi
     fi
 
     local timestamp
     if ! timestamp=$(execute_cmd "date +%y%m%d-%H%M%S"); then
-      log_error "$(printf "${MSG_HOSTNAME_DATE_FAILED}" "${HOST}")" # KCOV_EXCL_LINE
+      log_error "$(printf "${MSG_HOSTNAME_DATE_FAILED}" "${HOST}")"
     fi
 
     SAVE_FOLDER="${SAVE_FOLDER}_${host_label}_${timestamp}"
@@ -1755,14 +1746,12 @@ folder_creator() {
 
 # Writes a summary of user inputs and LOG_PATHS to script.log in SAVE_FOLDER.
 save_script_data() {
-  # KCOV_EXCL_START — kcov cannot instrument array literal lines
   local -a string_array=(
     "Host: ${HOST}"
     "Time range: ${START_TIME} ~ ${END_TIME}"
     "Using tool: ${GET_LOG_TOOL}"
     "Saving logs to folder: ${SAVE_FOLDER}"
     )
-  # KCOV_EXCL_STOP
 
   log_info "${MSG_USER_INPUTS_SUMMARY}"
 
@@ -1821,7 +1810,7 @@ file_cleaner() {
   readonly rm_cmd
 
   if ! execute_cmd "${rm_cmd}"; then
-    log_warn "$(printf "${MSG_FOLDER_REMOVE_FAILED}" "${SAVE_FOLDER}")" # KCOV_EXCL_LINE
+    log_warn "$(printf "${MSG_FOLDER_REMOVE_FAILED}" "${SAVE_FOLDER}")"
   else
     log_debug "$(printf "${MSG_FOLDER_REMOVED}" "${SAVE_FOLDER}")"
   fi
@@ -2077,17 +2066,18 @@ get_log() {
     local rp=""
     for rp in "${REPLY_PATHS[@]}"; do
       if _needs_sudo "${rp}" "${LOG_PATHS[i+2]}"; then
-        log_info "$(printf "${MSG_SUDO_REQUIRED}" "${rp}")" # KCOV_EXCL_LINE
-        if execute_cmd "sudo -v"; then # KCOV_EXCL_LINE
-          _sudo_authenticated=true # KCOV_EXCL_LINE
+        log_info "$(printf "${MSG_SUDO_REQUIRED}" "${rp}")"
+        if execute_cmd "sudo -v"; then
+          _sudo_authenticated=true
         else
-          log_warn "$(printf "${MSG_SUDO_FAILED}" "${rp}")" # KCOV_EXCL_LINE
+          log_warn "$(printf "${MSG_SUDO_FAILED}" "${rp}")"
         fi
-        break 2 # KCOV_EXCL_LINE
+        break 2
       fi
     done
   done
 
+  local _total_files_found=0
   for (( i=0; i<${#LOG_PATHS[@]}; i+=3 )); do
     log_path="${LOG_PATHS[i]}"
     log_pattern="${LOG_PATHS[i+1]}"
@@ -2128,8 +2118,13 @@ get_log() {
       log_warn "$(printf "${MSG_NO_FILES_FOUND}" "${idx}" "${total}")"
     else
       log_info "$(printf "${MSG_FOUND_COPYING}" "${idx}" "${total}" "${#all_found_files[@]}")"
+      _total_files_found=$(( _total_files_found + ${#all_found_files[@]} ))
     fi
   done
+
+  if [[ "${_total_files_found}" -eq 0 && "${total}" -gt 0 ]]; then
+    log_warn "$(printf "${MSG_NO_FILES_IN_RANGE}" "${START_TIME}" "${END_TIME}")"
+  fi
 }
 
 # Main function.
@@ -2140,14 +2135,12 @@ get_log() {
 main() {
   option_parser "$@"
 
-  # KCOV_EXCL_START — locale auto-detection depends on runtime $LANG
   if [[ -z "${LANG_CODE}" ]]; then
     case "${LANG:-}" in
       zh_TW*) LANG_CODE="zh-TW" ;; zh_CN*|zh_SG*) LANG_CODE="zh-CN" ;;
       ja*) LANG_CODE="ja" ;; *) LANG_CODE="en" ;;
     esac
   fi
-  # KCOV_EXCL_STOP
   load_lang
 
   if [[ "${DRY_RUN}" == "true" ]]; then
@@ -2184,7 +2177,7 @@ main() {
     get_log
 
     if [[ "${HOST}" != "local" ]]; then
-      log_info "$(printf "${MSG_STEP5_TRANSFER}" "${GET_LOG_TOOL}")" # KCOV_EXCL_LINE
+      log_info "$(printf "${MSG_STEP5_TRANSFER}" "${GET_LOG_TOOL}")"
       # KCOV_EXCL_START — file_sender only runs in remote integration tests
       while ! file_sender; do
         local choice=""
