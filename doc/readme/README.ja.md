@@ -175,7 +175,6 @@ declare -a LOG_PATHS=(
 │   ├── test_integration_local.bats      # ローカル結合テスト (13)
 │   ├── Dockerfile.sshd                  # リモートテスト用 SSH サーバー
 │   ├── setup_remote_logs.sh             # リモートテストデータ作成スクリプト
-│   ├── lib/bats-mock                    # Bats mock ライブラリ（symlink）
 │   └── integration/
 │       ├── test_helper.bash             # リモートテストヘルパー
 │       └── test_remote.bats             # リモート結合テスト (24)
@@ -185,7 +184,6 @@ declare -a LOG_PATHS=(
 │   ├── README.zh-CN.md                  # 簡体字中国語 README
 │   └── README.ja.md                     # 日本語 README
 │
-└── bash_test_helper/                    # リファレンスサブモジュール
 ```
 
 ## テスト

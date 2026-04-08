@@ -285,7 +285,6 @@ Enter number, user@host, or 'local':
 │   ├── test_integration_local.bats      # Local integration tests (23)
 │   ├── Dockerfile.sshd                  # SSH server for remote tests
 │   ├── setup_remote_logs.sh             # Remote test data seeder
-│   ├── lib/bats-mock                    # Bats mock library (symlink)
 │   └── integration/
 │       ├── test_helper.bash             # Remote test helper
 │       └── test_remote.bats             # Remote integration tests (32)
@@ -300,7 +299,6 @@ Enter number, user@host, or 'local':
 │   └── changelog/
 │       └── CHANGELOG.md                 # Version history
 │
-└── bash_test_helper/                    # Reference submodule
 ```
 
 ## Testing

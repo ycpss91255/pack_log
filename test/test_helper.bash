@@ -8,10 +8,6 @@ bats_load_library "bats-support"
 bats_load_library "bats-assert"
 bats_load_library "bats-file"
 
-if [ -d "${BATS_TEST_DIRNAME}/lib/bats-mock" ]; then
-	load "${BATS_TEST_DIRNAME}/lib/bats-mock/stub"
-fi
-
 # Source pack_log.sh (the source guard prevents main from running)
 # NOTE: pack_log.sh uses 'declare' for top-level variables, which creates
 # locals when sourced inside a function (bats load/setup mechanism).
