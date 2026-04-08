@@ -1870,12 +1870,10 @@ file_sender() {
   local -a scp_flags=("-p" "-r")
   local sftp_progress="progress\n" sftp_output="/dev/stdout"
 
-  # KCOV_EXCL_START — file_sender only runs in remote integration tests
   if [[ "${VERBOSE:-0}" -ge 1 ]]; then
     rsync_flags+=("-v" "--progress")
     scp_flags+=("-v")
   fi
-  # KCOV_EXCL_STOP
 
   local local_save_folder
   if [[ "${SAVE_FOLDER}" == /* ]]; then
@@ -1906,7 +1904,7 @@ file_sender() {
     if [[ "${size_mb}" -ge "${TRANSFER_SIZE_WARN_MB}" ]]; then
       local confirm=""
       log_warn "$(printf "${MSG_SIZE_EXCEED_CONFIRM}" "${TRANSFER_SIZE_WARN_MB}" "${folder_size}")"
-      read -r confirm </dev/tty 2>/dev/null || read -r confirm
+      read -r confirm </dev/tty 2>/dev/null || read -r confirm # KCOV_EXCL_LINE
       if [[ "${confirm,,}" == "n" || "${confirm,,}" == "no" ]]; then
         log_info "${MSG_TRANSFER_CANCELLED}"
         return 1
@@ -1914,7 +1912,6 @@ file_sender() {
     fi
   fi
 
-  # KCOV_EXCL_START — transfer loop requires real SSH/rsync/scp/sftp
   local attempt=0
   while (( attempt < TRANSFER_MAX_RETRIES )); do
     local transfer_ok=false
@@ -1966,7 +1963,6 @@ file_sender() {
       return 1
     fi
   done
-  # KCOV_EXCL_STOP
 }
 
 # Dry-run variant of get_log: finds and lists files without copying.

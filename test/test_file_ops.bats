@@ -295,6 +295,107 @@ setup() {
     assert_output --partial "Remote folder not found"
 }
 
+_setup_fake_transfer_bin() {
+    FAKE_BIN="${BATS_TEST_TMPDIR}/fake_bin"
+    mkdir -p "${FAKE_BIN}"
+    # stub execute_cmd used by file_sender for remote probes
+    execute_cmd() {
+        case "$1" in
+            "test -d "*) return 0 ;;
+            "du -sh "*) echo "10K" ;;
+            "du -sb "*) echo "10240" ;;
+            *) return 0 ;;
+        esac
+    }
+    export -f execute_cmd
+}
+
+@test "file_sender: rsync branch succeeds via PATH-hijacked fake binary" {
+    _setup_fake_transfer_bin
+    cat > "${FAKE_BIN}/rsync" <<'FAKE'
+#!/bin/bash
+echo "fake-rsync called with: $*"
+exit 0
+FAKE
+    chmod +x "${FAKE_BIN}/rsync"
+    PATH="${FAKE_BIN}:${PATH}"
+
+    GET_LOG_TOOL="rsync"
+    SAVE_FOLDER="${TEST_DIR}/rsync_fake"
+    mkdir -p "${SAVE_FOLDER}"
+    HOST="user@fakehost"
+    TRANSFER_SIZE_WARN_MB=0
+
+    run file_sender
+    assert_success
+    assert_output --partial "fake-rsync"
+}
+
+@test "file_sender: scp branch succeeds via PATH-hijacked fake binary" {
+    _setup_fake_transfer_bin
+    cat > "${FAKE_BIN}/scp" <<'FAKE'
+#!/bin/bash
+echo "fake-scp called"
+exit 0
+FAKE
+    chmod +x "${FAKE_BIN}/scp"
+    PATH="${FAKE_BIN}:${PATH}"
+
+    GET_LOG_TOOL="scp"
+    SAVE_FOLDER="${TEST_DIR}/scp_fake"
+    mkdir -p "${SAVE_FOLDER}"
+    HOST="user@fakehost"
+    TRANSFER_SIZE_WARN_MB=0
+
+    run file_sender
+    assert_success
+    assert_output --partial "fake-scp"
+}
+
+@test "file_sender: sftp branch succeeds via PATH-hijacked fake binary" {
+    _setup_fake_transfer_bin
+    cat > "${FAKE_BIN}/sftp" <<'FAKE'
+#!/bin/bash
+cat >/dev/null
+echo "fake-sftp called"
+exit 0
+FAKE
+    chmod +x "${FAKE_BIN}/sftp"
+    PATH="${FAKE_BIN}:${PATH}"
+
+    GET_LOG_TOOL="sftp"
+    SAVE_FOLDER="${TEST_DIR}/sftp_fake"
+    mkdir -p "${SAVE_FOLDER}"
+    HOST="user@fakehost"
+    TRANSFER_SIZE_WARN_MB=0
+
+    run file_sender
+    assert_success
+    assert_output --partial "fake-sftp"
+}
+
+@test "file_sender: retries then fails when rsync always fails" {
+    _setup_fake_transfer_bin
+    cat > "${FAKE_BIN}/rsync" <<'FAKE'
+#!/bin/bash
+exit 1
+FAKE
+    chmod +x "${FAKE_BIN}/rsync"
+    PATH="${FAKE_BIN}:${PATH}"
+
+    GET_LOG_TOOL="rsync"
+    SAVE_FOLDER="${TEST_DIR}/rsync_fail"
+    mkdir -p "${SAVE_FOLDER}"
+    HOST="user@fakehost"
+    TRANSFER_SIZE_WARN_MB=0
+    TRANSFER_MAX_RETRIES=2
+    TRANSFER_RETRY_DELAY=0
+
+    run file_sender
+    assert_failure
+    assert_output --partial "failed after 2 attempts"
+}
+
 @test "file_sender: rsync mode transfers files locally" {
     GET_LOG_TOOL="rsync"
     SAVE_FOLDER="${TEST_DIR}/rsync_src"
