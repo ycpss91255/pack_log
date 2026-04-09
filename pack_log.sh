@@ -750,6 +750,14 @@ print_help() {
 # `sudo -l`. It caches the result in the `HAVE_SUDO_ACCESS` variable to avoid
 # checking multiple times.
 #
+# Globals:
+#   HAVE_SUDO_ACCESS  Read/written; cached result (0/1) across calls.
+#   SUDO_ASKPASS      Read; if set, sudo is invoked with -A.
+#   EUID, UID         Read; root short-circuit.
+# Arguments:
+#   None.
+# Outputs:
+#   Writes MSG_CHECKING_SUDO to log on first invocation.
 # Returns:
 #   0 if the user has sudo access or is root.
 #   1 otherwise.
@@ -1883,9 +1891,17 @@ file_cleaner() {
 # Archive path: ${SAVE_FOLDER}.tar.gz
 # Original folder is preserved.
 #
+# Globals:
+#   SAVE_FOLDER  Read; absolute path of the folder to archive.
+#   MSG_ARCHIVE_NO_FOLDER, MSG_ARCHIVING, MSG_ARCHIVE_FAILED, MSG_ARCHIVE_DONE
+#                Read; i18n message templates used for log output.
+# Arguments:
+#   None.
+# Outputs:
+#   Writes progress / success / failure messages via log_info / log_warn.
 # Returns:
-#   0 on success
-#   1 on failure (any partial/corrupted archive is removed before returning)
+#   0 on success.
+#   1 on failure (any partial/corrupted archive is removed before returning).
 archive_save_folder() {
   if [[ -z "${SAVE_FOLDER}" || ! -d "${SAVE_FOLDER}" ]]; then
     log_warn "$(printf "${MSG_ARCHIVE_NO_FOLDER}" "${SAVE_FOLDER}")"
