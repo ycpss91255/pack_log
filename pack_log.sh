@@ -312,7 +312,6 @@ load_lang() {
       MSG_RETRIEVE_MANUALLY='請手動取回檔案，完成後請刪除遠端資料夾。'
       MSG_TRANSFER_CHOICE='[R]etry（重試，預設） / [K]eep（保留遠端資料） / [C]lean（清除遠端資料）: '
       MSG_EMPTY_PATH='[%d/%d] 解析後路徑為空，跳過。'
-      MSG_PROCESSING='[%d/%d] 處理中: %s :: %s'
       MSG_NO_FILES_FOUND='[%d/%d] 找不到檔案。'
       MSG_RESOLVED_PATH='[%d/%d] 解析結果: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 個檔案，複製中...'
@@ -424,7 +423,6 @@ load_lang() {
       MSG_RETRIEVE_MANUALLY='请手动取回文件，完成后请删除远程文件夹。'
       MSG_TRANSFER_CHOICE='[R]etry（重试，默认） / [K]eep（保留远程数据） / [C]lean（清除远程数据）: '
       MSG_EMPTY_PATH='[%d/%d] 解析后路径为空，跳过。'
-      MSG_PROCESSING='[%d/%d] 处理中: %s :: %s'
       MSG_NO_FILES_FOUND='[%d/%d] 未找到文件。'
       MSG_RESOLVED_PATH='[%d/%d] 解析结果: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 个文件，复制中...'
@@ -536,7 +534,6 @@ load_lang() {
       MSG_RETRIEVE_MANUALLY='手動で取得し、完了後にリモートフォルダを削除してください。'
       MSG_TRANSFER_CHOICE='[R]etry（リトライ、デフォルト） / [K]eep（リモートデータ保持） / [C]lean（リモートデータ削除）: '
       MSG_EMPTY_PATH='[%d/%d] 解決済みパスが空です。スキップします。'
-      MSG_PROCESSING='[%d/%d] 処理中: %s :: %s'
       MSG_NO_FILES_FOUND='[%d/%d] ファイルが見つかりません。'
       MSG_RESOLVED_PATH='[%d/%d] 解決済み: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] %d 個のファイルが見つかりました。コピー中...'
@@ -648,7 +645,6 @@ load_lang() {
       MSG_RETRIEVE_MANUALLY='Please retrieve manually and delete when done.'
       MSG_TRANSFER_CHOICE='[R]etry (default) / [K]eep remote data / [C]lean remote data: '
       MSG_EMPTY_PATH='[%d/%d] Resolved path is empty, skipping.'
-      MSG_PROCESSING='[%d/%d] Processing: %s :: %s'
       MSG_NO_FILES_FOUND='[%d/%d] No files found.'
       MSG_RESOLVED_PATH='[%d/%d] Resolved: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] Found %d files, copying...'
@@ -1018,6 +1014,94 @@ get_remote_value() {
   _TOKEN_CACHE["${cache_key}"]="${REPLY}"
 
   log_verbose "--------------------"
+}
+
+# Pre-populates _TOKEN_CACHE with every unique <env:VAR> and <cmd:...> token
+# referenced in LOG_PATHS, using a single execute_cmd round-trip.
+#
+# Without this, get_remote_value resolves each unique token lazily on first
+# use — N unique tokens means N sequential SSH round-trips. On a slow link
+# that's a noticeable startup pause. Batching collapses them to one.
+#
+# Strategy: scan LOG_PATHS for tokens, build one shell script that prints
+# each value followed by a runtime-generated sentinel, run it once, split
+# the output, and stuff the results into _TOKEN_CACHE. Tokens already in
+# the cache are skipped. Any failure (batch script error, value count
+# mismatch) silently falls back to the lazy path in get_remote_value, so
+# this is strictly a best-effort optimization.
+#
+# Globals:
+#   LOG_PATHS     Read; scanned for <env:>/<cmd:> tokens.
+#   _TOKEN_CACHE  Read/written; populated with resolved values.
+# Arguments:
+#   None.
+# Outputs:
+#   Debug traces only; never aborts on failure.
+# Returns:
+#   0 always.
+prefetch_token_cache() {
+  local -A unique=()
+  local i s rest type val
+  local pat='<(env|cmd):([^<>]+)>'
+  for (( i=0; i<${#LOG_PATHS[@]}; i+=3 )); do
+    for s in "${LOG_PATHS[i]}" "${LOG_PATHS[i+1]}"; do
+      rest="${s}"
+      while [[ "${rest}" =~ $pat ]]; do
+        type="${BASH_REMATCH[1]}"
+        val="${BASH_REMATCH[2]}"
+        unique["${type}:${val}"]=1
+        rest="${rest/"${BASH_REMATCH[0]}"/}"
+      done
+    done
+  done
+
+  local -a missing=()
+  local key
+  for key in "${!unique[@]}"; do
+    [[ -n "${_TOKEN_CACHE[${key}]+set}" ]] && continue
+    missing+=("${key}")
+  done
+  (( ${#missing[@]} == 0 )) && return 0
+
+  local sep="__PACK_LOG_TOK_SEP_$$_${RANDOM}_${RANDOM}__"
+  local script="" part=""
+  for key in "${missing[@]}"; do
+    type="${key%%:*}"
+    val="${key#*:}"
+    if [[ "${type}" == "env" ]]; then
+      printf -v part 'printf "%%s%s" "${%s}"; ' "${sep}" "${val}"
+    else
+      printf -v part 'printf "%%s%s" "$(%s)"; ' "${sep}" "${val}"
+    fi
+    script+="${part}"
+  done
+
+  log_debug "prefetch_token_cache: batching ${#missing[@]} token(s)"
+  local result
+  if ! result=$(execute_cmd "${script}"); then
+    log_debug "prefetch_token_cache: batch failed, falling back to lazy resolution"
+    return 0
+  fi
+
+  local -a values=()
+  local rest_out="${result}"
+  while [[ "${rest_out}" == *"${sep}"* ]]; do
+    values+=("${rest_out%%"${sep}"*}")
+    rest_out="${rest_out#*"${sep}"}"
+  done
+
+  if (( ${#values[@]} != ${#missing[@]} )); then
+    log_debug "prefetch_token_cache: value count mismatch (${#values[@]} vs ${#missing[@]})"
+    return 0
+  fi
+
+  local idx=0
+  for key in "${missing[@]}"; do
+    _TOKEN_CACHE["${key}"]="${values[idx]}"
+    log_debug "prefetch_token_cache: ${key} = ${values[idx]}"
+    (( ++idx ))
+  done
+  return 0
 }
 
 # Checks if a path requires sudo to access.
@@ -2413,7 +2497,6 @@ get_log_dry_run() {
     [[ "${log_flags}" == *"<sudo>"* ]] && use_sudo=true
     (( ++idx ))
 
-    log_info "$(printf "${MSG_PROCESSING}" "${idx}" "${total}" "${log_path}" "${log_pattern}")"
     string_handler "${log_path}" "${log_pattern}"
     resolve_path_dates
     local prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
@@ -2479,50 +2562,64 @@ get_log() {
     log_warn "LOG_PATHS has ${#LOG_PATHS[@]} elements (not a multiple of 3). Check configuration."
   fi
 
-  local log_path="" log_pattern="" log_flags=""
   local total=$(( ${#LOG_PATHS[@]} / 3 ))
-  local idx=0
   local i
 
-  # Pre-scan: check if any path needs sudo, authenticate once if so.
-  # _needs_sudo only inspects the path prefix (HOME / /tmp / explicit flag),
-  # so we can skip resolve_path_dates here — date tokens never affect the
-  # answer and expanding them just costs extra `date` invocations per entry.
-  local _sudo_authenticated=false
+  # Single resolution pass: each LOG_PATHS entry is run through string_handler
+  # exactly once, and _needs_sudo exactly once. Results are cached in parallel
+  # arrays so the main loop below can reuse them without re-resolving tokens
+  # or re-checking sudo for every date-expanded path.
+  local -a _resolved_path=() _resolved_prefix=() _resolved_suffix=()
+  local -a _resolved_sudo=() _resolved_mtime=()
   for (( i=0; i<${#LOG_PATHS[@]}; i+=3 )); do
     string_handler "${LOG_PATHS[i]}" "${LOG_PATHS[i+1]}"
+    _resolved_path+=("${REPLY_PATH}")
+    _resolved_prefix+=("${REPLY_PREFIX}")
+    _resolved_suffix+=("${REPLY_SUFFIX}")
     if _needs_sudo "${REPLY_PATH}" "${LOG_PATHS[i+2]}"; then
-      log_info "$(printf "${MSG_SUDO_REQUIRED}" "${REPLY_PATH}")"
+      _resolved_sudo+=("true")
+    else
+      _resolved_sudo+=("false")
+    fi
+    if [[ "${LOG_PATHS[i+2]}" == *"<mtime>"* ]]; then
+      _resolved_mtime+=("true")
+    else
+      _resolved_mtime+=("false")
+    fi
+  done
+
+  # Authenticate sudo upfront if any entry needs it (preserves the original
+  # UX of prompting for the password before the find loop starts).
+  local _sudo_authenticated=false
+  local k
+  for k in "${!_resolved_sudo[@]}"; do
+    if [[ "${_resolved_sudo[k]}" == "true" ]]; then
+      log_info "$(printf "${MSG_SUDO_REQUIRED}" "${_resolved_path[k]}")"
       if execute_cmd "sudo -v"; then
         _sudo_authenticated=true
       else
-        log_warn "$(printf "${MSG_SUDO_FAILED}" "${REPLY_PATH}")"
+        log_warn "$(printf "${MSG_SUDO_FAILED}" "${_resolved_path[k]}")"
       fi
       break
     fi
   done
 
   local _total_files_found=0
-  for (( i=0; i<${#LOG_PATHS[@]}; i+=3 )); do
-    log_path="${LOG_PATHS[i]}"
-    log_pattern="${LOG_PATHS[i+1]}"
-    log_flags="${LOG_PATHS[i+2]}"
+  local idx=0
+  for k in "${!_resolved_path[@]}"; do
+    REPLY_PATH="${_resolved_path[k]}"
+    local prefix="${_resolved_prefix[k]}" suffix="${_resolved_suffix[k]}"
+    local use_sudo=false
+    [[ "${_resolved_sudo[k]}" == "true" ]] && use_sudo=true
     local use_mtime=false
-    [[ "${log_flags}" == *"<mtime>"* ]] && use_mtime=true
+    [[ "${_resolved_mtime[k]}" == "true" ]] && use_mtime=true
     (( ++idx ))
 
-    log_info "$(printf "${MSG_PROCESSING}" "${idx}" "${total}" "${log_path}" "${log_pattern}")"
-    string_handler "${log_path}" "${log_pattern}"
     resolve_path_dates
-    local prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
 
     local -a all_found_files=()
     local rpath=""
     for rpath in "${REPLY_PATHS[@]}"; do
-      # Auto-detect sudo based on path
-      local use_sudo=false
-      _needs_sudo "${rpath}" "${log_flags}" && use_sudo=true
-
       log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${rpath}" "${prefix}" "${suffix}")"
 
       if [[ -z "${rpath}" ]]; then
@@ -2595,6 +2692,14 @@ main() {
   else
     log_info "${MSG_STEP3_LOCAL}"
     GET_LOG_TOOL="local"
+  fi
+
+  # Pre-resolve every <env:>/<cmd:> token in LOG_PATHS in one batch round-trip
+  # so subsequent get_remote_value calls hit the cache instead of paying the
+  # SSH RTT cost per unique token. Best-effort: failures fall through to lazy
+  # resolution. Only meaningful for remote HOST.
+  if [[ "${HOST}" != "local" ]]; then
+    prefetch_token_cache
   fi
 
   log_info "${MSG_STEP4}"

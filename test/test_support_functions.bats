@@ -383,6 +383,71 @@ WRAPPER
 
 # --- _needs_sudo: auto-detect sudo based on path ---
 
+@test "prefetch_token_cache: batches all unique env/cmd tokens into one execute_cmd call" {
+    HOST="testremote"
+    LOG_PATHS=(
+        "<env:HOME>/log" "<cmd:hostname>.log" ""
+        "<env:HOME>/log2" "<env:USER>.log" ""
+        "/fixed/path" "plain.log" ""
+    )
+    _TOKEN_CACHE=()
+    local call_log="${BATS_TEST_TMPDIR}/exec_calls"
+    : > "${call_log}"
+    execute_cmd() {
+        echo x >> "${call_log}"
+        bash -c "$1"
+    }
+
+    prefetch_token_cache
+
+    local n
+    n=$(wc -l < "${call_log}")
+    [ "${n}" -eq 1 ] || {
+        echo "expected 1 execute_cmd call, got ${n}" >&2
+        return 1
+    }
+    [ "${_TOKEN_CACHE[env:HOME]}" = "${HOME}" ]
+    [ "${_TOKEN_CACHE[env:USER]}" = "${USER}" ]
+    [ "${_TOKEN_CACHE[cmd:hostname]}" = "$(hostname)" ]
+}
+
+@test "prefetch_token_cache: no-op when LOG_PATHS has no env/cmd tokens" {
+    HOST="testremote"
+    LOG_PATHS=("/var/log" "*.log" "")
+    _TOKEN_CACHE=()
+    _EXEC_COUNT=0
+    execute_cmd() { _EXEC_COUNT=$(( _EXEC_COUNT + 1 )); }
+
+    prefetch_token_cache
+
+    [ "${_EXEC_COUNT}" -eq 0 ]
+    [ "${#_TOKEN_CACHE[@]}" -eq 0 ]
+}
+
+@test "prefetch_token_cache: skips tokens already in cache" {
+    HOST="testremote"
+    LOG_PATHS=("<env:HOME>/log" "<cmd:hostname>.log" "")
+    _TOKEN_CACHE=([env:HOME]="/cached/home" [cmd:hostname]="cachedhost")
+    _EXEC_COUNT=0
+    execute_cmd() { _EXEC_COUNT=$(( _EXEC_COUNT + 1 )); }
+
+    prefetch_token_cache
+
+    [ "${_EXEC_COUNT}" -eq 0 ]
+    [ "${_TOKEN_CACHE[env:HOME]}" = "/cached/home" ]
+}
+
+@test "prefetch_token_cache: silently falls back when batch execute_cmd fails" {
+    HOST="testremote"
+    LOG_PATHS=("<env:HOME>/log" "log" "")
+    _TOKEN_CACHE=()
+    execute_cmd() { return 1; }
+
+    # Should not abort the script
+    prefetch_token_cache
+    [ "${#_TOKEN_CACHE[@]}" -eq 0 ]
+}
+
 @test "_needs_sudo: returns true for path outside HOME" {
     HOST="local"
     _needs_sudo "/var/log" ""

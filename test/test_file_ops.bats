@@ -976,6 +976,67 @@ FAKE
     }
 }
 
+@test "get_log: calls string_handler exactly once per LOG_PATHS entry" {
+    SAVE_FOLDER="${TEST_DIR}/sh_count"
+    mkdir -p "${SAVE_FOLDER}"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
+    HOST="local"
+
+    local d1="${TEST_DIR}/sh1" d2="${TEST_DIR}/sh2" d3="${TEST_DIR}/sh3"
+    mkdir -p "${d1}" "${d2}" "${d3}"
+    touch "${d1}/a.conf" "${d2}/b.conf" "${d3}/c.conf"
+
+    LOG_PATHS=(
+        "${d1}" "a.conf" ""
+        "${d2}" "b.conf" ""
+        "${d3}" "c.conf" ""
+    )
+
+    _STRING_HANDLER_CALLS=0
+    eval "_orig_string_handler() $(declare -f string_handler | tail -n +2)"
+    string_handler() {
+        _STRING_HANDLER_CALLS=$(( _STRING_HANDLER_CALLS + 1 ))
+        _orig_string_handler "$@"
+    }
+
+    get_log >/dev/null 2>&1
+    [ "${_STRING_HANDLER_CALLS}" -eq 3 ] || {
+        echo "expected 3 string_handler calls, got ${_STRING_HANDLER_CALLS}" >&2
+        return 1
+    }
+}
+
+@test "get_log: calls _needs_sudo once per entry, not per resolved date path" {
+    SAVE_FOLDER="${TEST_DIR}/ns_count"
+    mkdir -p "${SAVE_FOLDER}"
+    # Multi-day range so resolve_path_dates expands to several rpaths
+    START_TIME="260115-0000"
+    END_TIME="260118-2359"
+    HOST="local"
+
+    local base="${TEST_DIR}/dated"
+    mkdir -p "${base}/2026-01-15" "${base}/2026-01-16" \
+             "${base}/2026-01-17" "${base}/2026-01-18"
+    touch "${base}/2026-01-15/x.log"
+
+    LOG_PATHS=("${base}/<date:%Y-%m-%d>" "x.log" "")
+
+    _NEEDS_SUDO_CALLS=0
+    eval "_orig_needs_sudo() $(declare -f _needs_sudo | tail -n +2)"
+    _needs_sudo() {
+        _NEEDS_SUDO_CALLS=$(( _NEEDS_SUDO_CALLS + 1 ))
+        _orig_needs_sudo "$@"
+    }
+
+    get_log >/dev/null 2>&1
+    # 1 LOG_PATHS entry → expect at most 1 sudo check, not 4 (one per day)
+    [ "${_NEEDS_SUDO_CALLS}" -le 1 ] || {
+        echo "expected <=1 _needs_sudo call, got ${_NEEDS_SUDO_CALLS}" >&2
+        return 1
+    }
+}
+
 @test "get_log: warns when LOG_PATHS element count is not multiple of 3" {
     SAVE_FOLDER="${TEST_DIR}/bad_logpaths"
     mkdir -p "${SAVE_FOLDER}"
