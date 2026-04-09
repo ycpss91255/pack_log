@@ -118,7 +118,19 @@ setup() {
     _LOG_FD=""
     assert_file_exists "${tmpfile}"
     run cat "${tmpfile}"
-    assert_output "hello log file"
+    assert_output --partial "hello log file"
+}
+
+@test "_log_to_file: prepends ISO 8601 timestamp with T separator" {
+    local tmpfile="${BATS_TEST_TMPDIR}/test_log_ts.log"
+    exec {_LOG_FD}>>"${tmpfile}"
+    _log_to_file "[INFO]  ts test"
+    exec {_LOG_FD}>&-
+    _LOG_FD=""
+    run cat "${tmpfile}"
+    assert_success
+    # Expect: 2026-04-09T12:34:56+0800 [INFO]  ts test
+    assert_line --regexp '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{4} \[INFO\]  ts test$'
 }
 
 # --- init_log_file / close_log_file ---
