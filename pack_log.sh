@@ -1809,12 +1809,14 @@ file_finder() {
     fi
   done < <(printf '%s\n' "${file_timestamps[@]}" | sort)
 
+  # Comparison style matches [5]/selection loops: use negated < / > so that
+  # "timestamp within [start, end]" reads consistently across the function.
   local s_idx=-1 e_idx=-1
   for i in "${!uniq_ts[@]}"; do
-    if [[ $s_idx -eq -1 ]] && [[ "${uniq_ts[i]}" > "${formatted_start_ts}" || "${uniq_ts[i]}" == "${formatted_start_ts}" ]]; then
+    if [[ $s_idx -eq -1 ]] && [[ ! "${uniq_ts[i]}" < "${formatted_start_ts}" ]]; then
       s_idx=$i
     fi
-    if [[ "${uniq_ts[i]}" < "${formatted_end_ts}" || "${uniq_ts[i]}" == "${formatted_end_ts}" ]]; then
+    if [[ ! "${uniq_ts[i]}" > "${formatted_end_ts}" ]]; then
       e_idx=$i
     fi
   done
@@ -1865,22 +1867,41 @@ file_finder() {
       date_format "${start_time}" "%s"; start_epoch="${REPLY}"
       date_format "${end_time}" "%s"; end_epoch="${REPLY}"
 
+      # Build a ts -> epoch map in a single `date` invocation. On folders
+      # with tens of thousands of files this replaces N forks with 1.
+      local -A epoch_map=()
+      if [[ "${format}" == "%s" ]]; then
+        # Epoch format: timestamp IS the epoch; no parsing needed.
+        for ts in "${uniq_ts[@]}"; do
+          epoch_map["${ts}"]="${ts}"
+        done
+      else
+        # Date string format: batch-parse YYYYMMDDHHMM[SS] via `date -f -`.
+        local -a date_strs=()
+        local sec
+        for ts in "${uniq_ts[@]}"; do
+          sec="${ts:12:2}"
+          date_strs+=( "$(printf '%s-%s-%s %s:%s:%s' \
+            "${ts:0:4}" "${ts:4:2}" "${ts:6:2}" \
+            "${ts:8:2}" "${ts:10:2}" "${sec:-00}")" )
+        done
+        local -a epochs=()
+        mapfile -t epochs < <(printf '%s\n' "${date_strs[@]}" \
+          | date -f - '+%s' 2>/dev/null) || true
+        if [[ ${#epochs[@]} -eq ${#uniq_ts[@]} ]]; then
+          local k
+          for k in "${!uniq_ts[@]}"; do
+            epoch_map["${uniq_ts[k]}"]="${epochs[k]}"
+          done
+        fi
+        # else: batch failed → map stays empty → all files skipped below
+      fi
+
       local -a selected=()
       for i in "${!all_files[@]}"; do
         ts="${file_timestamps[i]}"
-        local file_epoch
-        if [[ "${format}" == "%s" ]]; then
-          # Epoch format: timestamp IS the epoch
-          file_epoch="${ts}"
-        else
-          # Date string format: parse YYYYMMDD... to epoch
-          file_epoch=$(date -d "$(
-            local y="${ts:0:4}" m="${ts:4:2}" d="${ts:6:2}"
-            local rest="${ts:8}"
-            local H="${rest:0:2}" M="${rest:2:2}" S="${rest:4:2}"
-            printf '%s-%s-%s %s:%s:%s' "$y" "$m" "$d" "$H" "$M" "${S:-00}"
-          )" '+%s' 2>/dev/null) || continue
-        fi
+        local file_epoch="${epoch_map[${ts}]:-}"
+        [[ -z "${file_epoch}" ]] && continue
 
         local diff_start diff_end min_diff
         diff_start=$(( start_epoch - file_epoch ))
