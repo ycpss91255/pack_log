@@ -28,7 +28,8 @@
 - **Log 文件输出**：所有操作记录写入 `pack_log.log`。
 - **模拟执行模式**：预览会收集哪些文件，不做任何复制或传输（`--dry-run`）。
 - **传输重试与保留**：文件传输（rsync/scp/sftp）失败时自动重试，最多 3 次，每次间隔 5 秒，能处理 broken pipe 或网络中断等暂时性错误。若全部重试失败，远程临时文件夹会保留以供手动取回。
-- 380 个测试，涵盖单元测试、本机集成测试、远程集成测试。CI 以非 root 用户运行。
+- **自动归档**：收集完成后自动在输出文件夹旁生成 `.tar.gz`，方便携带与分享。失败时交互提示 `[R] 重试 / [K] 仅保留文件夹 / [A] 中止`。`--dry-run` 不会归档。
+- 396 个测试，涵盖单元测试、本机集成测试、远程集成测试。CI 以非 root 用户运行。
 
 ## 快速开始
 
@@ -98,8 +99,9 @@ graph LR
     I --> J{"HOST == local?"}:::decision
 
     J -->|否| K["file_sender\n传输回本机"]:::step
-    K --> L["完成"]:::output
-    J -->|是| L
+    K --> M["archive_save_folder\n创建 .tar.gz"]:::step
+    J -->|是| M
+    M --> L["完成"]:::output
 
     classDef entry fill:#1a5276,color:#fff,stroke:#2980b9
     classDef step fill:#8B6914,color:#fff,stroke:#c8960c
@@ -188,7 +190,7 @@ declare -a LOG_PATHS=(
 
 ## 测试
 
-380 个测试（325 单元 + 23 本机集成 + 32 远程集成）。详见 **[TEST.md](../test/TEST.md)**。
+396 个测试（341 单元 + 23 本机集成 + 32 远程集成）。详见 **[TEST.md](../test/TEST.md)**。
 
 ```bash
 ./ci.sh              # 全部测试（需要 Docker）

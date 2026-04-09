@@ -32,7 +32,8 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 - **Log File Output**: All operations logged to `pack_log.log` in the output folder.
 - **Dry-Run Mode**: Preview which files would be collected without any copying or transferring (`--dry-run`).
 - **Dynamic Output Naming**: Output folder defaults to `/tmp/<script_name>_<host>_<YYMMDD-HHMMSS>`. The script name is derived from the filename (e.g., renaming `pack_log.sh` to `my_tool.sh` changes the output folder to `my_tool_<host>_...`). Uses HOSTS display name for `-n` mode, hostname for `-l`/`-u` mode. Override with `-o`.
-- 380 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
+- **Auto Archive**: After collection, automatically creates a `.tar.gz` alongside the output folder for easy transport. Interactive `[R]etry / [K]eep folder only / [A]bort` on failure. Skipped in `--dry-run`.
+- 396 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
 
 ## Quick Start
 
@@ -102,8 +103,9 @@ graph LR
     I --> J{"HOST == local?"}:::decision
 
     J -->|No| K["file_sender\ntransfer to local"]:::step
-    K --> L["Done"]:::output
-    J -->|Yes| L
+    K --> M["archive_save_folder\ncreate .tar.gz"]:::step
+    J -->|Yes| M
+    M --> L["Done"]:::output
 
     classDef entry fill:#1a5276,color:#fff,stroke:#2980b9
     classDef step fill:#8B6914,color:#fff,stroke:#c8960c
@@ -303,7 +305,7 @@ Enter number, user@host, or 'local':
 
 ## Testing
 
-380 tests (325 unit + 23 local integration + 32 remote integration). See **[TEST.md](doc/test/TEST.md)** for full details.
+396 tests (341 unit + 23 local integration + 32 remote integration). See **[TEST.md](doc/test/TEST.md)** for full details.
 
 ```bash
 ./ci.sh              # All tests (Docker required)

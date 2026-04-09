@@ -961,3 +961,64 @@ FAKE
     run get_log
     assert_output --partial "LOG_PATHS"
 }
+
+# =============================================================================
+# archive_save_folder
+# =============================================================================
+
+@test "archive_save_folder: creates .tar.gz alongside SAVE_FOLDER" {
+    SAVE_FOLDER="${TEST_DIR}/logs"
+    mkdir -p "${SAVE_FOLDER}"
+    echo "test" > "${SAVE_FOLDER}/file.txt"
+    archive_save_folder
+    [ -f "${SAVE_FOLDER}.tar.gz" ]
+    tar -tzf "${SAVE_FOLDER}.tar.gz" | grep -q "logs/file.txt"
+}
+
+@test "archive_save_folder: preserves original folder" {
+    SAVE_FOLDER="${TEST_DIR}/logs2"
+    mkdir -p "${SAVE_FOLDER}"
+    touch "${SAVE_FOLDER}/a"
+    archive_save_folder
+    [ -d "${SAVE_FOLDER}" ]
+    [ -f "${SAVE_FOLDER}/a" ]
+}
+
+@test "archive_save_folder: archive uses relative paths (no absolute)" {
+    SAVE_FOLDER="${TEST_DIR}/logs3"
+    mkdir -p "${SAVE_FOLDER}"
+    touch "${SAVE_FOLDER}/a.log"
+    archive_save_folder
+    ! tar -tzf "${SAVE_FOLDER}.tar.gz" | grep -q "^/"
+}
+
+@test "archive_save_folder: returns 1 when SAVE_FOLDER missing" {
+    SAVE_FOLDER="${TEST_DIR}/nonexistent"
+    run archive_save_folder
+    assert_failure
+    assert_output --partial "Cannot archive"
+}
+
+@test "archive_save_folder: returns 1 and removes partial archive when tar fails" {
+    SAVE_FOLDER="${TEST_DIR}/logs4"
+    mkdir -p "${SAVE_FOLDER}"
+    local fake_bin="${TEST_DIR}/fake_bin"
+    mkdir -p "${fake_bin}"
+    cat > "${fake_bin}/tar" <<'EOF'
+#!/bin/bash
+prev=""
+for arg in "$@"; do
+  if [[ "${prev}" == "-czf" || "${prev}" == "-f" || "${prev}" == "--file" ]]; then
+    echo "partial garbage" > "${arg}"
+    break
+  fi
+  prev="${arg}"
+done
+exit 2
+EOF
+    chmod +x "${fake_bin}/tar"
+    PATH="${fake_bin}:${PATH}" run archive_save_folder
+    assert_failure
+    assert_output --partial "Failed to create archive"
+    [ ! -e "${SAVE_FOLDER}.tar.gz" ]
+}

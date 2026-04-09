@@ -277,16 +277,26 @@ load_lang() {
       MSG_NO_FILES_FOUND='[%d/%d] 找不到檔案。'
       MSG_RESOLVED_PATH='[%d/%d] 解析結果: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 個檔案，複製中...'
-      MSG_STEP1='=== 步驟 1/5: 解析目標主機 ==='
-      MSG_STEP2='=== 步驟 2/5: 驗證時間範圍 ==='
-      MSG_STEP3_SSH='=== 步驟 3/5: 建立 SSH 連線 ==='
-      MSG_STEP3_LOCAL='=== 步驟 3/5: 本機模式 (略過 SSH) ==='
+      MSG_STEP1='=== 步驟 1/6: 解析目標主機 ==='
+      MSG_STEP2='=== 步驟 2/6: 驗證時間範圍 ==='
+      MSG_STEP3_SSH='=== 步驟 3/6: 建立 SSH 連線 ==='
+      MSG_STEP3_LOCAL='=== 步驟 3/6: 本機模式 (略過 SSH) ==='
       MSG_SUDO_REQUIRED='路徑 %s 不在 HOME 底下，需要 sudo 權限。'
       MSG_SUDO_FAILED='sudo 驗證失敗，路徑 %s 可能無法存取。'
-      MSG_STEP4='=== 步驟 4/5: 收集 log 檔案 ==='
-      MSG_STEP5_TRANSFER='=== 步驟 5/5: 傳輸檔案到本機 (%s) ==='
-      MSG_STEP5_LOCAL='=== 步驟 5/5: 檔案已在本機收集完成 ==='
-      MSG_OUTPUT_FOLDER='輸出資料夾: %s'
+      MSG_STEP4='=== 步驟 4/6: 收集 log 檔案 ==='
+      MSG_STEP5_TRANSFER='=== 步驟 5/6: 傳輸檔案到本機 (%s) ==='
+      MSG_STEP5_LOCAL='=== 步驟 5/6: 檔案已在本機收集完成 ==='
+      MSG_STEP6_ARCHIVE='=== 步驟 6/6: 建立封存檔 ==='
+      MSG_ARCHIVING='建立封存檔：%s'
+      MSG_ARCHIVE_DONE='封存完成：%s (%s)'
+      MSG_ARCHIVE_FAILED='建立封存檔失敗：%s'
+      MSG_ARCHIVE_NO_FOLDER='無法封存：找不到資料夾：%s'
+      MSG_ARCHIVE_CHOICE='選擇：[R] 重試 / [K] 僅保留資料夾 / [A] 中止：'
+      MSG_ARCHIVE_KEEP_FOLDER='略過封存，資料夾保留於：%s'
+      MSG_ARCHIVE_ABORTED='使用者中止封存，資料夾保留於：%s'
+      MSG_OUTPUT_PATH='輸出路徑：  %s'
+      MSG_OUTPUT_NAME='輸出資料夾：%s'
+      MSG_OUTPUT_ARCHIVE='輸出封存檔：%s'
       MSG_SUCCESS='打包 log 完成。'
       MSG_DRY_RUN_BANNER='*** 模擬執行模式 — 不會複製或傳輸任何檔案 ***'
       MSG_DRY_RUN_RESOLVED='[模擬] 解析後路徑：%s'
@@ -379,16 +389,26 @@ load_lang() {
       MSG_NO_FILES_FOUND='[%d/%d] 未找到文件。'
       MSG_RESOLVED_PATH='[%d/%d] 解析结果: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 个文件，复制中...'
-      MSG_STEP1='=== 步骤 1/5: 解析目标主机 ==='
-      MSG_STEP2='=== 步骤 2/5: 验证时间范围 ==='
-      MSG_STEP3_SSH='=== 步骤 3/5: 建立 SSH 连接 ==='
-      MSG_STEP3_LOCAL='=== 步骤 3/5: 本机模式 (跳过 SSH) ==='
+      MSG_STEP1='=== 步骤 1/6: 解析目标主机 ==='
+      MSG_STEP2='=== 步骤 2/6: 验证时间范围 ==='
+      MSG_STEP3_SSH='=== 步骤 3/6: 建立 SSH 连接 ==='
+      MSG_STEP3_LOCAL='=== 步骤 3/6: 本机模式 (跳过 SSH) ==='
       MSG_SUDO_REQUIRED='路径 %s 不在 HOME 底下，需要 sudo 权限。'
       MSG_SUDO_FAILED='sudo 验证失败，路径 %s 可能无法访问。'
-      MSG_STEP4='=== 步骤 4/5: 收集 log 文件 ==='
-      MSG_STEP5_TRANSFER='=== 步骤 5/5: 传输文件到本机 (%s) ==='
-      MSG_STEP5_LOCAL='=== 步骤 5/5: 文件已在本机收集完成 ==='
-      MSG_OUTPUT_FOLDER='输出文件夹: %s'
+      MSG_STEP4='=== 步骤 4/6: 收集 log 文件 ==='
+      MSG_STEP5_TRANSFER='=== 步骤 5/6: 传输文件到本机 (%s) ==='
+      MSG_STEP5_LOCAL='=== 步骤 5/6: 文件已在本机收集完成 ==='
+      MSG_STEP6_ARCHIVE='=== 步骤 6/6: 创建归档文件 ==='
+      MSG_ARCHIVING='创建归档文件：%s'
+      MSG_ARCHIVE_DONE='归档完成：%s (%s)'
+      MSG_ARCHIVE_FAILED='创建归档文件失败：%s'
+      MSG_ARCHIVE_NO_FOLDER='无法归档：找不到文件夹：%s'
+      MSG_ARCHIVE_CHOICE='选择：[R] 重试 / [K] 仅保留文件夹 / [A] 中止：'
+      MSG_ARCHIVE_KEEP_FOLDER='跳过归档，文件夹保留于：%s'
+      MSG_ARCHIVE_ABORTED='用户中止归档，文件夹保留于：%s'
+      MSG_OUTPUT_PATH='输出路径：  %s'
+      MSG_OUTPUT_NAME='输出文件夹：%s'
+      MSG_OUTPUT_ARCHIVE='输出归档：  %s'
       MSG_SUCCESS='打包 log 完成。'
       MSG_DRY_RUN_BANNER='*** 模拟执行模式 — 不会复制或传输任何文件 ***'
       MSG_DRY_RUN_RESOLVED='[模拟] 解析后路径：%s'
@@ -481,16 +501,26 @@ load_lang() {
       MSG_NO_FILES_FOUND='[%d/%d] ファイルが見つかりません。'
       MSG_RESOLVED_PATH='[%d/%d] 解決済み: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] %d 個のファイルが見つかりました。コピー中...'
-      MSG_STEP1='=== ステップ 1/5: ターゲットホストの解決 ==='
-      MSG_STEP2='=== ステップ 2/5: 時間範囲の検証 ==='
-      MSG_STEP3_SSH='=== ステップ 3/5: SSH 接続の確立 ==='
-      MSG_STEP3_LOCAL='=== ステップ 3/5: ローカルモード (SSH スキップ) ==='
+      MSG_STEP1='=== ステップ 1/6: ターゲットホストの解決 ==='
+      MSG_STEP2='=== ステップ 2/6: 時間範囲の検証 ==='
+      MSG_STEP3_SSH='=== ステップ 3/6: SSH 接続の確立 ==='
+      MSG_STEP3_LOCAL='=== ステップ 3/6: ローカルモード (SSH スキップ) ==='
       MSG_SUDO_REQUIRED='パス %s は HOME 外のため、sudo 権限が必要です。'
       MSG_SUDO_FAILED='sudo 認証に失敗しました。パス %s にアクセスできない可能性があります。'
-      MSG_STEP4='=== ステップ 4/5: ログファイルの収集 ==='
-      MSG_STEP5_TRANSFER='=== ステップ 5/5: ローカルへファイル転送中 (%s) ==='
-      MSG_STEP5_LOCAL='=== ステップ 5/5: ローカルでファイル収集完了 ==='
-      MSG_OUTPUT_FOLDER='出力フォルダ: %s'
+      MSG_STEP4='=== ステップ 4/6: ログファイルの収集 ==='
+      MSG_STEP5_TRANSFER='=== ステップ 5/6: ローカルへファイル転送中 (%s) ==='
+      MSG_STEP5_LOCAL='=== ステップ 5/6: ローカルでファイル収集完了 ==='
+      MSG_STEP6_ARCHIVE='=== ステップ 6/6: アーカイブ作成中 ==='
+      MSG_ARCHIVING='アーカイブ作成中：%s'
+      MSG_ARCHIVE_DONE='アーカイブ作成完了：%s (%s)'
+      MSG_ARCHIVE_FAILED='アーカイブの作成に失敗しました：%s'
+      MSG_ARCHIVE_NO_FOLDER='アーカイブできません：フォルダが見つかりません：%s'
+      MSG_ARCHIVE_CHOICE='選択：[R] 再試行 / [K] フォルダのみ保持 / [A] 中止：'
+      MSG_ARCHIVE_KEEP_FOLDER='アーカイブをスキップしました。フォルダは保持されています：%s'
+      MSG_ARCHIVE_ABORTED='ユーザーによってアーカイブが中止されました。フォルダは保持されています：%s'
+      MSG_OUTPUT_PATH='出力パス：    %s'
+      MSG_OUTPUT_NAME='出力フォルダ：%s'
+      MSG_OUTPUT_ARCHIVE='出力アーカイブ：%s'
       MSG_SUCCESS='ログのパッケージングが正常に完了しました。'
       MSG_DRY_RUN_BANNER='*** ドライランモード — ファイルのコピー・転送は行いません ***'
       MSG_DRY_RUN_RESOLVED='[ドライラン] 解決済みパス：%s'
@@ -583,16 +613,26 @@ load_lang() {
       MSG_NO_FILES_FOUND='[%d/%d] No files found.'
       MSG_RESOLVED_PATH='[%d/%d] Resolved: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] Found %d files, copying...'
-      MSG_STEP1='=== Step 1/5: Resolving target host ==='
-      MSG_STEP2='=== Step 2/5: Validating time range ==='
-      MSG_STEP3_SSH='=== Step 3/5: Establishing SSH connection ==='
-      MSG_STEP3_LOCAL='=== Step 3/5: Local mode (skipping SSH) ==='
+      MSG_STEP1='=== Step 1/6: Resolving target host ==='
+      MSG_STEP2='=== Step 2/6: Validating time range ==='
+      MSG_STEP3_SSH='=== Step 3/6: Establishing SSH connection ==='
+      MSG_STEP3_LOCAL='=== Step 3/6: Local mode (skipping SSH) ==='
       MSG_SUDO_REQUIRED='Path %s is outside HOME, sudo permission required.'
       MSG_SUDO_FAILED='sudo authentication failed, path %s may be inaccessible.'
-      MSG_STEP4='=== Step 4/5: Collecting log files ==='
-      MSG_STEP5_TRANSFER='=== Step 5/5: Transferring files to local (%s) ==='
-      MSG_STEP5_LOCAL='=== Step 5/5: Files collected locally ==='
-      MSG_OUTPUT_FOLDER='Output folder: %s'
+      MSG_STEP4='=== Step 4/6: Collecting log files ==='
+      MSG_STEP5_TRANSFER='=== Step 5/6: Transferring files to local (%s) ==='
+      MSG_STEP5_LOCAL='=== Step 5/6: Files collected locally ==='
+      MSG_STEP6_ARCHIVE='=== Step 6/6: Creating archive ==='
+      MSG_ARCHIVING='Creating archive: %s'
+      MSG_ARCHIVE_DONE='Archive created: %s (%s)'
+      MSG_ARCHIVE_FAILED='Failed to create archive: %s'
+      MSG_ARCHIVE_NO_FOLDER='Cannot archive: folder not found: %s'
+      MSG_ARCHIVE_CHOICE='Choose: [R]etry / [K]eep folder only / [A]bort:'
+      MSG_ARCHIVE_KEEP_FOLDER='Skipping archive, folder kept at: %s'
+      MSG_ARCHIVE_ABORTED='Archive aborted by user, folder kept at: %s'
+      MSG_OUTPUT_PATH='Output path:    %s'
+      MSG_OUTPUT_NAME='Output folder:  %s'
+      MSG_OUTPUT_ARCHIVE='Output archive: %s'
       MSG_SUCCESS='Packaging log completed successfully.'
       MSG_DRY_RUN_BANNER='*** DRY RUN MODE — no files will be copied or transferred ***'
       MSG_DRY_RUN_RESOLVED='[dry-run] Resolved path: %s'
@@ -1810,6 +1850,38 @@ file_cleaner() {
   close_log_file
 }
 
+# Creates a .tar.gz archive of SAVE_FOLDER alongside the folder itself.
+# Archive path: ${SAVE_FOLDER}.tar.gz
+# Original folder is preserved.
+#
+# Returns:
+#   0 on success
+#   1 on failure (any partial/corrupted archive is removed before returning)
+archive_save_folder() {
+  if [[ -z "${SAVE_FOLDER}" || ! -d "${SAVE_FOLDER}" ]]; then
+    log_warn "$(printf "${MSG_ARCHIVE_NO_FOLDER}" "${SAVE_FOLDER}")"
+    return 1
+  fi
+
+  local archive_path="${SAVE_FOLDER}.tar.gz"
+  local parent_dir base_name
+  parent_dir="$(dirname "${SAVE_FOLDER}")"
+  base_name="$(basename "${SAVE_FOLDER}")"
+
+  log_info "$(printf "${MSG_ARCHIVING}" "${archive_path}")"
+
+  if ! tar -czf "${archive_path}" -C "${parent_dir}" "${base_name}"; then
+    rm -f "${archive_path}"
+    log_warn "$(printf "${MSG_ARCHIVE_FAILED}" "${archive_path}")"
+    return 1
+  fi
+
+  local archive_size
+  archive_size="$(du -h "${archive_path}" | awk '{print $1}')"
+  log_info "$(printf "${MSG_ARCHIVE_DONE}" "${archive_path}" "${archive_size}")"
+  return 0
+}
+
 # Copies matched files into the SAVE_FOLDER on local or remote host.
 #
 # Strips /home/<user>/ prefix from paths to keep output structure clean.
@@ -2187,7 +2259,33 @@ main() {
       log_info "${MSG_STEP5_LOCAL}"
     fi
 
-    log_info "$(printf "${MSG_OUTPUT_FOLDER}" "${SAVE_FOLDER}")"
+    # Step 6: Archive the collected folder
+    log_info "${MSG_STEP6_ARCHIVE}"
+    while ! archive_save_folder; do
+      local choice=""
+      log_warn "${MSG_ARCHIVE_CHOICE}"
+      read -r choice </dev/tty 2>/dev/null || read -r choice
+      case "${choice,,}" in
+        k|keep)
+          log_info "$(printf "${MSG_ARCHIVE_KEEP_FOLDER}" "${SAVE_FOLDER}")"
+          break ;;
+        a|abort)
+          log_info "$(printf "${MSG_ARCHIVE_ABORTED}" "${SAVE_FOLDER}")"
+          close_log_file; exit 1 ;;
+        *)  # retry (default: empty or 'r')
+          log_info "[R]etry: archiving again..."
+          continue ;;
+      esac
+    done
+
+    local out_parent out_name
+    out_parent="$(dirname "${SAVE_FOLDER}")"
+    out_name="$(basename "${SAVE_FOLDER}")"
+    log_info "$(printf "${MSG_OUTPUT_PATH}" "${out_parent}")"
+    log_info "$(printf "${MSG_OUTPUT_NAME}" "${out_name}")"
+    if [[ -f "${SAVE_FOLDER}.tar.gz" ]]; then
+      log_info "$(printf "${MSG_OUTPUT_ARCHIVE}" "${out_name}.tar.gz")"
+    fi
     log_info "${MSG_SUCCESS}"
     close_log_file
   fi

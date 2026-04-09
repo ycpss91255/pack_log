@@ -28,7 +28,8 @@
 - **Log 檔案輸出**：所有操作記錄寫入 `pack_log.log`。
 - **模擬執行模式**：預覽會收集哪些檔案，不做任何複製或傳輸（`--dry-run`）。
 - **傳輸重試與保留**：檔案傳輸（rsync/scp/sftp）失敗時自動重試，最多 3 次，每次間隔 5 秒，能處理 broken pipe 或網路中斷等暫時性錯誤。若全部重試失敗，遠端暫存資料夾會保留以供手動取回。
-- 380 個測試，涵蓋單元測試、本機整合測試、遠端整合測試。CI 以非 root 使用者執行。
+- **自動封存**：收集完成後自動在輸出資料夾旁產生 `.tar.gz`，方便攜帶與分享。失敗時互動提示 `[R] 重試 / [K] 僅保留資料夾 / [A] 中止`。`--dry-run` 不會封存。
+- 396 個測試，涵蓋單元測試、本機整合測試、遠端整合測試。CI 以非 root 使用者執行。
 
 ## 快速開始
 
@@ -98,8 +99,9 @@ graph LR
     I --> J{"HOST == local?"}:::decision
 
     J -->|否| K["file_sender\n傳輸回本機"]:::step
-    K --> L["完成"]:::output
-    J -->|是| L
+    K --> M["archive_save_folder\n建立 .tar.gz"]:::step
+    J -->|是| M
+    M --> L["完成"]:::output
 
     classDef entry fill:#1a5276,color:#fff,stroke:#2980b9
     classDef step fill:#8B6914,color:#fff,stroke:#c8960c
@@ -188,7 +190,7 @@ declare -a LOG_PATHS=(
 
 ## 測試
 
-380 個測試（325 單元 + 23 本機整合 + 32 遠端整合）。詳見 **[TEST.md](../test/TEST.md)**。
+396 個測試（341 單元 + 23 本機整合 + 32 遠端整合）。詳見 **[TEST.md](../test/TEST.md)**。
 
 ```bash
 ./ci.sh              # 全部測試（需要 Docker）

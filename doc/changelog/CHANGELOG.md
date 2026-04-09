@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.6.3 (2026-04-09)
+
+### Features
+- **Auto archive**: After log collection completes, the script now automatically creates a `.tar.gz` archive alongside the output folder for easy transport. The original folder is preserved. Applies to both local and remote modes; `--dry-run` skips archiving.
+- **Interactive failure recovery for archiving**: If `tar` fails (e.g., disk full), the user is prompted with `[R]etry / [K]eep folder only / [A]bort`, mirroring the file_sender failure flow. Any partial/corrupted archive is removed before prompting to avoid misleading output.
+- **New output format**: replaced the single `Output folder: ...` line with three lines — `Output path:`, `Output folder:`, and `Output archive:`.
+- Pipeline now has 6 steps (was 5); all `MSG_STEP*` labels updated to `N/6`.
+
+### Refactor
+- **`have_sudo_access` portability**: replaced hardcoded `/usr/bin/sudo` with `command -v sudo`, working on Alpine / NixOS / macOS Homebrew layouts where sudo is at a different path. As a side benefit, the missing-sudo and sudo-fails branches are now reachable via PATH hijack tests instead of requiring filesystem modification.
+
+### Tests
+- New `archive_save_folder` test group (5 tests).
+- New PATH hijack tests for `have_sudo_access`.
+- 396 tests (341 unit + 23 local integration + 32 remote integration).
+- Coverage: **94.79%** (1273/1343).
+
 ## v1.6.2 (2026-04-08)
 
 ### Tests / Coverage
