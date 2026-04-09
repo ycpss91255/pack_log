@@ -220,6 +220,16 @@ declare -gA _TOKEN_CACHE=()
 # --- i18n ---
 # Loads i18n messages based on LANG_CODE. All translations are embedded
 # so the script has no external dependencies.
+#
+# Globals:
+#   LANG_CODE  Read; selects which language block to load (en/zh-TW/zh-CN/ja).
+#   MSG_*      Written; all localized message strings used by the script.
+# Arguments:
+#   None.
+# Outputs:
+#   None.
+# Returns:
+#   0 always (unknown LANG_CODE falls through to the English default).
 # shellcheck disable=SC2034
 load_lang() {
   case "${LANG_CODE}" in
@@ -1115,8 +1125,16 @@ execute_cmd_from_array() {
 # This function uses `getopt` to parse the command-line options and set the
 # corresponding variables.
 #
+# Globals:
+#   NUM, HOST, START_TIME, END_TIME, SAVE_FOLDER, VERBOSE, DRY_RUN,
+#   LANG_CODE, VERSION  Written/Read; populated from matching CLI options.
 # Arguments:
 #   $@: The command-line options.
+# Outputs:
+#   Writes help/version text to stdout; warnings to stderr. Enables xtrace
+#   when verbosity reaches 3.
+# Returns:
+#   0 on success; exits 0 after --help/--version, exits 1 on parse failure.
 option_parser() {
   local -a short_opts_arr=(
     "n:" "u:" "l"
@@ -1200,6 +1218,18 @@ option_parser() {
 # This function determines which host to connect to based on the user's input.
 # It can be a number from the `HOSTS` array, a `user@host` string, or "local".
 # If no host is provided, it prompts the user to select one.
+#
+# Globals:
+#   HOSTS      Read; list of configured display_name::user@host entries.
+#   NUM        Read/Written; host index (1-based) into HOSTS.
+#   HOST       Read/Written; resolved user@host string or "local".
+#   MSG_HOST_* Read; localized prompts and error messages.
+# Arguments:
+#   None.
+# Outputs:
+#   Prints the selection menu and prompt to stdout; debug/verbose traces.
+# Returns:
+#   0 on success; aborts via log_error on invalid input or out-of-range number.
 host_handler() {
   log_verbose "${FUNCNAME[0]} input is: "
   log_verbose "  NUM: ${NUM}"
@@ -1275,6 +1305,18 @@ host_handler() {
 # This function prompts the user to enter the start and end times for the log
 # search if they are not provided as command-line options. It validates the
 # format of the input.
+#
+# Globals:
+#   START_TIME, END_TIME  Read/Written; YYMMDD-HHMM strings validated here.
+#   MSG_TIME_*,
+#   MSG_INVALID_TIME_FORMAT,
+#   MSG_START_BEFORE_END  Read; localized prompt/error strings.
+# Arguments:
+#   None.
+# Outputs:
+#   Interactive prompts to stdout when values are missing.
+# Returns:
+#   0 on success; aborts via log_error on bad format or START >= END.
 time_handler() {
   local t=""
   for t in START_TIME END_TIME; do
@@ -1304,6 +1346,20 @@ time_handler() {
 # This function checks for the SSH key, creates it if it doesn't exist, and
 # copies it to the remote host. It also handles known hosts and retries the
 # connection if it fails.
+#
+# Globals:
+#   HOST         Read; target user@host.
+#   SSH_KEY      Read; path to private key (auto-created if missing).
+#   SSH_TIMEOUT  Read; connect timeout passed to ssh-copy-id.
+#   HOME         Read; used to locate known_hosts.
+#   MSG_SSH_*    Read; localized status and error messages.
+# Arguments:
+#   None.
+# Outputs:
+#   Debug/info/warn log messages; may invoke ssh-keygen, ssh-keyscan and
+#   ssh-copy-id which write to stderr and known_hosts.
+# Returns:
+#   0 when SSH succeeds within max_retries (3); aborts via log_error otherwise.
 ssh_handler() {
   # non-local machine, check and install ssh package
   pkg_install_handler "ssh" || exit 1
@@ -1441,12 +1497,18 @@ get_tools_checker() {
 # This function parses a special string in the format `<type:string>` and
 # resolves it to a value.
 #
+# Globals:
+#   REPLY_TYPE  Written; token type (env, cmd, date, suffix).
+#   REPLY_STR   Written; resolved string value.
+#   REPLY       Read; receives output from get_remote_value for env/cmd tokens.
+#   MSG_INVALID_SPECIAL_STRING,
+#   MSG_UNKNOWN_SPECIAL_STRING  Read; localized error messages.
 # Arguments:
-#   input: The special string to parse.
-#
-# Sets:
-#   REPLY_TYPE: The type of the token (env, cmd, date, suffix).
-#   REPLY_STR:  The resolved string value.
+#   input: The special string to parse (without surrounding angle brackets).
+# Outputs:
+#   Debug traces via log_debug.
+# Returns:
+#   0 on success; aborts via log_error on malformed or unknown token type.
 special_string_parser() {
   local -r input="${1:?"${FUNCNAME[0]} need input string."}"; shift
 
@@ -1475,14 +1537,21 @@ special_string_parser() {
 # This function takes a path and a pattern, finds all special tokens in the
 # format `<...>`, and replaces them with their resolved values.
 #
+# Globals:
+#   NUM, HOSTS    Read; used for <num> and <name> token substitution.
+#   REPLY_PATH    Written; resolved directory path.
+#   REPLY_PREFIX  Written; resolved file name pattern (without suffix token).
+#   REPLY_SUFFIX  Written; suffix filter from <suffix:> token, or empty.
+#   REPLY_TYPE,
+#   REPLY_STR     Read; populated by special_string_parser.
+#   MSG_TOKEN_NUM_NO_HOST  Read; localized warning.
 # Arguments:
 #   path_str:    The directory path to process.
 #   pattern_str: The file name pattern to process.
-#
-# Sets:
-#   REPLY_PATH:   The resolved directory path.
-#   REPLY_PREFIX: The resolved file name pattern (without suffix token).
-#   REPLY_SUFFIX: The suffix filter (from <suffix:> token), or empty.
+# Outputs:
+#   Debug traces and warnings via log_debug/log_warn.
+# Returns:
+#   0 on success; may abort via log_error through special_string_parser.
 string_handler() {
   local path_str="${1:?"${FUNCNAME[0]} needs path argument."}"; shift
   local pattern_str="${1:?"${FUNCNAME[0]} needs pattern argument."}"; shift
@@ -1557,9 +1626,19 @@ string_handler() {
 # When a path contains date tokens, generates all dates from START_TIME
 # to END_TIME and returns an array of resolved paths.
 #
-# Sets:
-#   REPLY_PATHS: Array of resolved paths (one per date when cross-date,
-#                or single element when no date token in path).
+# Globals:
+#   REPLY_PATH   Read; path possibly containing a <date:fmt> token.
+#   REPLY_PATHS  Written; array of resolved paths (one per date, or single
+#                element when no date token is present).
+#   REPLY        Read; receives epoch output from date_format.
+#   START_TIME,
+#   END_TIME     Read; define the inclusive range of dates to generate.
+# Arguments:
+#   None.
+# Outputs:
+#   None.
+# Returns:
+#   0 always.
 resolve_path_dates() {
   local path="${REPLY_PATH}"
 
