@@ -1,12 +1,12 @@
 # Tests
 
-396 tests (341 unit + 23 local integration + 32 remote integration)
+398 tests (342 unit + 24 local integration + 32 remote integration)
 
 ## Unit Tests
 
 | Test File | Tests | Scope |
 |-----------|------:|-------|
-| `test_log_functions.bats` | 26 | Log output, verbosity, i18n, file descriptor management |
+| `test_log_functions.bats` | 27 | Log output, verbosity, i18n, file descriptor management |
 | `test_support_functions.bats` | 50 | `have_sudo_access` (incl. `command -v sudo` PATH hijack), `pkg_install_handler`, `execute_cmd`, `date_format` |
 | `test_option_parser.bats` | 57 | CLI argument parsing, `SAVE_FOLDER` default, `--dry-run`, `--extra-verbose`, `$LANG` auto-detect |
 | `test_host_handler.bats` | 22 | Host resolution (`-n`, `-u`, `-l`), interactive mode |
@@ -18,7 +18,7 @@
 
 ## Local Integration Tests
 
-`test/test_integration_local.bats` (23 tests):
+`test/test_integration_local.bats` (24 tests):
 
 - Config files, date-filtered files, suffix filtering
 - Multiple LOG_PATHS, empty directories, no files in range

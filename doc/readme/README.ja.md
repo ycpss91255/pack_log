@@ -166,21 +166,21 @@ declare -a LOG_PATHS=(
 │
 ├── test/
 │   ├── test_helper.bash                 # 共通 bats テストヘルパー
-│   ├── test_log_functions.bats          # ログ関数テスト (20)
-│   ├── test_support_functions.bats      # サポート関数テスト (37)
-│   ├── test_option_parser.bats          # オプション解析テスト (44)
+│   ├── test_log_functions.bats          # ログ関数テスト (27)
+│   ├── test_support_functions.bats      # サポート関数テスト (50)
+│   ├── test_option_parser.bats          # オプション解析テスト (57)
 │   ├── test_host_handler.bats           # ホストハンドラテスト (22)
 │   ├── test_string_handler.bats         # 文字列/トークン処理テスト (27)
-│   ├── test_file_finder.bats            # ファイル検索テスト (20)
-│   ├── test_file_ops.bats              # ファイル操作テスト (31)
+│   ├── test_file_finder.bats            # ファイル検索テスト (39)
+│   ├── test_file_ops.bats              # ファイル操作テスト (67)
 │   ├── test_ssh_handler.bats            # SSH ハンドラテスト (13)
-│   ├── test_main.bats                   # メインパイプラインテスト (17)
-│   ├── test_integration_local.bats      # ローカル結合テスト (13)
+│   ├── test_main.bats                   # メインパイプラインテスト (30)
+│   ├── test_integration_local.bats      # ローカル結合テスト (24)
 │   ├── Dockerfile.sshd                  # リモートテスト用 SSH サーバー
 │   ├── setup_remote_logs.sh             # リモートテストデータ作成スクリプト
 │   └── integration/
 │       ├── test_helper.bash             # リモートテストヘルパー
-│       └── test_remote.bats             # リモート結合テスト (24)
+│       └── test_remote.bats             # リモート結合テスト (32)
 │
 ├── doc/
 │   ├── README.zh-TW.md                  # 繁体字中国語 README

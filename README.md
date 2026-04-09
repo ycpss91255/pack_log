@@ -275,16 +275,16 @@ Enter number, user@host, or 'local':
 │
 ├── test/
 │   ├── test_helper.bash                 # Shared bats test helper
-│   ├── test_log_functions.bats          # Log function tests (25)
-│   ├── test_support_functions.bats      # Support function tests (48)
-│   ├── test_option_parser.bats          # Option parser tests (55)
+│   ├── test_log_functions.bats          # Log function tests (27)
+│   ├── test_support_functions.bats      # Support function tests (50)
+│   ├── test_option_parser.bats          # Option parser tests (57)
 │   ├── test_host_handler.bats           # Host handler tests (22)
 │   ├── test_string_handler.bats         # String/token handler tests (37)
 │   ├── test_file_finder.bats            # File finder tests (39)
-│   ├── test_file_ops.bats              # File operation tests (55)
+│   ├── test_file_ops.bats              # File operation tests (67)
 │   ├── test_ssh_handler.bats            # SSH handler tests (13)
 │   ├── test_main.bats                   # Main pipeline tests (30)
-│   ├── test_integration_local.bats      # Local integration tests (23)
+│   ├── test_integration_local.bats      # Local integration tests (24)
 │   ├── Dockerfile.sshd                  # SSH server for remote tests
 │   ├── setup_remote_logs.sh             # Remote test data seeder
 │   └── integration/

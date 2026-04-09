@@ -129,8 +129,8 @@ setup() {
     _LOG_FD=""
     run cat "${tmpfile}"
     assert_success
-    # Expect: 2026-04-09T12:34:56+0800 [INFO]  ts test
-    assert_line --regexp '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{4} \[INFO\]  ts test$'
+    # Expect: 2026-04-09T12:34:56+08:00 [INFO]  ts test (ISO 8601 with colon in offset)
+    assert_line --regexp '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2} \[INFO\]  ts test$'
 }
 
 # --- init_log_file / close_log_file ---

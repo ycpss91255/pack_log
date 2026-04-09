@@ -713,7 +713,7 @@ fi
 # Returns:
 #   0 always.
 _log_to_file() {
-  [[ -n "${_LOG_FD}" ]] && printf '%s %s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$*" >&"${_LOG_FD}"
+  [[ -n "${_LOG_FD}" ]] && printf '%s %s\n' "$(date '+%Y-%m-%dT%H:%M:%S%:z')" "$*" >&"${_LOG_FD}"
   return 0
 }
 

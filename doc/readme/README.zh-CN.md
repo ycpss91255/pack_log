@@ -166,21 +166,21 @@ declare -a LOG_PATHS=(
 │
 ├── test/
 │   ├── test_helper.bash                 # 共用 bats 测试 helper
-│   ├── test_log_functions.bats          # 日志函数测试 (20)
-│   ├── test_support_functions.bats      # 辅助函数测试 (37)
-│   ├── test_option_parser.bats          # 选项解析测试 (44)
+│   ├── test_log_functions.bats          # 日志函数测试 (27)
+│   ├── test_support_functions.bats      # 辅助函数测试 (50)
+│   ├── test_option_parser.bats          # 选项解析测试 (57)
 │   ├── test_host_handler.bats           # 主机选择测试 (22)
 │   ├── test_string_handler.bats         # 字符串/Token 处理测试 (27)
-│   ├── test_file_finder.bats            # 文件搜索测试 (20)
-│   ├── test_file_ops.bats              # 文件操作测试 (31)
+│   ├── test_file_finder.bats            # 文件搜索测试 (39)
+│   ├── test_file_ops.bats              # 文件操作测试 (67)
 │   ├── test_ssh_handler.bats            # SSH 处理测试 (13)
-│   ├── test_main.bats                   # Main 流程测试 (17)
-│   ├── test_integration_local.bats      # 本机集成测试 (13)
+│   ├── test_main.bats                   # Main 流程测试 (30)
+│   ├── test_integration_local.bats      # 本机集成测试 (24)
 │   ├── Dockerfile.sshd                  # 远程测试用 SSH 服务器
 │   ├── setup_remote_logs.sh             # 远程测试数据创建脚本
 │   └── integration/
 │       ├── test_helper.bash             # 远程测试 helper
-│       └── test_remote.bats             # 远程集成测试 (24)
+│       └── test_remote.bats             # 远程集成测试 (32)
 │
 ├── doc/
 │   ├── README.zh-TW.md                  # 繁体中文 README

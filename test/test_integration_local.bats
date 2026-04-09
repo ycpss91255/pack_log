@@ -276,6 +276,25 @@ setup() {
     [[ "${content}" == *"260115-2359"* ]]
 }
 
+@test "local-integration: pack_log.log entries have ISO 8601 timestamp (lnav format)" {
+    LOG_PATHS=(
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml" ""
+    )
+
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/ts_test"
+    assert_success
+
+    local -a out_dirs=("${OUTPUT_DIR}"/ts_test_*)
+    local log_file="${out_dirs[0]}/pack_log.log"
+    [[ -f "${log_file}" ]]
+
+    # Every non-empty line must start with: YYYY-MM-DDTHH:MM:SS+ZZZZ <space>
+    # This is the exact pattern that doc/lnav/formats/installed/pack_log.json parses.
+    run grep -Ev '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2} ' "${log_file}"
+    # grep -v should find no violating lines (exit 1 = no match = all lines conform)
+    [[ "${status}" -eq 1 ]]
+}
+
 # ---------------------------------------------------------------------------
 # 10. File content integrity
 # ---------------------------------------------------------------------------
