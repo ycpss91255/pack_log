@@ -692,7 +692,16 @@ else
   _C_RESET='' _C_RED='' _C_YELLOW='' _C_GREEN='' _C_CYAN='' _C_DIM=''
 fi
 
-# Writes plain-text log entry to the log file (no-op if log file not yet initialized)
+# Writes plain-text log entry to the log file (no-op if log file not yet initialized).
+#
+# Globals:
+#   _LOG_FD  Read; file descriptor opened by init_log_file.
+# Arguments:
+#   $@  Message to write.
+# Outputs:
+#   Writes one line to the log file via _LOG_FD.
+# Returns:
+#   0 always.
 _log_to_file() {
   [[ -n "${_LOG_FD}" ]] && printf '%s\n' "$*" >&"${_LOG_FD}"
   return 0
@@ -701,6 +710,17 @@ _log_to_file() {
 # Opens the log file for writing. Call after SAVE_FOLDER is finalized.
 # In remote mode, SAVE_FOLDER exists on the remote host but not locally.
 # Create the local directory first so the log file can be written.
+#
+# Globals:
+#   SAVE_FOLDER  Read; destination directory.
+#   LOG_FILE     Written; absolute path of the log file.
+#   _LOG_FD      Written; file descriptor opened for append.
+# Arguments:
+#   None.
+# Outputs:
+#   None (creates directory and opens fd).
+# Returns:
+#   0 on success; non-zero if mkdir/exec fails (set -e aborts).
 init_log_file() {
   LOG_FILE="${SAVE_FOLDER}/pack_log.log"
   mkdir -p "${SAVE_FOLDER}"
@@ -708,6 +728,15 @@ init_log_file() {
 }
 
 # Closes the log file descriptor. Safe to call multiple times.
+#
+# Globals:
+#   _LOG_FD  Read/written; cleared after close.
+# Arguments:
+#   None.
+# Outputs:
+#   None.
+# Returns:
+#   0 always.
 close_log_file() {
   if [[ -n "${_LOG_FD}" ]]; then
     exec {_LOG_FD}>&-
@@ -722,6 +751,16 @@ log_warn()    { printf "${_C_YELLOW}[WARN]${_C_RESET}  %s\n" "$*" >&2; _log_to_f
 log_error()   { printf "${_C_RED}[ERROR]${_C_RESET} %s\n" "$*" >&2; _log_to_file "[ERROR] $*"; close_log_file; exit 1; }
 
 # Prints the help message for the script.
+#
+# Globals:
+#   HOSTS         Read; size used to render number-selection range.
+#   MSG_HELP_*    Read; localized help strings.
+# Arguments:
+#   None.
+# Outputs:
+#   Writes the localized help text to stdout.
+# Returns:
+#   0 always.
 print_help() {
   # shellcheck disable=SC2059
   printf "${MSG_HELP_USAGE}\n" "$(basename "$0")"
@@ -834,8 +873,14 @@ pkg_install_handler() {
 #   date:   The date string in YYYYmmdd-HHMMSS format.
 #   format: The strftime format to convert to (e.g. %Y%m%d%H%M%S, %s).
 #
-# Sets:
-#   REPLY: The formatted date string.
+# Globals:
+#   REPLY                       Written; the formatted date string.
+#   MSG_INVALID_DATE_FORMAT,
+#   MSG_DATE_FORMAT_FAILED      Read; localized error messages.
+# Outputs:
+#   Verbose log lines on stderr; fatal log_error on parse failure.
+# Returns:
+#   0 on success; aborts via log_error on failure.
 date_format() {
   local -r date="${1:?"${FUNCNAME[0]} need date."}"; shift
   local -r format="${1:?"${FUNCNAME[0]} need format."}"; shift
@@ -865,8 +910,17 @@ date_format() {
 # Pipes the command string into 'bash -ls' via stdin, bypassing complex
 # shell escaping and nested quoting issues.
 #
+# Globals:
+#   HOST       Read; "local" runs in local bash, otherwise SSH target.
+#   SSH_OPTS   Read; SSH options array.
+#   SSH_KEY,
+#   SSH_TIMEOUT Read; logged for verbose tracing.
 # Arguments:
 #   inner_cmd: The shell command string to execute.
+# Outputs:
+#   Forwards stdout/stderr from the executed command.
+# Returns:
+#   The exit status of the executed command.
 execute_cmd() {
   local -r inner_cmd="${1:?"${FUNCNAME[0]} need inner command."}"; shift
   local ret=0
@@ -897,8 +951,16 @@ execute_cmd() {
 #   type: Token type — "env" (environment variable) or "cmd" (shell command).
 #   str:  The variable name or command to resolve.
 #
-# Sets:
-#   REPLY: The resolved value.
+# Globals:
+#   _TOKEN_CACHE  Read/written; cache of resolved tokens to skip repeated SSH.
+#   HOST          Read; "local" short-circuits env lookups.
+#   REPLY         Written; the resolved value.
+#   MSG_UNKNOWN_TOKEN_TYPE,
+#   MSG_COMMAND_FAILED  Read; localized error messages.
+# Outputs:
+#   Verbose/debug log lines; fatal log_error on unknown type or command failure.
+# Returns:
+#   0 on success; aborts via log_error on failure.
 get_remote_value() {
   local -r type="${1:?"${FUNCNAME[0]} need type."}"; shift
   local -r str="${1:?"${FUNCNAME[0]} need string."}"; shift
@@ -951,6 +1013,14 @@ get_remote_value() {
 # Arguments:
 #   path:  The resolved file path to check.
 #   flags: The FLAGS column from LOG_PATHS (may contain "<sudo>").
+#
+# Globals:
+#   HOST  Read; "local" uses ${HOME}, remote queries via execute_cmd.
+#   HOME  Read in local mode.
+# Outputs:
+#   None on success; remote HOME query may emit verbose logs via execute_cmd.
+# Returns:
+#   0 if sudo is required; 1 otherwise.
 _needs_sudo() {
   local path="${1:-}" flags="${2:-}"
 
@@ -976,8 +1046,15 @@ _needs_sudo() {
 
 # Creates a folder on the local or remote machine.
 #
+# Globals:
+#   HOST                       Read via execute_cmd; local or remote target.
+#   MSG_FOLDER_CREATE_FAILED   Read; localized error message.
 # Arguments:
 #   path: The path of the folder to create.
+# Outputs:
+#   Verbose log lines; fatal log_error on failure.
+# Returns:
+#   0 on success; aborts via log_error on failure.
 create_folder() {
   local -r path="${1:?"${FUNCNAME[0]} need path."}"; shift
 
@@ -998,9 +1075,16 @@ create_folder() {
 
 # Executes a command using an array of strings as null-delimited stdin.
 #
+# Globals:
+#   HOST      Read; "local" uses local eval, otherwise piped over SSH.
+#   SSH_OPTS  Read; SSH options array.
 # Arguments:
 #   inner_cmd: The command to execute (e.g., "xargs ...").
 #   ...:       Array elements to pipe as null-delimited stdin.
+# Outputs:
+#   Forwards stdout/stderr from the executed command.
+# Returns:
+#   The exit status of the executed command.
 execute_cmd_from_array() {
   local -r inner_cmd="${1:?"${FUNCNAME[0]} need inner command."}"; shift
   local ret=0
@@ -1317,7 +1401,18 @@ ssh_handler() {
 #
 # Checks for rsync, scp, and sftp in order. For rsync, also verifies the
 # binary exists on the remote host (rsync requires both sides).
-# Sets GET_LOG_TOOL to the first usable tool found.
+#
+# Globals:
+#   GET_LOG_TOOL              Written; first usable transfer tool name.
+#   HOST                      Read; remote rsync probe is skipped in local mode.
+#   MSG_RSYNC_NOT_AVAILABLE,
+#   MSG_NO_TRANSFER_TOOLS     Read; localized warning / fatal messages.
+# Arguments:
+#   None.
+# Outputs:
+#   log_warn when rsync is missing on the remote; fatal log_error if no tool found.
+# Returns:
+#   0 on success; aborts via log_error if no transfer tool is available.
 get_tools_checker() {
   local -r -a tools=("rsync" "scp" "sftp")
   local tool=""
@@ -1922,7 +2017,7 @@ archive_save_folder() {
   fi
 
   local archive_size
-  archive_size="$(du -h "${archive_path}" | awk '{print $1}')"
+  archive_size="$(du -h "${archive_path}" | cut -f1)"
   log_info "$(printf "${MSG_ARCHIVE_DONE}" "${archive_path}" "${archive_size}")"
   return 0
 }
