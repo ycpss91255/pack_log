@@ -45,7 +45,7 @@
 #
 # Author: Yunchien.chen <yunchien.chen@coretronic-robotics.com>
 # Date: 2026-04-08
-# Version: 1.6.3
+# Version: 1.7.0
 
 # shellcheck disable=SC2059  # i18n: MSG_* variables used as printf format strings by design
 # shellcheck disable=SC2029  # SSH commands piped via stdin, not affected
@@ -142,6 +142,8 @@ declare -a LOG_PATHS=(
   # "<env:HOME>/Desktop/pack_log/log/avoid/log_slam/record"                "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"               ""
 
 
+    "/tmp/multiday_test/<date:%Y-%m-%d>"  "*.log"  ""
+
   # # Panasonic — LiDAR Detection shelf log path (docker)
   # "${COREROBOT_DOCKER_LOG_CORE}"                      "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
   # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"         ""
@@ -156,9 +158,9 @@ declare -a LOG_PATHS=(
 
   # sys_log kernal_log
   # # 2D LiDAR SLAM log path (docker)
-  "${COREROBOT_DOCKER_LOG_CORE}"        "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
-  "${COREROBOT_DOCKER_LOG_SLAM}"        "coreslam_2D_<date:%s>*<suffix:.log>"                                     ""
-  "${COREROBOT_DOCKER_LOG_SLAM}/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
+  # "${COREROBOT_DOCKER_LOG_CORE}"        "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+  # "${COREROBOT_DOCKER_LOG_SLAM}"        "coreslam_2D_<date:%s>*<suffix:.log>"                                     ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
 
   # # 2D LiDAR AvoidStop log path (docker)
   # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"  "uimap.png"                                                              ""
@@ -191,7 +193,7 @@ declare FILE_TIME_TOLERANCE_MIN=30
 # Internal Variables (do not modify)
 # ==============================================================================
 
-declare -r VERSION="1.6.3"
+declare -r VERSION="1.7.0"
 declare VERBOSE=0
 declare NUM="" HOST="" GET_LOG_TOOL=""
 declare START_TIME="" END_TIME=""
@@ -332,7 +334,7 @@ load_lang() {
       MSG_ARCHIVE_CHOICE='選擇：[R] 重試 / [K] 僅保留資料夾 / [A] 中止：'
       MSG_ARCHIVE_KEEP_FOLDER='略過封存，資料夾保留於：%s'
       MSG_ARCHIVE_ABORTED='使用者中止封存，資料夾保留於：%s'
-      MSG_OUTPUT_PATH='輸出路徑：  %s'
+      MSG_OUTPUT_SECTION='=== 輸出 ==='
       MSG_OUTPUT_NAME='輸出資料夾：%s'
       MSG_OUTPUT_ARCHIVE='輸出封存檔：%s'
       MSG_SUCCESS='打包 log 完成。'
@@ -443,7 +445,7 @@ load_lang() {
       MSG_ARCHIVE_CHOICE='选择：[R] 重试 / [K] 仅保留文件夹 / [A] 中止：'
       MSG_ARCHIVE_KEEP_FOLDER='跳过归档，文件夹保留于：%s'
       MSG_ARCHIVE_ABORTED='用户中止归档，文件夹保留于：%s'
-      MSG_OUTPUT_PATH='输出路径：  %s'
+      MSG_OUTPUT_SECTION='=== 输出 ==='
       MSG_OUTPUT_NAME='输出文件夹：%s'
       MSG_OUTPUT_ARCHIVE='输出归档：  %s'
       MSG_SUCCESS='打包 log 完成。'
@@ -554,7 +556,7 @@ load_lang() {
       MSG_ARCHIVE_CHOICE='選択：[R] 再試行 / [K] フォルダのみ保持 / [A] 中止：'
       MSG_ARCHIVE_KEEP_FOLDER='アーカイブをスキップしました。フォルダは保持されています：%s'
       MSG_ARCHIVE_ABORTED='ユーザーによってアーカイブが中止されました。フォルダは保持されています：%s'
-      MSG_OUTPUT_PATH='出力パス：    %s'
+      MSG_OUTPUT_SECTION='=== 出力 ==='
       MSG_OUTPUT_NAME='出力フォルダ：%s'
       MSG_OUTPUT_ARCHIVE='出力アーカイブ：%s'
       MSG_SUCCESS='ログのパッケージングが正常に完了しました。'
@@ -665,7 +667,7 @@ load_lang() {
       MSG_ARCHIVE_CHOICE='Choose: [R]etry / [K]eep folder only / [A]bort:'
       MSG_ARCHIVE_KEEP_FOLDER='Skipping archive, folder kept at: %s'
       MSG_ARCHIVE_ABORTED='Archive aborted by user, folder kept at: %s'
-      MSG_OUTPUT_PATH='Output path:    %s'
+      MSG_OUTPUT_SECTION='=== Output ==='
       MSG_OUTPUT_NAME='Output folder:  %s'
       MSG_OUTPUT_ARCHIVE='Output archive: %s'
       MSG_SUCCESS='Packaging log completed successfully.'
@@ -1802,7 +1804,21 @@ resolve_path_dates() {
 # Returns:
 #   0 on success (REPLY_FILES may be empty); non-zero only on fatal find error.
 file_finder() {
-  local -r folder_path="${1:?"${FUNCNAME[0]} need path."}"; shift
+  local _ff_first="${1:?"${FUNCNAME[0]} need path."}"; shift
+  # First arg is either a literal path string or the name of an array
+  # variable holding multiple paths. Probe via `declare -p` so that callers
+  # passing a single dir keep working unchanged, while batched callers can
+  # pass an array name to collapse N finds into one.
+  local -a _ff_folder_paths=()
+  local _ff_decl=""
+  _ff_decl=$(declare -p "${_ff_first}" 2>/dev/null) || _ff_decl=""
+  if [[ "${_ff_decl}" == "declare -a"* || "${_ff_decl}" == "declare -ar"* \
+        || "${_ff_decl}" == "declare -ax"* ]]; then
+    local -n _ff_ref="${_ff_first}"
+    _ff_folder_paths=("${_ff_ref[@]}")
+  else
+    _ff_folder_paths=("${_ff_first}")
+  fi
   local file_prefix="${1:-}"; shift
   local file_suffix="${1:-}"; shift
   local start_time="${1:?"${FUNCNAME[0]} need start time."}"; shift
@@ -1812,7 +1828,7 @@ file_finder() {
   local sudo_prefix=""
   [[ "${use_sudo}" == "true" ]] && sudo_prefix="sudo "
 
-  log_verbose "${FUNCNAME[0]} input: Path=${folder_path}, Prefix=${file_prefix}"
+  log_verbose "${FUNCNAME[0]} input: Paths=${_ff_folder_paths[*]}, Prefix=${file_prefix}"
 
   local token="" format_position=""
   if [[ "${file_prefix}" =~ (<date:[^<>]*>) ]]; then
@@ -1836,9 +1852,16 @@ file_finder() {
   local name_pattern="${file_prefix}${file_suffix}"
   name_pattern="${name_pattern//\*\*/*}"
 
+  # Build a single find command that walks every starting path. find natively
+  # accepts multiple starting points, so we collapse N round-trips into one.
+  local _ff_paths_quoted="" _ff_p=""
+  for _ff_p in "${_ff_folder_paths[@]}"; do
+    [[ -z "${_ff_p}" ]] && continue
+    printf -v _ff_paths_quoted "%s %q" "${_ff_paths_quoted}" "${_ff_p}"
+  done
   local find_cmd
-  printf -v find_cmd "%sfind -L %q -maxdepth 1 \\( -type f -o -type l \\) -name '%s' 2>/dev/null | sort" \
-    "${sudo_prefix}" "${folder_path}" "${name_pattern}"
+  printf -v find_cmd "%sfind -L%s -maxdepth 1 \\( -type f -o -type l \\) -name '%s' 2>/dev/null | sort" \
+    "${sudo_prefix}" "${_ff_paths_quoted}" "${name_pattern}"
 
   # get file list
   local -a raw_files=()
@@ -2262,7 +2285,7 @@ archive_save_folder() {
   parent_dir="$(dirname "${SAVE_FOLDER}")"
   base_name="$(basename "${SAVE_FOLDER}")"
 
-  log_info "$(printf "${MSG_ARCHIVING}" "${archive_path}")"
+  log_debug "$(printf "${MSG_ARCHIVING}" "${archive_path}")"
 
   if ! tar -czf "${archive_path}" -C "${parent_dir}" "${base_name}"; then
     rm -f "${archive_path}"
@@ -2271,8 +2294,8 @@ archive_save_folder() {
   fi
 
   local archive_size
-  archive_size="$(du -h "${archive_path}" | cut -f1)"
-  log_info "$(printf "${MSG_ARCHIVE_DONE}" "${archive_path}" "${archive_size}")"
+  archive_size="$(du -h --apparent-size "${archive_path}" | cut -f1)"
+  log_debug "$(printf "${MSG_ARCHIVE_DONE}" "${archive_path}" "${archive_size}")"
   return 0
 }
 
@@ -2617,24 +2640,61 @@ get_log() {
 
     resolve_path_dates
 
-    local -a all_found_files=()
+    # Collect non-empty rpaths into a single array; one entry-level log line
+    # captures the resolved path template (still containing the date token,
+    # which is more useful than 30 nearly-identical expanded paths).
+    local -a entry_paths=()
     local rpath=""
+    local _had_empty_path=false
     for rpath in "${REPLY_PATHS[@]}"; do
-      log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${rpath}" "${prefix}" "${suffix}")"
-
       if [[ -z "${rpath}" ]]; then
-        log_warn "$(printf "${MSG_EMPTY_PATH}" "${idx}" "${total}")"
+        _had_empty_path=true
         continue
       fi
-
-      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_mtime}" "${use_sudo}"
-      if [[ "${#REPLY_FILES[@]}" -gt 0 ]]; then
-        all_found_files+=("${REPLY_FILES[@]}")
-        _SUDO_PREFIX=""; [[ "${use_sudo}" == "true" ]] && _SUDO_PREFIX="sudo "
-        file_copier "${rpath}" "${REPLY_FILES[@]}"
-        _SUDO_PREFIX=""
-      fi
+      entry_paths+=("${rpath}")
     done
+    log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${REPLY_PATH}" "${prefix}" "${suffix}")"
+
+    if [[ "${_had_empty_path}" == "true" && "${#entry_paths[@]}" -eq 0 ]]; then
+      log_warn "$(printf "${MSG_EMPTY_PATH}" "${idx}" "${total}")"
+      continue
+    fi
+    if [[ "${#entry_paths[@]}" -eq 0 ]]; then
+      log_warn "$(printf "${MSG_NO_FILES_FOUND}" "${idx}" "${total}")"
+      continue
+    fi
+
+    # Single batched find across every expanded path for this entry.
+    file_finder entry_paths "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_mtime}" "${use_sudo}"
+    local -a all_found_files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
+
+    # Group results back to their source rpath via longest-prefix match,
+    # then dispatch to file_copier per group so the per-day directory
+    # structure under SAVE_FOLDER is preserved.
+    if [[ "${#all_found_files[@]}" -gt 0 ]]; then
+      local -A files_by_path=()
+      local f="" matched_rp="" rp=""
+      for f in "${all_found_files[@]}"; do
+        matched_rp=""
+        for rp in "${entry_paths[@]}"; do
+          if [[ "${f}" == "${rp}/"* ]] && (( ${#rp} > ${#matched_rp} )); then
+            matched_rp="${rp}"
+          fi
+        done
+        if [[ -n "${matched_rp}" ]]; then
+          files_by_path["${matched_rp}"]+="${f}"$'\n'
+        fi
+      done
+
+      _SUDO_PREFIX=""; [[ "${use_sudo}" == "true" ]] && _SUDO_PREFIX="sudo "
+      for rp in "${entry_paths[@]}"; do
+        [[ -n "${files_by_path[${rp}]+set}" ]] || continue
+        local -a group=()
+        mapfile -t group <<< "${files_by_path[${rp}]%$'\n'}"
+        file_copier "${rp}" "${group[@]}"
+      done
+      _SUDO_PREFIX=""
+    fi
 
     if [[ "${#all_found_files[@]}" -eq 0 ]]; then
       log_warn "$(printf "${MSG_NO_FILES_FOUND}" "${idx}" "${total}")"
@@ -2757,13 +2817,10 @@ main() {
       esac
     done
 
-    local out_parent out_name
-    out_parent="$(dirname "${SAVE_FOLDER}")"
-    out_name="$(basename "${SAVE_FOLDER}")"
-    log_info "$(printf "${MSG_OUTPUT_PATH}" "${out_parent}")"
-    log_info "$(printf "${MSG_OUTPUT_NAME}" "${out_name}")"
+    log_info "${MSG_OUTPUT_SECTION}"
+    log_info "$(printf "${MSG_OUTPUT_NAME}" "${SAVE_FOLDER}")"
     if [[ -f "${SAVE_FOLDER}.tar.gz" ]]; then
-      log_info "$(printf "${MSG_OUTPUT_ARCHIVE}" "${out_name}.tar.gz")"
+      log_info "$(printf "${MSG_OUTPUT_ARCHIVE}" "${SAVE_FOLDER}.tar.gz")"
     fi
     log_info "${MSG_SUCCESS}"
     close_log_file

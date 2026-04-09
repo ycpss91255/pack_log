@@ -1037,6 +1037,51 @@ FAKE
     }
 }
 
+@test "get_log: runs one find per LOG_PATHS entry even when path expands to multiple dates" {
+    SAVE_FOLDER="${TEST_DIR}/batch_find"
+    mkdir -p "${SAVE_FOLDER}"
+    START_TIME="260115-0000"
+    END_TIME="260118-2359"
+    HOST="local"
+
+    local base="${TEST_DIR}/multiday"
+    mkdir -p "${base}/2026-01-15" "${base}/2026-01-16" \
+             "${base}/2026-01-17" "${base}/2026-01-18"
+    touch "${base}/2026-01-15/x.log"
+    touch "${base}/2026-01-17/y.log"
+
+    LOG_PATHS=("${base}/<date:%Y-%m-%d>" "*.log" "")
+
+    local find_log="${BATS_TEST_TMPDIR}/find_call_log"
+    : > "${find_log}"
+    execute_cmd() {
+        if [[ "$1" == *"find -L"* ]]; then
+            echo x >> "${find_log}"
+        fi
+        bash -c "$1"
+    }
+
+    get_log >/dev/null 2>&1
+
+    local n
+    n=$(wc -l < "${find_log}")
+    [ "${n}" -eq 1 ] || {
+        echo "expected 1 find call, got ${n}" >&2
+        return 1
+    }
+
+    # Verify both files copied — and into separate per-day subfolders
+    local x_path y_path
+    x_path=$(find "${SAVE_FOLDER}" -name x.log -type f | head -1)
+    y_path=$(find "${SAVE_FOLDER}" -name y.log -type f | head -1)
+    [ -n "${x_path}" ] || { echo "x.log not copied" >&2; return 1; }
+    [ -n "${y_path}" ] || { echo "y.log not copied" >&2; return 1; }
+    [ "$(dirname "${x_path}")" != "$(dirname "${y_path}")" ] || {
+        echo "x.log and y.log ended up in same folder; per-day grouping broken" >&2
+        return 1
+    }
+}
+
 @test "get_log: warns when LOG_PATHS element count is not multiple of 3" {
     SAVE_FOLDER="${TEST_DIR}/bad_logpaths"
     mkdir -p "${SAVE_FOLDER}"
@@ -1078,6 +1123,35 @@ FAKE
     touch "${SAVE_FOLDER}/a.log"
     archive_save_folder
     ! tar -tzf "${SAVE_FOLDER}.tar.gz" | grep -q "^/"
+}
+
+@test "archive_save_folder: reports apparent size, not filesystem block usage" {
+    SAVE_FOLDER="${TEST_DIR}/sz_logs"
+    mkdir -p "${SAVE_FOLDER}"
+    # Tiny content → tar.gz will be ~hundreds of bytes (well under one 4K block)
+    echo "tiny" > "${SAVE_FOLDER}/f.txt"
+
+    VERBOSE=1
+    local out
+    out=$(archive_save_folder 2>&1)
+
+    local apparent block
+    apparent=$(du -h --apparent-size "${SAVE_FOLDER}.tar.gz" | cut -f1)
+    block=$(du -h "${SAVE_FOLDER}.tar.gz" | cut -f1)
+
+    # Sanity: this test is only meaningful when the two differ
+    [ "${apparent}" != "${block}" ] || skip "fs block size matches apparent (no rounding to assert)"
+
+    [[ "${out}" == *"${apparent}"* ]] || {
+        echo "expected output to contain apparent size '${apparent}'" >&2
+        echo "got: ${out}" >&2
+        return 1
+    }
+    [[ "${out}" != *"(${block})"* ]] || {
+        echo "output still contains block-rounded size '${block}'" >&2
+        echo "got: ${out}" >&2
+        return 1
+    }
 }
 
 @test "archive_save_folder: returns 1 when SAVE_FOLDER missing" {

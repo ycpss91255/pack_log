@@ -101,6 +101,41 @@ setup() {
     [[ -d "${output_dirs[0]}" ]]
 }
 
+@test "main: archive step is silent at default verbosity, output section is shown" {
+    local test_dir="${BATS_TEST_TMPDIR}/arch_quiet"
+    mkdir -p "${test_dir}"
+    echo "x" > "${test_dir}/c.conf"
+    LOG_PATHS=("${test_dir}" "c.conf" "")
+
+    run main -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/arch_quiet_out"
+    assert_success
+    # Step 6 header stays visible as a progress milestone, but the inner
+    # archive mechanics (creating / done) are demoted to debug.
+    assert_output --partial "Step 6"
+    # The colon-form matches MSG_ARCHIVING ("Creating archive: <path>") but
+    # not the Step 6 header ("=== Step 6/6: Creating archive ===").
+    refute_output --partial "Creating archive: "
+    refute_output --partial "Archive created"
+    # The new Output section header replaces them as the user-facing summary;
+    # paths are full absolute paths so they can be copy-pasted directly.
+    assert_output --partial "=== Output ==="
+    assert_output --partial "Output folder:  ${BATS_TEST_TMPDIR}/arch_quiet_out"
+    assert_output --partial "Output archive: ${BATS_TEST_TMPDIR}/arch_quiet_out"
+    assert_output --partial ".tar.gz"
+    refute_output --partial "Output path:"
+}
+
+@test "main: archive step details are visible with -v" {
+    local test_dir="${BATS_TEST_TMPDIR}/arch_verbose"
+    mkdir -p "${test_dir}"
+    echo "y" > "${test_dir}/c.conf"
+    LOG_PATHS=("${test_dir}" "c.conf" "")
+
+    run main -v -l -s 260115-0000 -e 260115-2359 -o "${BATS_TEST_TMPDIR}/arch_verbose_out"
+    assert_success
+    assert_output --partial "Archive created"
+}
+
 @test "main: local mode copies config files to output" {
     local test_dir="${BATS_TEST_TMPDIR}/test_logs3"
     mkdir -p "${test_dir}"

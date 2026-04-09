@@ -9,6 +9,36 @@ setup() {
     mkdir -p "${TEST_LOG_DIR}"
 }
 
+# --- Multi-path batch mode (array name as first arg) ---
+
+@test "file_finder: accepts an array variable name and runs a single find over all paths" {
+    local d1="${BATS_TEST_TMPDIR}/m1"
+    local d2="${BATS_TEST_TMPDIR}/m2"
+    local d3="${BATS_TEST_TMPDIR}/m3"
+    mkdir -p "${d1}" "${d2}" "${d3}"
+    touch "${d1}/cfg.yaml" "${d2}/cfg.yaml"
+    # d3 has no matching file
+
+    local -a multi_paths=("${d1}" "${d2}" "${d3}")
+
+    local exec_log="${BATS_TEST_TMPDIR}/ff_exec_calls"
+    : > "${exec_log}"
+    execute_cmd() {
+        echo x >> "${exec_log}"
+        bash -c "$1"
+    }
+
+    file_finder multi_paths "cfg.yaml" "" "260115-0000" "260115-2359" "false"
+
+    local n
+    n=$(wc -l < "${exec_log}")
+    [ "${n}" -eq 1 ] || {
+        echo "expected 1 execute_cmd call, got ${n}" >&2
+        return 1
+    }
+    [ "${#REPLY_FILES[@]}" -eq 2 ]
+}
+
 # --- Config files (no date token) ---
 
 @test "file_finder: config files with no date token are passed through directly" {

@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.7.0 (2026-04-10)
+
+### Performance
+- **Batched `find` across date-expanded paths**: when a `LOG_PATHS` entry contains a path-level `<date:>` token (e.g. `AvoidStop_<date:%Y-%m-%d>`), `file_finder` now collapses N per-day SSH `find` calls into a single one with multiple starting points. Files are grouped back to their source path via longest-prefix match before dispatch to `file_copier`, preserving the per-day directory structure under `SAVE_FOLDER`.
+- **Token prefetch**: new `prefetch_token_cache` runs once after SSH is up, batch-resolving every unique `<env:>` / `<cmd:>` token in `LOG_PATHS` in a single round-trip and seeding `_TOKEN_CACHE`. Subsequent `get_remote_value` calls hit the cache instead of paying RTT cost per unique token. Best-effort: failures fall through to lazy resolution.
+- **`get_log` resolution dedup**: `string_handler` and `_needs_sudo` now run exactly once per `LOG_PATHS` entry. Previously `string_handler` was called twice (sudo pre-scan + main loop) and `_needs_sudo` once per date-expanded path.
+
+### UX
+- **`Output` summary section**: replaced the per-rpath `Resolved:` log spam with one entry-level line, and added a dedicated `=== Output ===` section at the end showing the full output folder + archive paths (no longer split across `path` / `folder` / `archive` lines), so you can copy-paste them straight into a `cp`.
+- **Archive mechanics demoted to debug**: the inner `Creating archive: ...` and `Archive created: ... (size)` lines are now `log_debug`, visible only with `-v`. The `Step 6/6` header stays as a progress milestone.
+- **Apparent file size**: archive size now uses `du -h --apparent-size` (real bytes) instead of filesystem block usage. A 200-byte tar.gz no longer reports as `4.0K`.
+- **Removed `MSG_PROCESSING`**: dropped the redundant `Processing: <raw>` line that printed before the `Resolved:` line; the resolved view already conveys everything.
+
+### Tests
+- New tests for `prefetch_token_cache` (4), `file_finder` array-mode batching (1), `get_log` per-entry batching (3), `archive_save_folder` apparent-size reporting (1), and `main` archive log levels (2).
+- 380 unit tests, all green; ShellCheck `-x -S style` clean.
+
 ## v1.6.3 (2026-04-09)
 
 ### Features
