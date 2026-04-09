@@ -21,7 +21,7 @@
 #
 # Author: Yunchien.chen <yunchien.chen@coretronic-robotics.com>
 # Date: 2026-04-08
-# Version: 1.7.0
+# Version: 1.7.1
 
 # shellcheck disable=SC2059  # i18n: MSG_* variables used as printf format strings by design
 # shellcheck disable=SC2029  # SSH commands piped via stdin, not affected
@@ -166,7 +166,7 @@ declare FILE_TIME_TOLERANCE_MIN=30
 # Internal Variables (do not modify)
 # ==============================================================================
 
-declare -r VERSION="1.7.0"
+declare -r VERSION="1.7.1"
 declare VERBOSE=0
 declare NUM="" HOST="" GET_LOG_TOOL=""
 declare START_TIME="" END_TIME=""

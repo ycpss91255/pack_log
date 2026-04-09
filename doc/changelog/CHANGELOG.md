@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.7.1 (2026-04-10)
+
+### Docs
+- Trimmed the header `Usage:` block from 8 examples down to 3 (basic / local / dry-run); the rest are covered by `--help` and were just noise.
+- Removed the niche "Renaming the script" paragraph from the header.
+- Updated `file_finder` docstring to reflect the v1.7.0 dual-mode first argument (literal path or array name) and documented the previously undocumented `use_mtime` / `use_sudo` arguments.
+
+### Refactor
+- Renamed `prefetch_token_cache` locals (`type`/`val`/`pat` → `tok_type`/`tok_val`/`token_pat`) so they no longer shadow the `type` shell builtin.
+
 ## v1.7.0 (2026-04-10)
 
 ### Performance
