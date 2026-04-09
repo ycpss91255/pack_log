@@ -1,0 +1,134 @@
+name: Release
+
+run-name: Release ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v1.6.3)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=${TAG}"         >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify VERSION constant matches tag
+        run: |
+          SCRIPT_VERSION=$(grep -oE 'declare -r VERSION="[^"]+"' pack_log.sh | sed 's/.*"\(.*\)"/\1/')
+          if [[ "${SCRIPT_VERSION}" != "${{ steps.tag.outputs.version }}" ]]; then
+            echo "::error::Tag ${{ steps.tag.outputs.tag }} but pack_log.sh VERSION is ${SCRIPT_VERSION}"
+            exit 1
+          fi
+
+      - name: Extract CHANGELOG section
+        id: changelog
+        run: |
+          VERSION="${{ steps.tag.outputs.version }}"
+          # Extract section between "## v${VERSION}" and the next "## v" header
+          awk -v v="${VERSION}" '
+            $0 ~ "^## v"v"( |$)" { found=1; next }
+            found && /^## v/ { exit }
+            found { print }
+          ' doc/changelog/CHANGELOG.md > /tmp/section.md
+
+          if [[ ! -s /tmp/section.md ]]; then
+            echo "::error::No CHANGELOG section found for v${VERSION}"
+            exit 1
+          fi
+
+          {
+            echo "## What's in this release"
+            echo
+            cat /tmp/section.md
+            echo
+            echo "## Assets"
+            echo
+            echo "| File | Description |"
+            echo "|---|---|"
+            echo "| \`pack_log.sh\` | Single-file script (versioned in this release) |"
+            echo "| \`pack_log-${VERSION}.tar.gz\` | Full bundle (script + 4-language READMEs + CHANGELOG) — Linux/macOS |"
+            echo "| \`pack_log-${VERSION}.zip\` | Same bundle, zip format — Windows-friendly |"
+            echo
+            echo "## Quick start"
+            echo
+            echo '```bash'
+            echo "# Always-latest URL (auto-redirects to newest release)"
+            echo "curl -LO https://github.com/${{ github.repository }}/releases/latest/download/pack_log.sh"
+            echo "chmod +x pack_log.sh"
+            echo "./pack_log.sh -l -s 260101-0000 -e 260101-2359"
+            echo '```'
+          } > /tmp/notes.md
+
+      - name: Build artifacts
+        run: |
+          VERSION="${{ steps.tag.outputs.version }}"
+          STAGE="pack_log-${VERSION}"
+          mkdir -p "${STAGE}/doc/readme" "${STAGE}/doc/changelog"
+          cp pack_log.sh "${STAGE}/"
+          cp README.md "${STAGE}/"
+          cp doc/readme/README.zh-TW.md doc/readme/README.zh-CN.md doc/readme/README.ja.md "${STAGE}/doc/readme/"
+          cp doc/changelog/CHANGELOG.md "${STAGE}/doc/changelog/"
+          chmod +x "${STAGE}/pack_log.sh"
+          tar -czf "pack_log-${VERSION}.tar.gz" "${STAGE}/"
+          zip -qr  "pack_log-${VERSION}.zip"   "${STAGE}/"
+          ls -la "pack_log-${VERSION}".*
+
+      - name: Append auto-generated commit notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          # Generate notes via API (commit list since previous tag) and append
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/releases/generate-notes" \
+            -f tag_name="${TAG}" \
+            --jq .body > /tmp/auto_notes.md || echo "" > /tmp/auto_notes.md
+
+          {
+            cat /tmp/notes.md
+            if [[ -s /tmp/auto_notes.md ]]; then
+              echo
+              echo "---"
+              echo
+              cat /tmp/auto_notes.md
+            fi
+          } > /tmp/final_notes.md
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.tag.outputs.version }}"
+          TAG="${{ steps.tag.outputs.tag }}"
+          gh release create "${TAG}" \
+            "pack_log-${VERSION}.tar.gz" \
+            "pack_log-${VERSION}.zip" \
+            "pack_log.sh" \
+            --title "${TAG}" \
+            --notes-file /tmp/final_notes.md
