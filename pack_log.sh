@@ -8,40 +8,16 @@
 # mode (no SSH).
 #
 # Usage:
-#   # Basic — pick a host by number from the HOSTS array
+#   # Pick a host by number from the HOSTS array
 #   ./pack_log.sh -n 1 -s 260101-0000 -e 260101-2359
-#
-#   # Direct user@host (no entry needed in HOSTS)
-#   ./pack_log.sh -u myuser@10.90.68.188 -s 260101-0000 -e 260101-2359
 #
 #   # Local mode — collect from this machine, no SSH
 #   ./pack_log.sh -l -s 260101-0000 -e 260101-2359
 #
-#   # Custom output folder (absolute path)
-#   ./pack_log.sh -n 1 -s 260101-0000 -e 260101-2359 -o /tmp/my_logs
-#
-#   # Output folder with tokens: <num>, <name>, <date:fmt>
-#   ./pack_log.sh -n 7 -s 260309-0000 -e 260309-2359 -o 'corenavi_<date:%m%d>_#<num>'
-#
-#   # Verbose output (-v info, -vv debug, --extra-verbose set -x)
-#   ./pack_log.sh -n 1 -s 260101-0000 -e 260101-2359 -v
-#
 #   # Dry-run — list files that would be collected, no copy/transfer/archive
 #   ./pack_log.sh -n 1 -s 260101-0000 -e 260101-2359 --dry-run
 #
-#   # Force language (otherwise auto-detected from $LANG)
-#   ./pack_log.sh --lang zh-TW -n 1 -s 260101-0000 -e 260101-2359
-#
-#   # Interactive host selection (no -n / -u / -l)
-#   ./pack_log.sh -s 260101-0000 -e 260101-2359
-#
-# Renaming the script:
-#   The output folder/archive name is derived from the script filename via
-#   ${BASH_SOURCE[0]}. Renaming pack_log.sh to my_tool.sh changes the default
-#   output folder from "pack_log_<host>_<timestamp>" to "my_tool_<host>_..."
-#   automatically — useful for running multiple instances with distinct names.
-#
-# For more information, run the script with the --help option.
+# Run with --help for the full option reference.
 #
 # Author: Yunchien.chen <yunchien.chen@coretronic-robotics.com>
 # Date: 2026-04-08
@@ -140,9 +116,6 @@ declare -a LOG_PATHS=(
   # "<env:HOME>/Desktop/pack_log/log/avoid/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"                    ""
   # "<env:HOME>/Desktop/pack_log/log/avoid/log_core"                       "corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*"      "<mtime>"
   # "<env:HOME>/Desktop/pack_log/log/avoid/log_slam/record"                "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"               ""
-
-
-    "/tmp/multiday_test/<date:%Y-%m-%d>"  "*.log"  ""
 
   # # Panasonic — LiDAR Detection shelf log path (docker)
   # "${COREROBOT_DOCKER_LOG_CORE}"                      "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
@@ -1043,15 +1016,15 @@ get_remote_value() {
 #   0 always.
 prefetch_token_cache() {
   local -A unique=()
-  local i s rest type val
-  local pat='<(env|cmd):([^<>]+)>'
+  local i s rest tok_type tok_val
+  local token_pat='<(env|cmd):([^<>]+)>'
   for (( i=0; i<${#LOG_PATHS[@]}; i+=3 )); do
     for s in "${LOG_PATHS[i]}" "${LOG_PATHS[i+1]}"; do
       rest="${s}"
-      while [[ "${rest}" =~ $pat ]]; do
-        type="${BASH_REMATCH[1]}"
-        val="${BASH_REMATCH[2]}"
-        unique["${type}:${val}"]=1
+      while [[ "${rest}" =~ $token_pat ]]; do
+        tok_type="${BASH_REMATCH[1]}"
+        tok_val="${BASH_REMATCH[2]}"
+        unique["${tok_type}:${tok_val}"]=1
         rest="${rest/"${BASH_REMATCH[0]}"/}"
       done
     done
@@ -1068,12 +1041,12 @@ prefetch_token_cache() {
   local sep="__PACK_LOG_TOK_SEP_$$_${RANDOM}_${RANDOM}__"
   local script="" part=""
   for key in "${missing[@]}"; do
-    type="${key%%:*}"
-    val="${key#*:}"
-    if [[ "${type}" == "env" ]]; then
-      printf -v part 'printf "%%s%s" "${%s}"; ' "${sep}" "${val}"
+    tok_type="${key%%:*}"
+    tok_val="${key#*:}"
+    if [[ "${tok_type}" == "env" ]]; then
+      printf -v part 'printf "%%s%s" "${%s}"; ' "${sep}" "${tok_val}"
     else
-      printf -v part 'printf "%%s%s" "$(%s)"; ' "${sep}" "${val}"
+      printf -v part 'printf "%%s%s" "$(%s)"; ' "${sep}" "${tok_val}"
     fi
     script+="${part}"
   done
@@ -1789,11 +1762,19 @@ resolve_path_dates() {
 # and expands boundaries by +/-1 to catch edge cases.
 #
 # Arguments:
-#   folder_path: Directory to search in.
+#   paths:       Either a literal directory path string OR the name of an
+#                indexed-array variable holding multiple directory paths.
+#                Multiple paths are walked in a single `find` invocation,
+#                which collapses N round-trips into one when called from a
+#                date-expansion loop.
 #   file_prefix: Filename pattern before the date token (may contain <date:>).
 #   file_suffix: Filename pattern after the date token (may contain <date:>).
 #   start_time:  Range start in YYYYmmdd-HHMMSS format.
 #   end_time:    Range end in YYYYmmdd-HHMMSS format.
+#   use_mtime:   "true" to enable the mtime fallback for files whose name
+#                does not match the timestamp regex (default "false").
+#   use_sudo:    "true" to prefix the remote `find` and `stat` calls with
+#                sudo (default "false").
 #
 # Globals:
 #   HOST                       Read; controls local vs remote find.
