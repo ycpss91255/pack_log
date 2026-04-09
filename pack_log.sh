@@ -845,8 +845,15 @@ have_sudo_access() {
 
 # Installs a package using apt-get if it is not already installed.
 #
+# Globals:
+#   MSG_PKG_ALREADY_INSTALLED, MSG_PKG_NOT_FOUND, MSG_NO_SUDO_ACCESS,
+#   MSG_PKG_INSTALL_FAILED                Read; localized log strings.
 # Arguments:
 #   pkg_name: The name of the package to install.
+# Outputs:
+#   Verbose / info / warn log lines; sudo apt-get output on stdout/stderr.
+# Returns:
+#   0 if installed (or already present); 1 if sudo unavailable or install failed.
 pkg_install_handler() {
   local -r pkg_name="$1"
 
@@ -1697,8 +1704,14 @@ resolve_path_dates() {
 #   start_time:  Range start in YYYYmmdd-HHMMSS format.
 #   end_time:    Range end in YYYYmmdd-HHMMSS format.
 #
-# Sets:
-#   REPLY_FILES: Array of matched file paths.
+# Globals:
+#   HOST                       Read; controls local vs remote find.
+#   FILE_TIME_TOLERANCE_MIN    Read; mtime expansion window.
+#   REPLY_FILES                Written; array of matched file paths.
+# Outputs:
+#   Verbose/debug log lines; remote find/stat output piped internally.
+# Returns:
+#   0 on success (REPLY_FILES may be empty); non-zero only on fatal find error.
 file_finder() {
   local -r folder_path="${1:?"${FUNCNAME[0]} need path."}"; shift
   local file_prefix="${1:-}"; shift
@@ -1928,6 +1941,17 @@ file_finder() {
 #   <num>          Host number (from -n option)
 #   <name>         Host display name (from HOSTS array)
 #   <date:format>  START_TIME formatted with strftime format
+#
+# Globals:
+#   SAVE_FOLDER  Read/written; resolved to a final absolute path.
+#   NUM, HOSTS, HOST, START_TIME  Read; used for token resolution and default suffix.
+#   MSG_TOKEN_NUM_NO_HOST         Read; localized warning when token cannot resolve.
+# Arguments:
+#   None.
+# Outputs:
+#   Calls create_folder which may emit fatal log_error on failure.
+# Returns:
+#   0 on success; aborts via log_error if folder creation fails.
 folder_creator() {
   if [[ "${SAVE_FOLDER}" == *"<"* ]]; then
     # Resolve <num> token
@@ -1989,6 +2013,16 @@ folder_creator() {
 }
 
 # Writes a summary of user inputs and LOG_PATHS to script.log in SAVE_FOLDER.
+#
+# Globals:
+#   HOST, START_TIME, END_TIME, GET_LOG_TOOL, SAVE_FOLDER, LOG_PATHS  Read.
+#   MSG_USER_INPUTS_SUMMARY  Read; localized header.
+# Arguments:
+#   None.
+# Outputs:
+#   Info log lines locally; appends summary to ${SAVE_FOLDER}/script.log on host.
+# Returns:
+#   0 on success; non-zero if remote write fails.
 save_script_data() {
   local -a string_array=(
     "Host: ${HOST}"
@@ -2041,7 +2075,15 @@ save_script_data() {
 # the script finishes or is interrupted.
 #
 # Globals:
-#   SAVE_FOLDER: The path of the folder to be removed.
+#   SAVE_FOLDER  Read; the path of the folder to be removed.
+#   HOST         Read; controls local vs remote rm via execute_cmd.
+#   MSG_NO_SAVE_FOLDER, MSG_FOLDER_REMOVE_FAILED  Read; localized messages.
+# Arguments:
+#   None.
+# Outputs:
+#   Debug/log lines; closes log file before returning.
+# Returns:
+#   0 always (best-effort cleanup).
 file_cleaner() {
   if [[ -z "${SAVE_FOLDER}" ]]; then
     log_debug "${MSG_NO_SAVE_FOLDER}"
@@ -2106,9 +2148,16 @@ archive_save_folder() {
 # Strips /home/<user>/ prefix from paths to keep output structure clean.
 # Uses xargs with null-delimited input to handle filenames safely.
 #
+# Globals:
+#   SAVE_FOLDER  Read; destination directory on local or remote host.
+#   HOST         Read via execute_cmd_from_array.
 # Arguments:
 #   log_path: The resolved source directory path.
 #   ...:      File paths to copy.
+# Outputs:
+#   Verbose log lines; cp/install output from the executed command.
+# Returns:
+#   The exit status of the underlying copy command.
 file_copier() {
   local log_path="${1:?"${FUNCNAME[0]} need log path."}"; shift
   local -a fc_log_files=("$@")
@@ -2153,6 +2202,21 @@ file_copier() {
 # Uses rsync, scp, or sftp (as determined by get_tools_checker).
 # Automatically retries up to TRANSFER_MAX_RETRIES times on failure,
 # with TRANSFER_RETRY_DELAY seconds between attempts.
+#
+# Globals:
+#   GET_LOG_TOOL                 Read; selected transfer tool.
+#   HOST, SAVE_FOLDER, SSH_KEY,
+#   SSH_OPTS                     Read; transfer endpoint and credentials.
+#   TRANSFER_MAX_RETRIES,
+#   TRANSFER_RETRY_DELAY,
+#   TRANSFER_SIZE_WARN_MB        Read; retry / size-warning policy.
+#   MSG_TRANSFER_*, MSG_RETRIEVE_MANUALLY  Read; localized progress / errors.
+# Arguments:
+#   None.
+# Outputs:
+#   Transfer-tool stdout/stderr; interactive prompt on persistent failure.
+# Returns:
+#   0 on success; 1 if transfer ultimately fails after retries.
 file_sender() {
   local -r tool="${GET_LOG_TOOL}"
   # Default: show overall transfer progress (--info=progress2)
@@ -2259,6 +2323,20 @@ file_sender() {
 }
 
 # Dry-run variant of get_log: finds and lists files without copying.
+#
+# Globals:
+#   LOG_PATHS, START_TIME, END_TIME  Read; configuration for the search.
+#   REPLY_PATH, REPLY_PREFIX,
+#   REPLY_SUFFIX, REPLY_PATHS,
+#   REPLY_FILES                      Read; populated by string_handler /
+#                                    resolve_path_dates / file_finder.
+#   MSG_DRY_RUN_*, MSG_NO_FILES_FOUND  Read; localized output strings.
+# Arguments:
+#   None.
+# Outputs:
+#   Info / warn log lines listing matched files per LOG_PATHS entry.
+# Returns:
+#   0 always.
 get_log_dry_run() {
   if (( ${#LOG_PATHS[@]} % 3 != 0 )); then
     log_warn "LOG_PATHS has ${#LOG_PATHS[@]} elements (not a multiple of 3). Check configuration."
@@ -2328,6 +2406,18 @@ get_log_dry_run() {
 #
 # This function iterates over the `LOG_PATHS` array, finds the log files, and
 # copies them to the output folder.
+#
+# Globals:
+#   LOG_PATHS, START_TIME, END_TIME, SAVE_FOLDER  Read; configuration / target.
+#   REPLY_PATH, REPLY_PREFIX, REPLY_SUFFIX,
+#   REPLY_PATHS, REPLY_FILES                      Read; populated by helpers.
+#   MSG_NO_FILES_FOUND, MSG_NO_FILES_IN_RANGE     Read; localized warnings.
+# Arguments:
+#   None.
+# Outputs:
+#   Info / warn log lines per processed LOG_PATHS entry.
+# Returns:
+#   0 on success.
 get_log() {
   if (( ${#LOG_PATHS[@]} % 3 != 0 )); then
     log_warn "LOG_PATHS has ${#LOG_PATHS[@]} elements (not a multiple of 3). Check configuration."
@@ -2412,6 +2502,16 @@ get_log() {
 # This is the main function of the script. It parses the command-line
 # options, handles the host and time selection, checks for the SSH
 # connection, and then gets the logs.
+#
+# Globals:
+#   LANG_CODE, LANG, HOST, NUM, START_TIME, END_TIME, SAVE_FOLDER,
+#   DRY_RUN, GET_LOG_TOOL  Read/written across the pipeline.
+# Arguments:
+#   $@: Forwarded to option_parser.
+# Outputs:
+#   Drives all step messages, prompts, and final output paths.
+# Returns:
+#   0 on full success; non-zero / log_error abort on any fatal failure.
 main() {
   option_parser "$@"
 
