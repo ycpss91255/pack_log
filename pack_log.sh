@@ -8,9 +8,38 @@
 # mode (no SSH).
 #
 # Usage:
+#   # Basic — pick a host by number from the HOSTS array
 #   ./pack_log.sh -n 1 -s 260101-0000 -e 260101-2359
+#
+#   # Direct user@host (no entry needed in HOSTS)
 #   ./pack_log.sh -u myuser@10.90.68.188 -s 260101-0000 -e 260101-2359
+#
+#   # Local mode — collect from this machine, no SSH
 #   ./pack_log.sh -l -s 260101-0000 -e 260101-2359
+#
+#   # Custom output folder (absolute path)
+#   ./pack_log.sh -n 1 -s 260101-0000 -e 260101-2359 -o /tmp/my_logs
+#
+#   # Output folder with tokens: <num>, <name>, <date:fmt>
+#   ./pack_log.sh -n 7 -s 260309-0000 -e 260309-2359 -o 'corenavi_<date:%m%d>_#<num>'
+#
+#   # Verbose output (-v info, -vv debug, --extra-verbose set -x)
+#   ./pack_log.sh -n 1 -s 260101-0000 -e 260101-2359 -v
+#
+#   # Dry-run — list files that would be collected, no copy/transfer/archive
+#   ./pack_log.sh -n 1 -s 260101-0000 -e 260101-2359 --dry-run
+#
+#   # Force language (otherwise auto-detected from $LANG)
+#   ./pack_log.sh --lang zh-TW -n 1 -s 260101-0000 -e 260101-2359
+#
+#   # Interactive host selection (no -n / -u / -l)
+#   ./pack_log.sh -s 260101-0000 -e 260101-2359
+#
+# Renaming the script:
+#   The output folder/archive name is derived from the script filename via
+#   ${BASH_SOURCE[0]}. Renaming pack_log.sh to my_tool.sh changes the default
+#   output folder from "pack_log_<host>_<timestamp>" to "my_tool_<host>_..."
+#   automatically — useful for running multiple instances with distinct names.
 #
 # For more information, run the script with the --help option.
 #
