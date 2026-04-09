@@ -304,6 +304,32 @@ setup() {
     [[ "${REPLY_PATHS[2]}" == "/home/user/log/AvoidStop_2026-01-17" ]]
 }
 
+@test "resolve_path_dates: batches date invocations across multi-day range" {
+    START_TIME="260101-0000"
+    END_TIME="260110-2359"
+    REPLY_PATH="/var/log/AvoidStop_<date:%Y-%m-%d>"
+
+    # Wrap `date` to count invocations. date_format uses `date` twice
+    # (start/end epoch); resolve_path_dates should add ONE more batched call,
+    # not one per day. Total expected: <= 4 (cushion for date_format internals).
+    : > "${BATS_TEST_TMPDIR}/date_calls"
+    date() {
+        printf 'x\n' >> "${BATS_TEST_TMPDIR}/date_calls"
+        command date "$@"
+    }
+
+    resolve_path_dates
+
+    unset -f date
+
+    assert_equal "${#REPLY_PATHS[@]}" 10
+    [[ "${REPLY_PATHS[0]}" == "/var/log/AvoidStop_2026-01-01" ]]
+    [[ "${REPLY_PATHS[9]}" == "/var/log/AvoidStop_2026-01-10" ]]
+    local n
+    n=$(wc -l < "${BATS_TEST_TMPDIR}/date_calls")
+    [[ "${n}" -le 4 ]] || { echo "date called ${n} times (expected <=4)"; false; }
+}
+
 @test "resolve_path_dates: combined <num> and <date:> in path" {
     NUM="7"
     START_TIME="260309-0000"

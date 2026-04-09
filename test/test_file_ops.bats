@@ -295,6 +295,33 @@ setup() {
     assert_output --partial "Remote folder not found"
 }
 
+@test "file_sender: queries remote folder size with a single du call" {
+    GET_LOG_TOOL="rsync"
+    SAVE_FOLDER="${TEST_DIR}/du_batch"
+    mkdir -p "${SAVE_FOLDER}"
+    echo "x" > "${SAVE_FOLDER}/f"
+    TRANSFER_SIZE_WARN_MB=300
+
+    : > "${BATS_TEST_TMPDIR}/du_calls"
+    execute_cmd() {
+        case "$1" in
+            "test -d "*) return 0 ;;
+            *du*)
+                printf '%s\n' "$1" >> "${BATS_TEST_TMPDIR}/du_calls"
+                echo "10240"
+                ;;
+            *) return 0 ;;
+        esac
+    }
+    export -f execute_cmd
+
+    run file_sender
+    # Don't care if rsync ultimately fails — only that du was issued exactly once
+    local n
+    n=$(wc -l < "${BATS_TEST_TMPDIR}/du_calls")
+    assert_equal "${n}" 1
+}
+
 _setup_fake_transfer_bin() {
     FAKE_BIN="${BATS_TEST_TMPDIR}/fake_bin"
     mkdir -p "${FAKE_BIN}"

@@ -1666,27 +1666,32 @@ resolve_path_dates() {
   # Determine step size from format (daily for most formats)
   local step_sec=86400  # default: 1 day
 
-  local -a paths=()
-  local -A seen=()
+  # Batch-format every epoch in the range with a single `date -f -` call.
+  # Replaces N forks (one per day) with 1, mirroring file_finder's tolerance
+  # path. The trailing END_TIME entry guards against the loop missing the
+  # final boundary when end_epoch isn't an exact step multiple.
+  local -a epoch_lines=()
   local epoch="${start_epoch}"
   while [[ "${epoch}" -le "${end_epoch}" ]]; do
-    local resolved_date
-    resolved_date=$(date -d "@${epoch}" "+${fmt}" 2>/dev/null) || break
-    local resolved_path="${path//${token}/${resolved_date}}"
+    epoch_lines+=("@${epoch}")
+    epoch=$(( epoch + step_sec ))
+  done
+  epoch_lines+=("@${end_epoch}")
+
+  local -a resolved_dates=()
+  mapfile -t resolved_dates < <(printf '%s\n' "${epoch_lines[@]}" \
+    | date -f - "+${fmt}" 2>/dev/null) || true
+
+  local -a paths=()
+  local -A seen=()
+  local resolved_date resolved_path
+  for resolved_date in "${resolved_dates[@]+"${resolved_dates[@]}"}"; do
+    resolved_path="${path//${token}/${resolved_date}}"
     if [[ -z "${seen["${resolved_path}"]+set}" ]]; then
       paths+=("${resolved_path}")
       seen["${resolved_path}"]=1
     fi
-    epoch=$(( epoch + step_sec ))
   done
-
-  # Also include END_TIME's date in case step missed it
-  local end_date
-  end_date=$(date -d "@${end_epoch}" "+${fmt}" 2>/dev/null) || true
-  local end_path="${path//${token}/${end_date}}"
-  if [[ -z "${seen["${end_path}"]+set}" ]]; then
-    paths+=("${end_path}")
-  fi
 
   REPLY_PATHS=("${paths[@]}")
 }
@@ -1809,24 +1814,22 @@ file_finder() {
     fi
   done < <(printf '%s\n' "${file_timestamps[@]}" | sort)
 
-  # Comparison style matches [5]/selection loops: use negated < / > so that
-  # "timestamp within [start, end]" reads consistently across the function.
+  # Single pass over uniq_ts: compute s_idx (first ts >= start),
+  # e_idx (last ts <= end), and has_exact_match (any ts in [start, end]).
+  # Comparison style: use negated < / > so that "ts within [start, end]"
+  # reads consistently across the function.
   local s_idx=-1 e_idx=-1
+  local has_exact_match=false
   for i in "${!uniq_ts[@]}"; do
-    if [[ $s_idx -eq -1 ]] && [[ ! "${uniq_ts[i]}" < "${formatted_start_ts}" ]]; then
+    ts="${uniq_ts[i]}"
+    if [[ $s_idx -eq -1 ]] && [[ ! "${ts}" < "${formatted_start_ts}" ]]; then
       s_idx=$i
     fi
-    if [[ ! "${uniq_ts[i]}" > "${formatted_end_ts}" ]]; then
+    if [[ ! "${ts}" > "${formatted_end_ts}" ]]; then
       e_idx=$i
-    fi
-  done
-
-  # [5] Check if any file falls strictly within the requested range
-  local has_exact_match=false
-  for ts in "${uniq_ts[@]}"; do
-    if [[ ! "$ts" < "${formatted_start_ts}" && ! "$ts" > "${formatted_end_ts}" ]]; then
-      has_exact_match=true
-      break
+      if [[ ! "${ts}" < "${formatted_start_ts}" ]]; then
+        has_exact_match=true
+      fi
     fi
   done
 
@@ -1933,18 +1936,43 @@ file_finder() {
       selected_set["${f}"]=1
     done
 
+    # Collect unselected files and stat them in one batched call.
+    local -a unselected=()
     for f in "${raw_files[@]}"; do
       [[ -n "${selected_set["${f}"]+set}" ]] && continue
-
-      local file_mtime
-      file_mtime=$(execute_cmd "${sudo_prefix}stat -c %Y $(printf '%q' "${f}")") || continue
-      # A file with mtime >= start means it was still being written during the range.
-      # We don't check <= end because a continuously written log that spans past the
-      # range end was clearly also active during the range.
-      if [[ "${file_mtime}" -ge "${mtime_start_epoch}" ]]; then
-        REPLY_FILES+=("${f}")
-      fi
+      unselected+=("${f}")
     done
+
+    if [[ ${#unselected[@]} -gt 0 ]]; then
+      local quoted_args="" stat_out
+      for f in "${unselected[@]}"; do
+        quoted_args+=" $(printf '%q' "${f}")"
+      done
+      # Single stat call: '%Y|%n' lets us split mtime from path even if path
+      # contains spaces. Errors (missing/permission) go to stderr; surviving
+      # entries still appear on stdout, matching the prior graceful-skip behavior.
+      # A file with mtime >= start means it was still being written during the range.
+      # We don't check <= end because a continuously written log that spans past
+      # the range end was clearly also active during the range.
+      if stat_out=$(execute_cmd "${sudo_prefix}stat -c '%Y|%n'${quoted_args} 2>/dev/null"); then
+        local -A mtime_map=()
+        local line ts path
+        while IFS= read -r line; do
+          [[ -z "${line}" ]] && continue
+          ts="${line%%|*}"
+          path="${line#*|}"
+          mtime_map["${path}"]="${ts}"
+        done <<< "${stat_out}"
+
+        for f in "${unselected[@]}"; do
+          local file_mtime="${mtime_map[${f}]:-}"
+          [[ -z "${file_mtime}" ]] && continue
+          if [[ "${file_mtime}" -ge "${mtime_start_epoch}" ]]; then
+            REPLY_FILES+=("${f}")
+          fi
+        done
+      fi
+    fi
   fi
 
   if [[ "${#REPLY_FILES[@]}" -gt 0 ]]; then
@@ -2270,14 +2298,21 @@ file_sender() {
 
   mkdir -p "${local_save_folder}"
 
-  local folder_size=""
-  folder_size=$(execute_cmd "du -sh ${remote_esc} | awk '{print \$1}'")
+  # Single SSH `du -sb` traverses the tree once; format human-readable locally
+  # in pure bash. Saves one round-trip on every run (was -sh + -sb).
+  local size_bytes folder_size=""
+  size_bytes=$(execute_cmd "du -sb ${remote_esc} | awk '{print \$1}'")
+  size_bytes="${size_bytes//[^0-9]/}"
+  : "${size_bytes:=0}"
+  if   (( size_bytes < 1024 ));        then folder_size="${size_bytes}B"
+  elif (( size_bytes < 1048576 ));     then folder_size="$((size_bytes/1024))K"
+  elif (( size_bytes < 1073741824 ));  then folder_size="$((size_bytes/1048576))M"
+  else                                      folder_size="$((size_bytes/1073741824))G"
+  fi
   log_info "$(printf "${MSG_REMOTE_FOLDER_SIZE}" "${SAVE_FOLDER}" "${folder_size}")"
 
   # Check if folder size exceeds warning threshold
   if [[ "${TRANSFER_SIZE_WARN_MB:-0}" -gt 0 ]]; then
-    local size_bytes
-    size_bytes=$(execute_cmd "du -sb ${remote_esc} | awk '{print \$1}'")
     local size_mb=$(( size_bytes / 1024 / 1024 ))
     if [[ "${size_mb}" -ge "${TRANSFER_SIZE_WARN_MB}" ]]; then
       local confirm=""
@@ -2449,23 +2484,22 @@ get_log() {
   local idx=0
   local i
 
-  # Pre-scan: check if any path needs sudo, authenticate once if so
+  # Pre-scan: check if any path needs sudo, authenticate once if so.
+  # _needs_sudo only inspects the path prefix (HOME / /tmp / explicit flag),
+  # so we can skip resolve_path_dates here — date tokens never affect the
+  # answer and expanding them just costs extra `date` invocations per entry.
   local _sudo_authenticated=false
   for (( i=0; i<${#LOG_PATHS[@]}; i+=3 )); do
     string_handler "${LOG_PATHS[i]}" "${LOG_PATHS[i+1]}"
-    resolve_path_dates
-    local rp=""
-    for rp in "${REPLY_PATHS[@]}"; do
-      if _needs_sudo "${rp}" "${LOG_PATHS[i+2]}"; then
-        log_info "$(printf "${MSG_SUDO_REQUIRED}" "${rp}")"
-        if execute_cmd "sudo -v"; then
-          _sudo_authenticated=true
-        else
-          log_warn "$(printf "${MSG_SUDO_FAILED}" "${rp}")"
-        fi
-        break 2
+    if _needs_sudo "${REPLY_PATH}" "${LOG_PATHS[i+2]}"; then
+      log_info "$(printf "${MSG_SUDO_REQUIRED}" "${REPLY_PATH}")"
+      if execute_cmd "sudo -v"; then
+        _sudo_authenticated=true
+      else
+        log_warn "$(printf "${MSG_SUDO_FAILED}" "${REPLY_PATH}")"
       fi
-    done
+      break
+    fi
   done
 
   local _total_files_found=0

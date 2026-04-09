@@ -534,6 +534,38 @@ setup() {
     eval "${_orig_exec}"
 }
 
+@test "file_finder: mtime fallback batches stat calls (one execute_cmd for many files)" {
+    # Create several files with old filename timestamps but recent mtimes
+    local i
+    for i in 1 2 3 4 5; do
+        touch "${TEST_LOG_DIR}/batch_2025010112000${i}.log"
+        touch -t 202601151200 "${TEST_LOG_DIR}/batch_2025010112000${i}.log"
+    done
+
+    local _orig_exec
+    _orig_exec=$(declare -f execute_cmd)
+
+    : > "${BATS_TEST_TMPDIR}/stat_calls"
+    execute_cmd() {
+        if [[ "$1" == *stat* ]]; then
+            printf 'x\n' >> "${BATS_TEST_TMPDIR}/stat_calls"
+        fi
+        printf '%s' "$1" | bash -ls
+    }
+
+    file_finder "${TEST_LOG_DIR}" \
+        "batch_<date:%Y%m%d%H%M%S>*" ".log" \
+        "260115-0000" "260115-2359" "true"
+
+    eval "${_orig_exec}"
+
+    [[ "${#REPLY_FILES[@]}" -ge 5 ]]
+    local n
+    n=$(wc -l < "${BATS_TEST_TMPDIR}/stat_calls")
+    # Must be a single batched stat call, not one per file
+    assert_equal "${n}" 1
+}
+
 # --- sudo flag support ---
 
 @test "file_finder: sudo flag accepted as parameter" {
