@@ -239,6 +239,30 @@ setup() {
     assert_output --partial "done"
 }
 
+# --- have_sudo_access: PATH hijack to cover L697 (sudo missing) and L711 (sudo fail) ---
+
+@test "have_sudo_access: returns 1 in-process when sudo not in PATH" {
+    unset HAVE_SUDO_ACCESS
+    # Use a tmpdir with no sudo binary as PATH
+    local empty_bin="${BATS_TEST_TMPDIR}/empty_bin"
+    mkdir -p "${empty_bin}"
+    PATH="${empty_bin}" run have_sudo_access
+    [ "${status}" -eq 1 ]
+}
+
+@test "have_sudo_access: returns 1 in-process when sudo binary always fails" {
+    unset HAVE_SUDO_ACCESS
+    local bin_dir="${BATS_TEST_TMPDIR}/fake_sudo_fail"
+    mkdir -p "${bin_dir}"
+    cat > "${bin_dir}/sudo" <<'EOF'
+#!/bin/bash
+exit 1
+EOF
+    chmod +x "${bin_dir}/sudo"
+    PATH="${bin_dir}:${PATH}" have_sudo_access || true
+    [[ "${HAVE_SUDO_ACCESS}" == "1" ]]
+}
+
 # --- have_sudo_access: in-process coverage for L711, L716-720 ---
 
 @test "have_sudo_access: in-process with SUDO_ASKPASS and unset cache" {

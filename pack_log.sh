@@ -22,10 +22,10 @@
 # shellcheck disable=SC2029  # SSH commands piped via stdin, not affected
 # shellcheck disable=SC2016  # Single-quoted <env:> tokens are resolved by string_handler, not bash
 
-set +u 2>/dev/null # KCOV_EXCL_LINE
-declare _PACK_LOG_SCRIPT_NAME # KCOV_EXCL_LINE
-_PACK_LOG_SCRIPT_NAME="$(basename "${BASH_SOURCE[0]:-$0}" .sh)" # KCOV_EXCL_LINE
-readonly _PACK_LOG_SCRIPT_NAME # KCOV_EXCL_LINE
+set +u 2>/dev/null
+declare _PACK_LOG_SCRIPT_NAME
+_PACK_LOG_SCRIPT_NAME="$(basename "${BASH_SOURCE[0]:-$0}" .sh)"
+readonly _PACK_LOG_SCRIPT_NAME
 
 set -euo pipefail
 
@@ -40,7 +40,6 @@ set -euo pipefail
 #   2. On the remote machine, run: whoami       (to get username)
 #   3. Test connection: ssh user@IP
 #   4. Add entry below: "my-robot::user@IP"
-# KCOV_EXCL_START — pure data array; kcov cannot instrument per-element lines
 declare -a HOSTS=(
   # # lixing
   # "core-03::myuser@192.168.11.161"
@@ -66,7 +65,6 @@ declare -a HOSTS=(
   # "mr1206::myuser@10.11.199.9"
   # "t2003::myuser@10.11.199.11"
 )
-# KCOV_EXCL_STOP
 
 # Log paths format: consecutive triplets of (PATH, FILE_PATTERN, FLAGS).
 #
@@ -105,7 +103,6 @@ declare COREROBOT_DOCKER_LOG_DATA="${COREROBOT_DOCKER_HOME}/log_data"
 # shellcheck disable=SC2034
 declare COREROBOT_DOCKER_LOG_SLAM="${COREROBOT_DOCKER_HOME}/log_slam"
 
-# KCOV_EXCL_START — pure data array; kcov cannot instrument per-element lines
 declare -a LOG_PATHS=(
   # PATH                                                                  FILE_PATTERN                                                      FLAGS
   # AvoidStop (pana-04, local test with symlink dirs)
@@ -147,7 +144,6 @@ declare -a LOG_PATHS=(
   # "${COREROBOT_LOG_DATA}/lidar_detection/glog"                                     "detect_pallet_node-DetectPallet-<date:%Y%m%d-%H%M%S>*"              ""
   # "${COREROBOT_CORETRONIC_AMR_NAVI_INSTALL}/share/lidar_detection_pkg/config"      "pallet.ini"                                                        ""
 )
-# KCOV_EXCL_STOP
 
 declare SAVE_FOLDER="${_PACK_LOG_SCRIPT_NAME}"
 
@@ -174,7 +170,6 @@ declare LANG_CODE=""
 declare DRY_RUN=false
 declare LOG_FILE="" _LOG_FD=""
 
-# KCOV_EXCL_START — pure data array; kcov cannot instrument per-element lines
 declare -a SSH_OPTS=(
     -i "${SSH_KEY}"
     -o BatchMode=yes
@@ -187,7 +182,6 @@ declare -a SSH_OPTS=(
     -o ServerAliveInterval=30
     -o ServerAliveCountMax=3
   )
-# KCOV_EXCL_STOP
 
 unset HAVE_SUDO_ACCESS
 
@@ -506,7 +500,7 @@ load_lang() {
       MSG_DRY_RUN_TOTAL='[ドライラン] 収集予定の合計ファイル数：%d'
       MSG_DRY_RUN_COMPLETE='*** ドライラン完了 — 変更は行われていません ***'
       ;;
-    *) # English (default) # KCOV_EXCL_LINE: case label, kcov cannot instrument
+    *) # English (default)
       MSG_HELP_USAGE='Usage: %s [options]'
       MSG_HELP_OPTIONS='  Options:'
       MSG_HELP_NUMBER='    -n, --number                  Host number (1-%d)'
@@ -618,7 +612,6 @@ load_lang
 
 # --- Log functions ---
 # Color codes (disabled when stdout/stderr is not a terminal)
-# KCOV_EXCL_START — tty branch requires real terminal; tests run without tty
 if [[ -t 2 ]]; then
   _C_RESET='\033[0m'
   _C_RED='\033[1;31m'
@@ -626,7 +619,6 @@ if [[ -t 2 ]]; then
   _C_GREEN='\033[0;32m'
   _C_CYAN='\033[0;36m'
   _C_DIM='\033[2m'
-# KCOV_EXCL_STOP
 else
   _C_RESET='' _C_RED='' _C_YELLOW='' _C_GREEN='' _C_CYAN='' _C_DIM=''
 fi
@@ -693,16 +685,18 @@ print_help() {
 #   0 if the user has sudo access or is root.
 #   1 otherwise.
 have_sudo_access() {
-  local -a sudo_cmd=("/usr/bin/sudo")
+  local sudo_bin
+  sudo_bin="$(command -v sudo 2>/dev/null || true)"
+  local -a sudo_cmd=("${sudo_bin}")
 
   # check if already root
   if [[ "${EUID:-${UID}}" -eq 0 ]]; then
-    return 0 # KCOV_EXCL_LINE: EUID=0 branch only hit when running as root; covered in CI via sudo wrapper, skipped locally
+    return 0
   fi
 
   # check sudo executable exists and is executable
-  if [[ ! -x "/usr/bin/sudo" ]]; then
-    return 1 # KCOV_EXCL_LINE: requires /usr/bin/sudo to be missing; not testable without altering the host filesystem
+  if [[ -z "${sudo_bin}" || ! -x "${sudo_bin}" ]]; then
+    return 1
   fi
 
   # processing SUDO_ASKPASS
@@ -963,7 +957,6 @@ execute_cmd_from_array() {
 # Arguments:
 #   $@: The command-line options.
 option_parser() {
-  # KCOV_EXCL_START — pure data arrays; kcov cannot instrument per-element lines
   local -a short_opts_arr=(
     "n:" "u:" "l"
     "s:" "e:"
@@ -980,7 +973,6 @@ option_parser() {
     "dry-run"
     "help" "version"
   )
-  # KCOV_EXCL_STOP
 
   local short_opts long_opts
   short_opts=$(printf "%s" "${short_opts_arr[@]}")
@@ -1033,7 +1025,7 @@ option_parser() {
       --version)
         printf "%s\n" "${VERSION}"; exit 0 ;;
       --) shift; break ;;
-      *) break ;; # KCOV_EXCL_LINE: defensive unreachable; getopt already validates args
+      *) break ;;
     esac
   done
 
@@ -1128,7 +1120,7 @@ time_handler() {
     local time=""
 
     if [[ -z "${!t}" ]]; then
-      read -er -p "$(printf "${MSG_TIME_PROMPT}" "${t,,}")" time # KCOV_EXCL_LINE
+      read -er -p "$(printf "${MSG_TIME_PROMPT}" "${t,,}")" time
     else
       time="${!t}"
     fi
@@ -1238,12 +1230,10 @@ ssh_handler() {
     (( attempt+=1 ))
   done
 
-  # KCOV_EXCL_START — kcov cannot instrument lines inside $(...) subshell
   log_error "$(
     printf "${MSG_SSH_FINAL_FAILURE}\n" "${max_retries}"
     printf '  %s\n' "${err_msgs[@]}"
   )"
-  # KCOV_EXCL_STOP
 }
 
 # Selects the best available file transfer tool.
@@ -1553,7 +1543,7 @@ file_finder() {
       uniq_ts+=( "$ts" )
       last_ts="$ts"
     fi
-  done < <(printf '%s\n' "${file_timestamps[@]}" | sort) # KCOV_EXCL_LINE: kcov cannot instrument process-substitution tail
+  done < <(printf '%s\n' "${file_timestamps[@]}" | sort)
 
   local s_idx=-1 e_idx=-1
   for i in "${!uniq_ts[@]}"; do
@@ -1620,14 +1610,12 @@ file_finder() {
           file_epoch="${ts}"
         else
           # Date string format: parse YYYYMMDD... to epoch
-          # KCOV_EXCL_START — kcov cannot instrument lines inside $(...) subshell
           file_epoch=$(date -d "$(
             local y="${ts:0:4}" m="${ts:4:2}" d="${ts:6:2}"
             local rest="${ts:8}"
             local H="${rest:0:2}" M="${rest:2:2}" S="${rest:4:2}"
             printf '%s-%s-%s %s:%s:%s' "$y" "$m" "$d" "$H" "$M" "${S:-00}"
           )" '+%s' 2>/dev/null) || continue
-          # KCOV_EXCL_STOP
         fi
 
         local diff_start diff_end min_diff
@@ -1638,7 +1626,7 @@ file_finder() {
         elif [[ $diff_end -gt 0 ]]; then
           min_diff=$diff_end
         else
-          min_diff=0 # KCOV_EXCL_LINE: unreachable under has_exact_match=false (would contradict enclosing condition)
+          min_diff=0
         fi
 
         if [[ $min_diff -le $tolerance_sec ]]; then
@@ -1751,14 +1739,12 @@ folder_creator() {
 
 # Writes a summary of user inputs and LOG_PATHS to script.log in SAVE_FOLDER.
 save_script_data() {
-  # KCOV_EXCL_START — pure data array; kcov cannot instrument per-element lines
   local -a string_array=(
     "Host: ${HOST}"
     "Time range: ${START_TIME} ~ ${END_TIME}"
     "Using tool: ${GET_LOG_TOOL}"
     "Saving logs to folder: ${SAVE_FOLDER}"
     )
-  # KCOV_EXCL_STOP
 
   log_info "${MSG_USER_INPUTS_SUMMARY}"
 
@@ -1920,7 +1906,7 @@ file_sender() {
     if [[ "${size_mb}" -ge "${TRANSFER_SIZE_WARN_MB}" ]]; then
       local confirm=""
       log_warn "$(printf "${MSG_SIZE_EXCEED_CONFIRM}" "${TRANSFER_SIZE_WARN_MB}" "${folder_size}")"
-      read -r confirm </dev/tty 2>/dev/null || read -r confirm # KCOV_EXCL_LINE
+      read -r confirm </dev/tty 2>/dev/null || read -r confirm
       if [[ "${confirm,,}" == "n" || "${confirm,,}" == "no" ]]; then
         log_info "${MSG_TRANSFER_CANCELLED}"
         return 1
@@ -2184,7 +2170,7 @@ main() {
       while ! file_sender; do
         local choice=""
         log_warn "${MSG_TRANSFER_CHOICE}"
-        read -r choice </dev/tty 2>/dev/null || read -r choice # KCOV_EXCL_LINE
+        read -r choice </dev/tty 2>/dev/null || read -r choice
         case "${choice,,}" in
           k|keep)
             log_info "$(printf "${MSG_REMOTE_PRESERVED}" "${HOST}" "${SAVE_FOLDER}")"
@@ -2192,7 +2178,7 @@ main() {
           c|clean)
             file_cleaner
             close_log_file; exit 1 ;;
-          *)  # retry (default: empty or 'r') # KCOV_EXCL_LINE: case label, kcov cannot instrument
+          *)  # retry (default: empty or 'r')
             log_info "[R]etry: restarting transfer..."
             continue ;;
         esac
@@ -2209,6 +2195,4 @@ main() {
 
 # Allow sourcing without executing main.
 # "return" succeeds when sourced but fails when executed directly.
-# KCOV_EXCL_START
 (return 0 2>/dev/null) || main "$@"
-# KCOV_EXCL_STOP
