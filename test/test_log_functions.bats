@@ -193,7 +193,7 @@ setup() {
 @test "load_lang: loads ja messages" {
     LANG_CODE="ja"
     load_lang
-    [[ "${MSG_STEP1}" == "=== ステップ 1/5: ターゲットホストの解決 ===" ]]
+    [[ "${MSG_STEP1}" == "=== ステップ 1/6: ターゲットホストの解決 ===" ]]
     # Restore
     LANG_CODE="en"
     load_lang
