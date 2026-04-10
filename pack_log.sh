@@ -75,9 +75,9 @@ declare -a HOSTS=(
 #
 # Examples:
 #   "<env:HOME>/config"                "node_config.yaml"                      ""
-#   "<env:HOME>/log_core"              "app.<cmd:hostname>.log.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+#   "<env:HOME>/log_core"              "app.<cmd:hostname>.log.<date:%Y%m%d-%H%M%S>*"  ""
 #   "/var/log"                         "syslog*"                               "<sudo>"
-#   "<env:HOME>/log_core"              "app.*.<date:%Y%m%d-%H%M%S>*"           "<mtime><sudo>"
+#   "<env:HOME>/log_core"              "app.*.<date:%Y%m%d-%H%M%S>*"           "<sudo>"
 
 # Coretronic path shortcuts (non-Docker)
 # shellcheck disable=SC2034
@@ -114,11 +114,11 @@ declare -a LOG_PATHS=(
   # "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default"           "uimap.png"                                                        ""
   # "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default2"          "uimap.yaml"                                                       ""
   # "<env:HOME>/Desktop/pack_log/log/avoid/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"                    ""
-  # "<env:HOME>/Desktop/pack_log/log/avoid/log_core"                       "corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*"      "<mtime>"
+  # "<env:HOME>/Desktop/pack_log/log/avoid/log_core"                       "corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*"      ""
   # "<env:HOME>/Desktop/pack_log/log/avoid/log_slam/record"                "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"               ""
 
   # # Panasonic — LiDAR Detection shelf log path (docker)
-  # "${COREROBOT_DOCKER_LOG_CORE}"                      "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+  # "${COREROBOT_DOCKER_LOG_CORE}"                      "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
   # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"         ""
   # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"                          ""
   # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection/glog" "detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"                     ""
@@ -131,7 +131,7 @@ declare -a LOG_PATHS=(
 
   # sys_log kernal_log
   # # 2D LiDAR SLAM log path (docker)
-  # "${COREROBOT_DOCKER_LOG_CORE}"        "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+  # "${COREROBOT_DOCKER_LOG_CORE}"        "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
   # "${COREROBOT_DOCKER_LOG_SLAM}"        "coreslam_2D_<date:%s>*<suffix:.log>"                                     ""
   # "${COREROBOT_DOCKER_LOG_SLAM}/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
 
@@ -139,7 +139,7 @@ declare -a LOG_PATHS=(
   # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"  "uimap.png"                                                              ""
   # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"  "uimap.yaml"                                                             ""
   # "${COREROBOT_DOCKER_LOG}/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"                    ""
-  # "${COREROBOT_DOCKER_LOG_CORE}"                 "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+  # "${COREROBOT_DOCKER_LOG_CORE}"                 "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
   # "${COREROBOT_DOCKER_LOG_SLAM}/record"          "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
 
   # # ASE Us — LiDAR Detection pallet log path
@@ -268,7 +268,7 @@ load_lang() {
       MSG_RSYNC_NOT_AVAILABLE='遠端主機上沒有 rsync，嘗試下一個工具...'
       MSG_NO_TRANSFER_TOOLS='沒有可用的檔案傳輸工具 (%s)。'
       MSG_NO_FILES_IN_RANGE='在時間範圍 %s ~ %s 中找不到檔案。'
-      MSG_FILES_SELECTED='從 %d 個候選檔案中選取了 %d 個。'
+      MSG_FILES_SELECTED='已選取 %d 個檔案（共 %d 個候選）。'
       MSG_USER_INPUTS_SUMMARY='使用者輸入摘要:'
       MSG_NO_SAVE_FOLDER='未定義 SAVE_FOLDER，略過清理。'
       MSG_FOLDER_REMOVE_FAILED='移除遠端資料夾失敗: %s'
@@ -288,6 +288,9 @@ load_lang() {
       MSG_TRANSFER_CHOICE='[R]etry（重試，預設） / [K]eep（保留遠端資料） / [C]lean（清除遠端資料）: '
       MSG_EMPTY_PATH='[%d/%d] 解析後路徑為空，跳過。'
       MSG_NO_FILES_FOUND='[%d/%d] 找不到檔案。'
+      MSG_DIR_NOT_FOUND='[%d/%d] 目錄不存在: %s'
+      MSG_NO_PATTERN_MATCH='[%d/%d] 沒有符合樣式的檔案: %s'
+      MSG_NO_TIME_MATCH='[%d/%d] 找到 %d 個檔案，但皆不在時間範圍 %s ~ %s 內'
       MSG_RESOLVED_PATH='[%d/%d] 解析結果: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 個檔案，複製中...'
       MSG_STEP1='=== 步驟 1/6: 解析目標主機 ==='
@@ -318,6 +321,35 @@ load_lang() {
       MSG_DRY_RUN_WOULD_COPY='[模擬] 將會複製 %d 個檔案：'
       MSG_DRY_RUN_TOTAL='[模擬] 總共會收集的檔案數量：%d'
       MSG_DRY_RUN_COMPLETE='*** 模擬執行完成 — 未做任何變更 ***'
+      MSG_DBG_CACHE_HIT='快取命中: %s = %s'
+      MSG_DBG_EXECUTING_CMD='執行指令: %s'
+      MSG_DBG_PREFETCH_BATCHING='prefetch_token_cache: 批次處理 %d 個 token'
+      MSG_DBG_PREFETCH_FAILED='prefetch_token_cache: 批次失敗，退回逐一解析'
+      MSG_DBG_PREFETCH_MISMATCH='prefetch_token_cache: 值數量不符 (%d vs %d)'
+      MSG_DBG_PREFETCH_RESULT='prefetch_token_cache: %s = %s'
+      MSG_DBG_NO_INPUT_PROMPTING='未提供編號或 user@host，提示輸入'
+      MSG_DBG_USER_SELECTED_NUM='使用者選擇編號 %s'
+      MSG_DBG_USER_PROVIDED_HOST='使用者提供 user@host %s'
+      MSG_DBG_USE_NUM_FOR_HOST='使用編號 %s 取得主機'
+      MSG_DBG_PARSED_SPECIAL='解析特殊字串 - 類型: %s, 字串: %s'
+      MSG_DBG_RESOLVED_STRING='解析結果: %s'
+      MSG_DBG_ORIGINAL_PATH='原始路徑: %s'
+      MSG_DBG_ORIGINAL_PATTERN='原始樣式: %s'
+      MSG_DBG_DATE_TOKEN_DEFERRED='日期 token 延後處理: %s'
+      MSG_DBG_PROCESSING_TOKEN='處理 token: %s'
+      MSG_DBG_SUFFIX_SET='副檔名設定為: %s'
+      MSG_DBG_DATE_TOKEN_POS='日期 token 位置: %s, 內容: %s'
+      MSG_DBG_EXPANDED_RANGE='展開範圍: %d 到 %d (值: %s ~ %s)'
+      MSG_TRACE_INPUT='%s 輸入:'
+      MSG_TRACE_OUTPUT='%s 輸出:'
+      MSG_TRACE_PARAM='  %s: %s'
+      MSG_TRACE_SINGLE_OUTPUT='%s 輸出: %s'
+      MSG_RETRY_TRANSFER='正在重試傳輸...'
+      MSG_RETRY_ARCHIVE='正在重試封存...'
+      MSG_SUMMARY_HOST='主機: %s'
+      MSG_SUMMARY_TIME_RANGE='時間範圍: %s ~ %s'
+      MSG_SUMMARY_TOOL='傳輸工具: %s'
+      MSG_SUMMARY_SAVE_FOLDER='儲存 log 至資料夾: %s'
       ;;
     zh-CN)
       MSG_HELP_USAGE='用法: %s [选项]'
@@ -379,7 +411,7 @@ load_lang() {
       MSG_RSYNC_NOT_AVAILABLE='远程主机上没有 rsync，尝试下一个工具...'
       MSG_NO_TRANSFER_TOOLS='没有可用的文件传输工具 (%s)。'
       MSG_NO_FILES_IN_RANGE='在时间范围 %s ~ %s 中未找到文件。'
-      MSG_FILES_SELECTED='从 %d 个候选文件中选取了 %d 个。'
+      MSG_FILES_SELECTED='已选取 %d 个文件（共 %d 个候选）。'
       MSG_USER_INPUTS_SUMMARY='用户输入摘要:'
       MSG_NO_SAVE_FOLDER='未定义 SAVE_FOLDER，跳过清理。'
       MSG_FOLDER_REMOVE_FAILED='移除远程文件夹失败: %s'
@@ -399,6 +431,9 @@ load_lang() {
       MSG_TRANSFER_CHOICE='[R]etry（重试，默认） / [K]eep（保留远程数据） / [C]lean（清除远程数据）: '
       MSG_EMPTY_PATH='[%d/%d] 解析后路径为空，跳过。'
       MSG_NO_FILES_FOUND='[%d/%d] 未找到文件。'
+      MSG_DIR_NOT_FOUND='[%d/%d] 目录不存在: %s'
+      MSG_NO_PATTERN_MATCH='[%d/%d] 没有匹配模式的文件: %s'
+      MSG_NO_TIME_MATCH='[%d/%d] 找到 %d 个文件，但均不在时间范围 %s ~ %s 内'
       MSG_RESOLVED_PATH='[%d/%d] 解析结果: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 个文件，复制中...'
       MSG_STEP1='=== 步骤 1/6: 解析目标主机 ==='
@@ -429,6 +464,35 @@ load_lang() {
       MSG_DRY_RUN_WOULD_COPY='[模拟] 将会复制 %d 个文件：'
       MSG_DRY_RUN_TOTAL='[模拟] 总共会收集的文件数量：%d'
       MSG_DRY_RUN_COMPLETE='*** 模拟执行完成 — 未做任何变更 ***'
+      MSG_DBG_CACHE_HIT='缓存命中: %s = %s'
+      MSG_DBG_EXECUTING_CMD='执行命令: %s'
+      MSG_DBG_PREFETCH_BATCHING='prefetch_token_cache: 批量处理 %d 个 token'
+      MSG_DBG_PREFETCH_FAILED='prefetch_token_cache: 批量失败，回退到逐个解析'
+      MSG_DBG_PREFETCH_MISMATCH='prefetch_token_cache: 值数量不匹配 (%d vs %d)'
+      MSG_DBG_PREFETCH_RESULT='prefetch_token_cache: %s = %s'
+      MSG_DBG_NO_INPUT_PROMPTING='未提供编号或 user@host，提示输入'
+      MSG_DBG_USER_SELECTED_NUM='用户选择编号 %s'
+      MSG_DBG_USER_PROVIDED_HOST='用户提供 user@host %s'
+      MSG_DBG_USE_NUM_FOR_HOST='使用编号 %s 获取主机'
+      MSG_DBG_PARSED_SPECIAL='解析特殊字符串 - 类型: %s, 字符串: %s'
+      MSG_DBG_RESOLVED_STRING='解析结果: %s'
+      MSG_DBG_ORIGINAL_PATH='原始路径: %s'
+      MSG_DBG_ORIGINAL_PATTERN='原始模式: %s'
+      MSG_DBG_DATE_TOKEN_DEFERRED='日期 token 延后处理: %s'
+      MSG_DBG_PROCESSING_TOKEN='处理 token: %s'
+      MSG_DBG_SUFFIX_SET='后缀名设置为: %s'
+      MSG_DBG_DATE_TOKEN_POS='日期 token 位置: %s, 内容: %s'
+      MSG_DBG_EXPANDED_RANGE='展开范围: %d 到 %d (值: %s ~ %s)'
+      MSG_TRACE_INPUT='%s 输入:'
+      MSG_TRACE_OUTPUT='%s 输出:'
+      MSG_TRACE_PARAM='  %s: %s'
+      MSG_TRACE_SINGLE_OUTPUT='%s 输出: %s'
+      MSG_RETRY_TRANSFER='正在重试传输...'
+      MSG_RETRY_ARCHIVE='正在重试归档...'
+      MSG_SUMMARY_HOST='主机: %s'
+      MSG_SUMMARY_TIME_RANGE='时间范围: %s ~ %s'
+      MSG_SUMMARY_TOOL='传输工具: %s'
+      MSG_SUMMARY_SAVE_FOLDER='保存日志到文件夹: %s'
       ;;
     ja)
       MSG_HELP_USAGE='使用法: %s [オプション]'
@@ -490,7 +554,7 @@ load_lang() {
       MSG_RSYNC_NOT_AVAILABLE='リモートホストに rsync がありません。次のツールを試行中...'
       MSG_NO_TRANSFER_TOOLS='利用可能なファイル転送ツール (%s) がありません。'
       MSG_NO_FILES_IN_RANGE='時間範囲 %s ~ %s に該当するファイルが見つかりません。'
-      MSG_FILES_SELECTED='%d 個の候補から %d 個のファイルを選択しました。'
+      MSG_FILES_SELECTED='%d 個のファイルを選択（候補 %d 個）。'
       MSG_USER_INPUTS_SUMMARY='ユーザー入力サマリー:'
       MSG_NO_SAVE_FOLDER='SAVE_FOLDER が未定義です。クリーンアップをスキップします。'
       MSG_FOLDER_REMOVE_FAILED='リモートフォルダの削除に失敗: %s'
@@ -510,6 +574,9 @@ load_lang() {
       MSG_TRANSFER_CHOICE='[R]etry（リトライ、デフォルト） / [K]eep（リモートデータ保持） / [C]lean（リモートデータ削除）: '
       MSG_EMPTY_PATH='[%d/%d] 解決済みパスが空です。スキップします。'
       MSG_NO_FILES_FOUND='[%d/%d] ファイルが見つかりません。'
+      MSG_DIR_NOT_FOUND='[%d/%d] ディレクトリが存在しません: %s'
+      MSG_NO_PATTERN_MATCH='[%d/%d] パターンに一致するファイルがありません: %s'
+      MSG_NO_TIME_MATCH='[%d/%d] %d 個のファイルが見つかりましたが、時間範囲 %s ~ %s 内にありません'
       MSG_RESOLVED_PATH='[%d/%d] 解決済み: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] %d 個のファイルが見つかりました。コピー中...'
       MSG_STEP1='=== ステップ 1/6: ターゲットホストの解決 ==='
@@ -540,6 +607,35 @@ load_lang() {
       MSG_DRY_RUN_WOULD_COPY='[ドライラン] %d 個のファイルをコピー予定：'
       MSG_DRY_RUN_TOTAL='[ドライラン] 収集予定の合計ファイル数：%d'
       MSG_DRY_RUN_COMPLETE='*** ドライラン完了 — 変更は行われていません ***'
+      MSG_DBG_CACHE_HIT='キャッシュヒット: %s = %s'
+      MSG_DBG_EXECUTING_CMD='コマンド実行: %s'
+      MSG_DBG_PREFETCH_BATCHING='prefetch_token_cache: %d 個のトークンをバッチ処理'
+      MSG_DBG_PREFETCH_FAILED='prefetch_token_cache: バッチ失敗、個別解決にフォールバック'
+      MSG_DBG_PREFETCH_MISMATCH='prefetch_token_cache: 値の数が不一致 (%d vs %d)'
+      MSG_DBG_PREFETCH_RESULT='prefetch_token_cache: %s = %s'
+      MSG_DBG_NO_INPUT_PROMPTING='番号または user@host が未指定、入力を要求'
+      MSG_DBG_USER_SELECTED_NUM='ユーザーが番号 %s を選択'
+      MSG_DBG_USER_PROVIDED_HOST='ユーザーが user@host %s を指定'
+      MSG_DBG_USE_NUM_FOR_HOST='番号 %s でホストを取得'
+      MSG_DBG_PARSED_SPECIAL='特殊文字列を解析 - タイプ: %s, 文字列: %s'
+      MSG_DBG_RESOLVED_STRING='解決結果: %s'
+      MSG_DBG_ORIGINAL_PATH='元のパス: %s'
+      MSG_DBG_ORIGINAL_PATTERN='元のパターン: %s'
+      MSG_DBG_DATE_TOKEN_DEFERRED='日付トークンを後で処理: %s'
+      MSG_DBG_PROCESSING_TOKEN='トークン処理中: %s'
+      MSG_DBG_SUFFIX_SET='サフィックス設定: %s'
+      MSG_DBG_DATE_TOKEN_POS='日付トークン位置: %s, 内容: %s'
+      MSG_DBG_EXPANDED_RANGE='展開範囲: %d から %d (値: %s ~ %s)'
+      MSG_TRACE_INPUT='%s 入力:'
+      MSG_TRACE_OUTPUT='%s 出力:'
+      MSG_TRACE_PARAM='  %s: %s'
+      MSG_TRACE_SINGLE_OUTPUT='%s 出力: %s'
+      MSG_RETRY_TRANSFER='転送を再試行中...'
+      MSG_RETRY_ARCHIVE='アーカイブを再試行中...'
+      MSG_SUMMARY_HOST='ホスト: %s'
+      MSG_SUMMARY_TIME_RANGE='時間範囲: %s ~ %s'
+      MSG_SUMMARY_TOOL='転送ツール: %s'
+      MSG_SUMMARY_SAVE_FOLDER='ログの保存先フォルダ: %s'
       ;;
     *) # English (default)
       MSG_HELP_USAGE='Usage: %s [options]'
@@ -621,6 +717,9 @@ load_lang() {
       MSG_TRANSFER_CHOICE='[R]etry (default) / [K]eep remote data / [C]lean remote data: '
       MSG_EMPTY_PATH='[%d/%d] Resolved path is empty, skipping.'
       MSG_NO_FILES_FOUND='[%d/%d] No files found.'
+      MSG_DIR_NOT_FOUND='[%d/%d] Directory does not exist: %s'
+      MSG_NO_PATTERN_MATCH='[%d/%d] No files matching pattern: %s'
+      MSG_NO_TIME_MATCH='[%d/%d] Found %d files but none in time range %s ~ %s'
       MSG_RESOLVED_PATH='[%d/%d] Resolved: %s :: %s%s'
       MSG_FOUND_COPYING='[%d/%d] Found %d files, copying...'
       MSG_STEP1='=== Step 1/6: Resolving target host ==='
@@ -651,6 +750,35 @@ load_lang() {
       MSG_DRY_RUN_WOULD_COPY='[dry-run] Would copy %d files:'
       MSG_DRY_RUN_TOTAL='[dry-run] Total files that would be collected: %d'
       MSG_DRY_RUN_COMPLETE='*** Dry run complete — no changes were made ***'
+      MSG_DBG_CACHE_HIT='Cache hit: %s = %s'
+      MSG_DBG_EXECUTING_CMD='Executing command: %s'
+      MSG_DBG_PREFETCH_BATCHING='prefetch_token_cache: batching %d token(s)'
+      MSG_DBG_PREFETCH_FAILED='prefetch_token_cache: batch failed, falling back'
+      MSG_DBG_PREFETCH_MISMATCH='prefetch_token_cache: value count mismatch (%d vs %d)'
+      MSG_DBG_PREFETCH_RESULT='prefetch_token_cache: %s = %s'
+      MSG_DBG_NO_INPUT_PROMPTING='No number or user@host provided, prompting'
+      MSG_DBG_USER_SELECTED_NUM='User selected number %s'
+      MSG_DBG_USER_PROVIDED_HOST='User provided user@host %s'
+      MSG_DBG_USE_NUM_FOR_HOST='Use number %s to get host'
+      MSG_DBG_PARSED_SPECIAL='Parsed special string - type: %s, string: %s'
+      MSG_DBG_RESOLVED_STRING='Resolved string: %s'
+      MSG_DBG_ORIGINAL_PATH='Original path: %s'
+      MSG_DBG_ORIGINAL_PATTERN='Original pattern: %s'
+      MSG_DBG_DATE_TOKEN_DEFERRED='Date token deferred: %s'
+      MSG_DBG_PROCESSING_TOKEN='Processing token: %s'
+      MSG_DBG_SUFFIX_SET='Suffix set to: %s'
+      MSG_DBG_DATE_TOKEN_POS='Date token position: %s, content: %s'
+      MSG_DBG_EXPANDED_RANGE='Expanded range: %d to %d (Values: %s ~ %s)'
+      MSG_TRACE_INPUT='%s input:'
+      MSG_TRACE_OUTPUT='%s output:'
+      MSG_TRACE_PARAM='  %s: %s'
+      MSG_TRACE_SINGLE_OUTPUT='%s output: %s'
+      MSG_RETRY_TRANSFER='Retrying transfer...'
+      MSG_RETRY_ARCHIVE='Retrying archive...'
+      MSG_SUMMARY_HOST='Host: %s'
+      MSG_SUMMARY_TIME_RANGE='Time range: %s ~ %s'
+      MSG_SUMMARY_TOOL='Using tool: %s'
+      MSG_SUMMARY_SAVE_FOLDER='Saving logs to folder: %s'
       ;;
   esac
 }
@@ -828,8 +956,8 @@ have_sudo_access() {
 pkg_install_handler() {
   local -r pkg_name="$1"
 
-  log_verbose "${FUNCNAME[0]} input is: "
-  log_verbose "  pkg_name: ${pkg_name}"
+  log_verbose "$(printf "${MSG_TRACE_INPUT}" "${FUNCNAME[0]}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "pkg_name" "${pkg_name}")"
 
   # Check if the package is already installed.
   if command -v "${pkg_name}" >/dev/null 2>&1; then
@@ -873,9 +1001,9 @@ date_format() {
   local -r date="${1:?"${FUNCNAME[0]} need date."}"; shift
   local -r format="${1:?"${FUNCNAME[0]} need format."}"; shift
 
-  log_verbose "${FUNCNAME[0]} input is: "
-  log_verbose "  date: ${date}"
-  log_verbose "  format: ${format}"
+  log_verbose "$(printf "${MSG_TRACE_INPUT}" "${FUNCNAME[0]}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "date" "${date}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "format" "${format}")"
 
   if [[ ! "${date}" =~ ^[0-9]{6}-[0-9]{4}$ ]]; then
     log_error "$(printf "${MSG_INVALID_DATE_FORMAT}" "${date}")"
@@ -889,7 +1017,7 @@ date_format() {
     log_error "$(printf "${MSG_DATE_FORMAT_FAILED}" "${date}")"
   fi
 
-  log_verbose "${FUNCNAME[0]} output: ${REPLY}"
+  log_verbose "$(printf "${MSG_TRACE_SINGLE_OUTPUT}" "${FUNCNAME[0]}" "${REPLY}")"
   log_verbose "--------------------"
 }
 
@@ -913,11 +1041,11 @@ execute_cmd() {
   local -r inner_cmd="${1:?"${FUNCNAME[0]} need inner command."}"; shift
   local ret=0
 
-  log_verbose "${FUNCNAME[0]} input is: "
-  log_verbose "  inner_cmd: ${inner_cmd}"
-  log_verbose "  HOST: ${HOST}"
-  log_verbose "  SSH_KEY: ${SSH_KEY}"
-  log_verbose "  SSH_TIMEOUT: ${SSH_TIMEOUT}"
+  log_verbose "$(printf "${MSG_TRACE_INPUT}" "${FUNCNAME[0]}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "inner_cmd" "${inner_cmd}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "HOST" "${HOST}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "SSH_KEY" "${SSH_KEY}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "SSH_TIMEOUT" "${SSH_TIMEOUT}")"
 
   if [[ "${HOST}" == "local" ]]; then
     printf '%s' "${inner_cmd}" | bash -ls
@@ -953,16 +1081,16 @@ get_remote_value() {
   local -r type="${1:?"${FUNCNAME[0]} need type."}"; shift
   local -r str="${1:?"${FUNCNAME[0]} need string."}"; shift
 
-  log_verbose "${FUNCNAME[0]} input is: "
-  log_verbose "  type: ${type}"
-  log_verbose "  str: ${str}"
-  log_verbose "  HOST: ${HOST}"
+  log_verbose "$(printf "${MSG_TRACE_INPUT}" "${FUNCNAME[0]}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "type" "${type}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "str" "${str}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "HOST" "${HOST}")"
 
   # Check cache first to avoid redundant SSH calls
   local cache_key="${type}:${str}"
   if [[ -n "${_TOKEN_CACHE["${cache_key}"]+set}" ]]; then
     REPLY="${_TOKEN_CACHE["${cache_key}"]}"
-    log_debug "Cache hit: ${cache_key} = ${REPLY}"
+    log_debug "$(printf "${MSG_DBG_CACHE_HIT}" "${cache_key}" "${REPLY}")"
     return 0
   fi
 
@@ -981,7 +1109,7 @@ get_remote_value() {
     log_error "$(printf "${MSG_UNKNOWN_TOKEN_TYPE}" "${type}")"
   fi
 
-  log_debug "Executing command: ${get_cmd}"
+  log_debug "$(printf "${MSG_DBG_EXECUTING_CMD}" "${get_cmd}")"
 
   if ! REPLY=$(execute_cmd "${get_cmd}"); then
     log_error "$(printf "${MSG_COMMAND_FAILED}" "${get_cmd}")"
@@ -1051,10 +1179,10 @@ prefetch_token_cache() {
     script+="${part}"
   done
 
-  log_debug "prefetch_token_cache: batching ${#missing[@]} token(s)"
+  log_debug "$(printf "${MSG_DBG_PREFETCH_BATCHING}" "${#missing[@]}")"
   local result
   if ! result=$(execute_cmd "${script}"); then
-    log_debug "prefetch_token_cache: batch failed, falling back to lazy resolution"
+    log_debug "${MSG_DBG_PREFETCH_FAILED}"
     return 0
   fi
 
@@ -1066,14 +1194,14 @@ prefetch_token_cache() {
   done
 
   if (( ${#values[@]} != ${#missing[@]} )); then
-    log_debug "prefetch_token_cache: value count mismatch (${#values[@]} vs ${#missing[@]})"
+    log_debug "$(printf "${MSG_DBG_PREFETCH_MISMATCH}" "${#values[@]}" "${#missing[@]}")"
     return 0
   fi
 
   local idx=0
   for key in "${missing[@]}"; do
     _TOKEN_CACHE["${key}"]="${values[idx]}"
-    log_debug "prefetch_token_cache: ${key} = ${values[idx]}"
+    log_debug "$(printf "${MSG_DBG_PREFETCH_RESULT}" "${key}" "${values[idx]}")"
     (( ++idx ))
   done
   return 0
@@ -1134,9 +1262,9 @@ _needs_sudo() {
 create_folder() {
   local -r path="${1:?"${FUNCNAME[0]} need path."}"; shift
 
-  log_verbose "${FUNCNAME[0]} input is: "
-  log_verbose "  path: ${path}"
-  log_verbose "  HOST: ${HOST}"
+  log_verbose "$(printf "${MSG_TRACE_INPUT}" "${FUNCNAME[0]}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "path" "${path}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "HOST" "${HOST}")"
 
   local mkdir_cmd
   printf -v mkdir_cmd "mkdir -p %q" "${path}"
@@ -1165,10 +1293,10 @@ execute_cmd_from_array() {
   local -r inner_cmd="${1:?"${FUNCNAME[0]} need inner command."}"; shift
   local ret=0
 
-  log_verbose "${FUNCNAME[0]} input is: "
-  log_verbose "  inner_cmd: ${inner_cmd}"
-  log_verbose "  array size: $# elements"
-  log_verbose "  HOST: ${HOST}"
+  log_verbose "$(printf "${MSG_TRACE_INPUT}" "${FUNCNAME[0]}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "inner_cmd" "${inner_cmd}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "array size" "$# elements")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "HOST" "${HOST}")"
 
   if [[ "${HOST}" == "local" ]]; then
     # Directly pipe formatted array to eval
@@ -1297,9 +1425,9 @@ option_parser() {
 # Returns:
 #   0 on success; aborts via log_error on invalid input or out-of-range number.
 host_handler() {
-  log_verbose "${FUNCNAME[0]} input is: "
-  log_verbose "  NUM: ${NUM}"
-  log_verbose "  HOST: ${HOST}"
+  log_verbose "$(printf "${MSG_TRACE_INPUT}" "${FUNCNAME[0]}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "NUM" "${NUM}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "HOST" "${HOST}")"
 
   if [[ "${HOST}" == "local" ]]; then
     log_debug "${MSG_HOST_USING_LOCAL}"
@@ -1320,7 +1448,7 @@ host_handler() {
 
   # check user input for number or user@host
   if [[ -z "${NUM}" && -z "${HOST}" ]]; then
-    log_debug "No number or user@host provided, prompting for input"
+    log_debug "${MSG_DBG_NO_INPUT_PROMPTING}"
     for i in "${!HOSTS[@]}"; do
       local name="${HOSTS[i]%%::*}"
       local userhost="${HOSTS[i]#*::}"
@@ -1334,11 +1462,11 @@ host_handler() {
       HOST="local"
       return 0
     elif [[ "${input}" =~ ^[1-9][0-9]*$ ]]; then
-      log_debug "User selected number ${input}"
+      log_debug "$(printf "${MSG_DBG_USER_SELECTED_NUM}" "${input}")"
       NUM="${input}"
       HOST=""
     elif [[ "${input}" =~ ^[^@[:space:]]+@[^@[:space:]]+$ ]]; then
-      log_debug "User provided user@host ${input}"
+      log_debug "$(printf "${MSG_DBG_USER_PROVIDED_HOST}" "${input}")"
       HOST="${input}"
       NUM=""
     else
@@ -1352,7 +1480,7 @@ host_handler() {
       log_error "$(printf "${MSG_HOST_NUMBER_RANGE}" "${#HOSTS[@]}")"
     fi
 
-    log_debug "Use number ${NUM} to get host"
+    log_debug "$(printf "${MSG_DBG_USE_NUM_FOR_HOST}" "${NUM}")"
     HOST="${HOSTS[${NUM}-1]#*::}"
   fi
 
@@ -1361,8 +1489,8 @@ host_handler() {
     log_error "$(printf "${MSG_INVALID_USERHOST}" "${HOST}")"
   fi
 
-  log_verbose "${FUNCNAME[0]} output is: "
-  log_verbose "  HOST after: ${HOST}"
+  log_verbose "$(printf "${MSG_TRACE_OUTPUT}" "${FUNCNAME[0]}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "HOST" "${HOST}")"
   log_verbose "--------------------"
 }
 
@@ -1584,7 +1712,7 @@ special_string_parser() {
 
   REPLY_TYPE="${input%%:*}"
   local str="${input#"${REPLY_TYPE}":}"
-  log_debug "Parsed special string - type: ${REPLY_TYPE}, string: ${str}"
+  log_debug "$(printf "${MSG_DBG_PARSED_SPECIAL}" "${REPLY_TYPE}" "${str}")"
 
   if [[ ${REPLY_TYPE} == "env"  || ${REPLY_TYPE} == "cmd" ]]; then
     get_remote_value "${REPLY_TYPE}" "${str}"
@@ -1595,7 +1723,7 @@ special_string_parser() {
     log_error "$(printf "${MSG_UNKNOWN_SPECIAL_STRING}" "${REPLY_TYPE}")"
   fi
 
-  log_debug "Resolved string: ${REPLY_STR}"
+  log_debug "$(printf "${MSG_DBG_RESOLVED_STRING}" "${REPLY_STR}")"
 }
 
 # Handles path and pattern strings containing special tokens.
@@ -1623,8 +1751,8 @@ string_handler() {
   local pattern_str="${1:?"${FUNCNAME[0]} needs pattern argument."}"; shift
   REPLY_SUFFIX=""
 
-  log_debug "Original path: ${path_str}"
-  log_debug "Original pattern: ${pattern_str}"
+  log_debug "$(printf "${MSG_DBG_ORIGINAL_PATH}" "${path_str}")"
+  log_debug "$(printf "${MSG_DBG_ORIGINAL_PATTERN}" "${pattern_str}")"
 
   local str_name
   for str_name in path_str pattern_str; do
@@ -1654,7 +1782,7 @@ string_handler() {
 
       # special case for date, need to process later
       if [[ "${token}" == "<date:"*">" ]]; then
-        log_debug "Date token process later: ${token}"
+        log_debug "$(printf "${MSG_DBG_DATE_TOKEN_DEFERRED}" "${token}")"
         date_tokens+=("${token}")
         str_ref="${str_ref//${token}/__DATE_TOKEN_${i}__}"
         (( i+=1 ))
@@ -1662,11 +1790,11 @@ string_handler() {
       fi
 
       # normal case, replace directly
-      log_debug "Processing token: ${token}"
+      log_debug "$(printf "${MSG_DBG_PROCESSING_TOKEN}" "${token}")"
       special_string_parser "${token:1:-1}"
       if [[ "${REPLY_TYPE}" == "suffix" ]]; then
         REPLY_SUFFIX="${REPLY_STR}"
-        log_debug "Suffix set to: ${REPLY_SUFFIX}"
+        log_debug "$(printf "${MSG_DBG_SUFFIX_SET}" "${REPLY_SUFFIX}")"
         str_ref="${str_ref//${token}/}"
         continue
       fi
@@ -1771,8 +1899,6 @@ resolve_path_dates() {
 #   file_suffix: Filename pattern after the date token (may contain <date:>).
 #   start_time:  Range start in YYYYmmdd-HHMMSS format.
 #   end_time:    Range end in YYYYmmdd-HHMMSS format.
-#   use_mtime:   "true" to enable the mtime fallback for files whose name
-#                does not match the timestamp regex (default "false").
 #   use_sudo:    "true" to prefix the remote `find` and `stat` calls with
 #                sudo (default "false").
 #
@@ -1780,6 +1906,9 @@ resolve_path_dates() {
 #   HOST                       Read; controls local vs remote find.
 #   FILE_TIME_TOLERANCE_MIN    Read; mtime expansion window.
 #   REPLY_FILES                Written; array of matched file paths.
+#   REPLY_RAW_COUNT            Written; number of files found by find before
+#                              time filtering. Callers use this to distinguish
+#                              "no pattern match" (0) from "no time match" (>0).
 # Outputs:
 #   Verbose/debug log lines; remote find/stat output piped internally.
 # Returns:
@@ -1804,12 +1933,13 @@ file_finder() {
   local file_suffix="${1:-}"; shift
   local start_time="${1:?"${FUNCNAME[0]} need start time."}"; shift
   local end_time="${1:?"${FUNCNAME[0]} need end time."}"; shift
-  local use_mtime="${1:-false}"; shift || true
   local use_sudo="${1:-false}"; shift || true
   local sudo_prefix=""
   [[ "${use_sudo}" == "true" ]] && sudo_prefix="sudo "
 
-  log_verbose "${FUNCNAME[0]} input: Paths=${_ff_folder_paths[*]}, Prefix=${file_prefix}"
+  log_verbose "$(printf "${MSG_TRACE_INPUT}" "${FUNCNAME[0]}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "Paths" "${_ff_folder_paths[*]}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "Prefix" "${file_prefix}")"
 
   local token="" format_position=""
   if [[ "${file_prefix}" =~ (<date:[^<>]*>) ]]; then
@@ -1821,7 +1951,7 @@ file_finder() {
     format_position="suffix"
     file_suffix="${file_suffix//${token}/*}"
   fi
-  log_debug "Date token position: ${format_position}, content: ${token}"
+  log_debug "$(printf "${MSG_DBG_DATE_TOKEN_POS}" "${format_position}" "${token}")"
 
   local format=""
   if [[ -n "${token}" ]]; then
@@ -1848,8 +1978,10 @@ file_finder() {
   local -a raw_files=()
   if ! mapfile -t raw_files < <(execute_cmd "${find_cmd}"); then
     REPLY_FILES=()
+    REPLY_RAW_COUNT=0
     return 0
   fi
+  REPLY_RAW_COUNT=${#raw_files[@]}
 
   # [1] Configuration Files Direct Pass
   if [[ -z "${token}" ]]; then
@@ -1938,7 +2070,7 @@ file_finder() {
 
     local final_start_val="${uniq_ts[s_idx]}"
     local final_end_val="${uniq_ts[e_idx]}"
-    log_debug "Expanded Index Range: ${s_idx} to ${e_idx} (Values: ${final_start_val} ~ ${final_end_val})"
+    log_debug "$(printf "${MSG_DBG_EXPANDED_RANGE}" "${s_idx}" "${e_idx}" "${final_start_val}" "${final_end_val}")"
 
     local -a selected=()
     for i in "${!all_files[@]}"; do
@@ -1968,13 +2100,17 @@ file_finder() {
         done
       else
         # Date string format: batch-parse YYYYMMDDHHMM[SS] via `date -f -`.
+        # Strip non-digit characters first so formats like %Y%m%d-%H%M%S
+        # (which produce "20260410-100238") are normalised to "20260410100238"
+        # before positional extraction.
         local -a date_strs=()
-        local sec
+        local sec stripped
         for ts in "${uniq_ts[@]}"; do
-          sec="${ts:12:2}"
+          stripped="${ts//[^0-9]/}"
+          sec="${stripped:12:2}"
           date_strs+=( "$(printf '%s-%s-%s %s:%s:%s' \
-            "${ts:0:4}" "${ts:4:2}" "${ts:6:2}" \
-            "${ts:8:2}" "${ts:10:2}" "${sec:-00}")" )
+            "${stripped:0:4}" "${stripped:4:2}" "${stripped:6:2}" \
+            "${stripped:8:2}" "${stripped:10:2}" "${sec:-00}")" )
         done
         local -a epochs=()
         mapfile -t epochs < <(printf '%s\n' "${date_strs[@]}" \
@@ -2013,8 +2149,10 @@ file_finder() {
     fi
   fi
 
-  # [6] mtime fallback: check unselected files by modification time
-  if [[ "${use_mtime}" == "true" && ${#raw_files[@]} -gt 0 ]]; then
+  # [6] mtime fallback: check unselected files by modification time.
+  # Always enabled — a file whose name timestamp predates the range may still
+  # have been actively written during the range (e.g. glog, corenavi_auto).
+  if [[ -n "${token}" && ${#raw_files[@]} -gt 0 ]]; then
     local mtime_start_epoch
     date_format "${start_time}" "%s"; mtime_start_epoch="${REPLY}"
 
@@ -2024,10 +2162,20 @@ file_finder() {
       selected_set["${f}"]=1
     done
 
-    # Collect unselected files and stat them in one batched call.
+    # Only consider files whose filename timestamp predates the range start.
+    # Files created after the range couldn't have been writing during it.
+    local -A pre_range_set=()
+    for i in "${!all_files[@]}"; do
+      if [[ "${file_timestamps[i]}" < "${formatted_start_ts}" ]]; then
+        pre_range_set["${all_files[i]}"]=1
+      fi
+    done
+
+    # Collect unselected pre-range files and stat them in one batched call.
     local -a unselected=()
     for f in "${raw_files[@]}"; do
       [[ -n "${selected_set["${f}"]+set}" ]] && continue
+      [[ -n "${pre_range_set["${f}"]+set}" ]] || continue
       unselected+=("${f}")
     done
 
@@ -2162,10 +2310,10 @@ folder_creator() {
 #   0 on success; non-zero if remote write fails.
 save_script_data() {
   local -a string_array=(
-    "Host: ${HOST}"
-    "Time range: ${START_TIME} ~ ${END_TIME}"
-    "Using tool: ${GET_LOG_TOOL}"
-    "Saving logs to folder: ${SAVE_FOLDER}"
+    "$(printf "${MSG_SUMMARY_HOST}" "${HOST}")"
+    "$(printf "${MSG_SUMMARY_TIME_RANGE}" "${START_TIME}" "${END_TIME}")"
+    "$(printf "${MSG_SUMMARY_TOOL}" "${GET_LOG_TOOL}")"
+    "$(printf "${MSG_SUMMARY_SAVE_FOLDER}" "${SAVE_FOLDER}")"
     )
 
   log_info "${MSG_USER_INPUTS_SUMMARY}"
@@ -2299,11 +2447,11 @@ file_copier() {
   local log_path="${1:?"${FUNCNAME[0]} need log path."}"; shift
   local -a fc_log_files=("$@")
 
-  log_verbose "${FUNCNAME[0]} input is: "
-  log_verbose "  log_path: ${log_path}"
-  log_verbose "  files count: ${#fc_log_files[@]}"
-  log_verbose "  SAVE_FOLDER: ${SAVE_FOLDER}"
-  log_verbose "  HOST: ${HOST}"
+  log_verbose "$(printf "${MSG_TRACE_INPUT}" "${FUNCNAME[0]}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "log_path" "${log_path}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "files count" "${#fc_log_files[@]}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "SAVE_FOLDER" "${SAVE_FOLDER}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "HOST" "${HOST}")"
 
   if [[ ${#fc_log_files[@]} -eq 0 ]]; then
     log_warn "$(printf "${MSG_NO_FILES_TO_COPY}" "${log_path}")"
@@ -2496,8 +2644,7 @@ get_log_dry_run() {
     log_path="${LOG_PATHS[i]}"
     log_pattern="${LOG_PATHS[i+1]}"
     log_flags="${LOG_PATHS[i+2]}"
-    local use_mtime=false use_sudo=false
-    [[ "${log_flags}" == *"<mtime>"* ]] && use_mtime=true
+    local use_sudo=false
     [[ "${log_flags}" == *"<sudo>"* ]] && use_sudo=true
     (( ++idx ))
 
@@ -2523,7 +2670,7 @@ get_log_dry_run() {
         continue
       fi
 
-      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_mtime}" "${use_sudo}"
+      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_sudo}"
       local -a files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
 
       if [[ "${#files[@]}" -gt 0 ]]; then
@@ -2534,6 +2681,12 @@ get_log_dry_run() {
           log_info "  ${f}"
         done
         (( grand_total += ${#files[@]} ))
+      else
+        if [[ "${REPLY_RAW_COUNT:-0}" -eq 0 ]]; then
+          log_warn "$(printf "${MSG_NO_PATTERN_MATCH}" "${idx}" "${total}" "${prefix}${suffix}")"
+        else
+          log_warn "$(printf "${MSG_NO_TIME_MATCH}" "${idx}" "${total}" "${REPLY_RAW_COUNT}" "${START_TIME}" "${END_TIME}")"
+        fi
       fi
     done
 
@@ -2574,7 +2727,7 @@ get_log() {
   # arrays so the main loop below can reuse them without re-resolving tokens
   # or re-checking sudo for every date-expanded path.
   local -a _resolved_path=() _resolved_prefix=() _resolved_suffix=()
-  local -a _resolved_sudo=() _resolved_mtime=()
+  local -a _resolved_sudo=()
   for (( i=0; i<${#LOG_PATHS[@]}; i+=3 )); do
     string_handler "${LOG_PATHS[i]}" "${LOG_PATHS[i+1]}"
     _resolved_path+=("${REPLY_PATH}")
@@ -2584,11 +2737,6 @@ get_log() {
       _resolved_sudo+=("true")
     else
       _resolved_sudo+=("false")
-    fi
-    if [[ "${LOG_PATHS[i+2]}" == *"<mtime>"* ]]; then
-      _resolved_mtime+=("true")
-    else
-      _resolved_mtime+=("false")
     fi
   done
 
@@ -2615,8 +2763,6 @@ get_log() {
     local prefix="${_resolved_prefix[k]}" suffix="${_resolved_suffix[k]}"
     local use_sudo=false
     [[ "${_resolved_sudo[k]}" == "true" ]] && use_sudo=true
-    local use_mtime=false
-    [[ "${_resolved_mtime[k]}" == "true" ]] && use_mtime=true
     (( ++idx ))
 
     resolve_path_dates
@@ -2646,7 +2792,7 @@ get_log() {
     fi
 
     # Single batched find across every expanded path for this entry.
-    file_finder entry_paths "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_mtime}" "${use_sudo}"
+    file_finder entry_paths "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_sudo}"
     local -a all_found_files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
 
     # Group results back to their source rpath via longest-prefix match,
@@ -2678,7 +2824,22 @@ get_log() {
     fi
 
     if [[ "${#all_found_files[@]}" -eq 0 ]]; then
-      log_warn "$(printf "${MSG_NO_FILES_FOUND}" "${idx}" "${total}")"
+      # Diagnose why no files were found
+      local _dir_missing=false _check_cmd=""
+      for rp in "${entry_paths[@]}"; do
+        printf -v _check_cmd "test -d %q" "${rp}"
+        if ! execute_cmd "${_check_cmd}"; then
+          _dir_missing=true
+          log_warn "$(printf "${MSG_DIR_NOT_FOUND}" "${idx}" "${total}" "${rp}")"
+        fi
+      done
+      if [[ "${_dir_missing}" == "false" ]]; then
+        if [[ "${REPLY_RAW_COUNT:-0}" -eq 0 ]]; then
+          log_warn "$(printf "${MSG_NO_PATTERN_MATCH}" "${idx}" "${total}" "${prefix}${suffix}")"
+        else
+          log_warn "$(printf "${MSG_NO_TIME_MATCH}" "${idx}" "${total}" "${REPLY_RAW_COUNT}" "${START_TIME}" "${END_TIME}")"
+        fi
+      fi
     else
       log_info "$(printf "${MSG_FOUND_COPYING}" "${idx}" "${total}" "${#all_found_files[@]}")"
       _total_files_found=$(( _total_files_found + ${#all_found_files[@]} ))
@@ -2771,7 +2932,7 @@ main() {
             file_cleaner
             close_log_file; exit 1 ;;
           *)  # retry (default: empty or 'r')
-            log_info "[R]etry: restarting transfer..."
+            log_info "${MSG_RETRY_TRANSFER}"
             continue ;;
         esac
       done
@@ -2793,7 +2954,7 @@ main() {
           log_info "$(printf "${MSG_ARCHIVE_ABORTED}" "${SAVE_FOLDER}")"
           close_log_file; exit 1 ;;
         *)  # retry (default: empty or 'r')
-          log_info "[R]etry: archiving again..."
+          log_info "${MSG_RETRY_ARCHIVE}"
           continue ;;
       esac
     done
