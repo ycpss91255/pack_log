@@ -19,7 +19,7 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 ## Features
 
 - **Multi-Host Support**: Pre-configured host list with interactive selection, or direct `user@host` input.
-- **Smart Log Discovery**: Token system for dynamic path resolution — environment variables (`<env:VAR>`), shell commands (`<cmd:command>`), date formats (`<date:%Y%m%d>`), and file extension filters (`<suffix:.ext>`).
+- **Smart Log Discovery**: Token system for dynamic path resolution — environment variables (`<env:VAR>`), shell commands (`<cmd:command>`), and date formats (`<date:%Y%m%d>`). File extensions are written inline (e.g., `*.log`).
 - **Time-Range Filtering**: Finds log files within a specified time window with automatic boundary expansion. When no exact matches exist, files within a configurable time tolerance (default 30 minutes) are included.
 - **Auto SSH Key Management**: Creates SSH keys, copies them to remote hosts, and handles host key rotation automatically. Unknown SSH errors trigger retry instead of fatal exit.
 - **Flexible Transfer**: Supports rsync, scp, and sftp with automatic tool detection and fallback. Shows overall transfer progress by default (`--info=progress2`), per-file detail in verbose mode.
@@ -122,7 +122,8 @@ Log paths support dynamic tokens resolved at runtime on the target host:
 | `<env:VAR>` | Remote environment variable | `<env:HOME>/logs` |
 | `<cmd:command>` | Remote shell command output | `<cmd:hostname>` |
 | `<date:format>` | Date format for time filtering | `<date:%Y%m%d-%H%M%S>` |
-| `<suffix:ext>` | File extension filter | `<suffix:.pcd>` |
+
+File extensions are written inline in the pattern (e.g., `*.pcd`); no dedicated token is required.
 
 **Token processing chain**: `string_handler` → `special_string_parser` → `get_remote_value`
 
@@ -165,7 +166,8 @@ Each entry is three elements: `"path"  "file_pattern"  "flags"`
 | `<env:VAR>` | Environment variable | `<env:HOME>/logs` |
 | `<cmd:command>` | Shell command output | `<cmd:hostname>` |
 | `<date:format>` | strftime date format for time filtering | `<date:%Y%m%d-%H%M%S>` |
-| `<suffix:ext>` | File extension filter | `<suffix:.log>` |
+
+File extensions are written inline in the pattern (e.g., `*.log`); no dedicated token is required.
 
 **Flags** (third element):
 
@@ -185,14 +187,14 @@ declare -a LOG_PATHS=(
   # Config file (no date token, always collected)
   "<env:HOME>/core_storage"                       "node_config.yaml"                                              ""
 
-  # Date-filtered files with suffix
-  "<env:HOME>/log_data/detection"                 "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"                ""
+  # Date-filtered files with extension in pattern
+  "<env:HOME>/log_data/detection"                 "detect_shelf_<date:%Y%m%d%H%M%S>*.dat"                ""
 
   # Epoch-based timestamp
-  "<env:HOME>/log_slam"                           "coreslam_2D_<date:%s>*<suffix:.log>"                           ""
+  "<env:HOME>/log_slam"                           "coreslam_2D_<date:%s>*.log"                           ""
 
   # Cross-date folder (path contains <date:>, expands all dates in range)
-  "<env:HOME>/log/AvoidStop_<date:%Y-%m-%d>"      "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"                ""
+  "<env:HOME>/log/AvoidStop_<date:%Y-%m-%d>"      "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png"                ""
 
   # Continuous log with <mtime> (created once, written until restart)
   "<env:HOME>/log_core"                           "app.<cmd:hostname>.<env:USER>.log.<date:%Y%m%d-%H%M%S>*"      "<mtime>"
@@ -202,7 +204,7 @@ declare -a LOG_PATHS=(
   "/var/log"                                      "kern.log*"                                                     "<sudo>"
 
   # Using shell variables (defined at script top, expanded at source time)
-  "${MY_LOG_PATH}"                                "app_<date:%Y%m%d%H%M%S>*<suffix:.log>"                        ""
+  "${MY_LOG_PATH}"                                "app_<date:%Y%m%d%H%M%S>*.log"                        ""
 )
 ```
 

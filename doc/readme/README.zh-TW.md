@@ -19,7 +19,7 @@
 ## 功能特點
 
 - **多主機支援**：預設主機列表互動式選擇，或直接輸入 `user@host`。
-- **智慧 Log 搜尋**：Token 系統支援動態路徑解析 — 環境變數（`<env:VAR>`）、Shell 指令（`<cmd:command>`）、日期格式（`<date:%Y%m%d>`）、副檔名篩選（`<suffix:.ext>`）。
+- **智慧 Log 搜尋**：Token 系統支援動態路徑解析 — 環境變數（`<env:VAR>`）、Shell 指令（`<cmd:command>`）、日期格式（`<date:%Y%m%d>`）。副檔名直接寫在 pattern 中（例如 `*.log`）。
 - **時間範圍篩選**：在指定時間窗口內搜尋 log 檔案，自動擴展邊界確保不遺漏。
 - **自動 SSH 金鑰管理**：自動建立 SSH 金鑰、複製到遠端主機、處理 host key 更新。
 - **彈性傳輸方式**：支援 rsync、scp、sftp，自動偵測可用工具並依序嘗試。
@@ -119,7 +119,8 @@ Log 路徑支援在執行時對遠端主機動態解析的 token：
 | `<env:VAR>` | 遠端環境變數 | `<env:HOME>/logs` |
 | `<cmd:command>` | 遠端 shell 指令輸出 | `<cmd:hostname>` |
 | `<date:format>` | 時間範圍篩選用的日期格式 | `<date:%Y%m%d-%H%M%S>` |
-| `<suffix:ext>` | 副檔名篩選 | `<suffix:.pcd>` |
+
+副檔名直接寫在 pattern 中（例如 `*.pcd`），不需特殊 token。
 
 **處理鏈**：`string_handler` → `special_string_parser` → `get_remote_value`
 
@@ -145,7 +146,7 @@ declare -a HOSTS=(
 
 # Log 路徑: "<路徑>::<檔案樣式>"
 declare -a LOG_PATHS=(
-  '<env:HOME>/logs::app_<date:%Y%m%d%H%M%S>*<suffix:.log>'
+  '<env:HOME>/logs::app_<date:%Y%m%d%H%M%S>*.log'
   '<env:HOME>/config::node_config.yaml'
 )
 ```

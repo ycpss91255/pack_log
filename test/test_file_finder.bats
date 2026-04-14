@@ -28,7 +28,7 @@ setup() {
         bash -c "$1"
     }
 
-    file_finder multi_paths "cfg.yaml" "" "260115-0000" "260115-2359" "false"
+    file_finder multi_paths "cfg.yaml" "260115-0000" "260115-2359" "false"
 
     local n
     n=$(wc -l < "${exec_log}")
@@ -46,7 +46,7 @@ setup() {
     touch "${TEST_LOG_DIR}/shelf.ini"
     touch "${TEST_LOG_DIR}/other.txt"
 
-    file_finder "${TEST_LOG_DIR}" "node_config.yaml" "" "260115-0000" "260115-2359" "false"
+    file_finder "${TEST_LOG_DIR}" "node_config.yaml" "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
     assert_equal "${REPLY_FILES[0]}" "${TEST_LOG_DIR}/node_config.yaml"
@@ -56,7 +56,7 @@ setup() {
     touch "${TEST_LOG_DIR}/real_config.yaml"
     ln -s "${TEST_LOG_DIR}/real_config.yaml" "${TEST_LOG_DIR}/link_config.yaml"
 
-    file_finder "${TEST_LOG_DIR}" "link_config.yaml" "" "260115-0000" "260115-2359" "false"
+    file_finder "${TEST_LOG_DIR}" "link_config.yaml" "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
     [[ "${REPLY_FILES[0]}" == *"link_config.yaml" ]]
@@ -69,7 +69,7 @@ setup() {
     echo "map yaml" > "${real_dir}/uimap.yaml"
     ln -s "${real_dir}" "${TEST_LOG_DIR}/default"
 
-    file_finder "${TEST_LOG_DIR}/default" "uimap.png" "" "260115-0000" "260115-2359" "false"
+    file_finder "${TEST_LOG_DIR}/default" "uimap.png" "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
     [[ "$(cat "${REPLY_FILES[0]}")" == "map data" ]]
@@ -80,7 +80,7 @@ setup() {
     ln -s "${TEST_LOG_DIR}/real_20260115120000.log" "${TEST_LOG_DIR}/app_20260115120000.log"
 
     file_finder "${TEST_LOG_DIR}" \
-        "app_<date:%Y%m%d%H%M%S>*" ".log" \
+        "app_<date:%Y%m%d%H%M%S>*.log" \
         "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
@@ -91,7 +91,7 @@ setup() {
     touch "${TEST_LOG_DIR}/config_b.yaml"
     touch "${TEST_LOG_DIR}/unrelated.txt"
 
-    file_finder "${TEST_LOG_DIR}" "config_*" ".yaml" "260115-0000" "260115-2359" "false"
+    file_finder "${TEST_LOG_DIR}" "config_*.yaml" "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 2
 }
@@ -106,7 +106,7 @@ setup() {
     touch "${TEST_LOG_DIR}/detect_shelf_node-DetectShelf_20260116080000.dat"
 
     file_finder "${TEST_LOG_DIR}" \
-        "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*" ".dat" \
+        "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*.dat" \
         "260115-0000" "260115-2359" "false"
 
     # Should include files within range plus boundary expansion
@@ -128,7 +128,7 @@ setup() {
     touch "${test_dir}/corenavi_auto.host.user.log.FATAL.20260115-120400.5"
 
     file_finder "${test_dir}" \
-        "corenavi_auto.host.user.*.<date:%Y%m%d-%H%M%S>*" "" \
+        "corenavi_auto.host.user.*.<date:%Y%m%d-%H%M%S>*" \
         "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 5
@@ -142,7 +142,7 @@ setup() {
     touch "${test_dir}/corenavi_nav.host.user.log.WARNING.20260115-140000.3"
 
     file_finder "${test_dir}" \
-        "corenavi_*.host.user.*.<date:%Y%m%d-%H%M%S>*" "" \
+        "corenavi_*.host.user.*.<date:%Y%m%d-%H%M%S>*" \
         "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 3
@@ -157,7 +157,7 @@ setup() {
     touch "${TEST_LOG_DIR}/corenavi_auto.host.user.log.INFO.20260116-080000.1"
 
     file_finder "${TEST_LOG_DIR}" \
-        "corenavi_auto.host.user.log.INFO.<date:%Y%m%d-%H%M%S>*" "" \
+        "corenavi_auto.host.user.log.INFO.<date:%Y%m%d-%H%M%S>*" \
         "260115-0000" "260115-2359" "false"
 
     # Timestamps: 20260114-100000, 20260115-080000, 20260115-120000, 20260116-080000
@@ -173,7 +173,7 @@ setup() {
     mkdir -p "${empty_dir}"
 
     file_finder "${empty_dir}" \
-        "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*" ".dat" \
+        "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*.dat" \
         "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 0
@@ -186,7 +186,7 @@ setup() {
     touch "${TEST_LOG_DIR}/another_file.log"
 
     file_finder "${TEST_LOG_DIR}" \
-        "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*" ".dat" \
+        "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*.dat" \
         "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 0
@@ -202,7 +202,7 @@ setup() {
     touch -t 202601171000 "${TEST_LOG_DIR}/log_20260117100000.dat"
 
     file_finder "${TEST_LOG_DIR}" \
-        "log_<date:%Y%m%d%H%M%S>*" ".dat" \
+        "log_<date:%Y%m%d%H%M%S>*.dat" \
         "260115-0000" "260115-2359" "false"
 
     # In range: 20260115100000
@@ -222,7 +222,7 @@ setup() {
 
     FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
-        "log_<date:%Y%m%d%H%M%S>*" ".dat" \
+        "log_<date:%Y%m%d%H%M%S>*.dat" \
         "260115-0000" "260115-2359" "false"
 
     # All files are 3+ days older than range → beyond 30 min tolerance
@@ -238,7 +238,7 @@ setup() {
 
     FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
-        "log_<date:%Y%m%d%H%M%S>*" ".dat" \
+        "log_<date:%Y%m%d%H%M%S>*.dat" \
         "260115-0000" "260115-2359" "false"
 
     # All files are 5+ days newer than range → beyond 30 min tolerance
@@ -252,7 +252,7 @@ setup() {
     touch -t 202601161000 "${TEST_LOG_DIR}/log_20260116100000.dat"
 
     file_finder "${TEST_LOG_DIR}" \
-        "log_<date:%Y%m%d%H%M%S>*" ".dat" \
+        "log_<date:%Y%m%d%H%M%S>*.dat" \
         "260117-0000" "260114-2359" "false"
 
     # start > end: s_idx=-1 (no file >= 20260117000000), e_idx=0..1 (files < 20260114235959? no, they're > end)
@@ -267,7 +267,7 @@ setup() {
     touch "${TEST_LOG_DIR}/log_20260115120000.dat"
 
     file_finder "${TEST_LOG_DIR}" \
-        "log_<date:%Y%m%d%H%M%S>*" ".dat" \
+        "log_<date:%Y%m%d%H%M%S>*.dat" \
         "260115-0000" "260115-2359" "false"
 
     # Single file in range, s_idx=0, e_idx=0
@@ -284,12 +284,12 @@ setup() {
 }
 
 @test "file_finder: errors when start_time is missing" {
-    run file_finder "${TEST_LOG_DIR}" "prefix" "suffix"
+    run file_finder "${TEST_LOG_DIR}" "pattern"
     assert_failure
 }
 
 @test "file_finder: errors when end_time is missing" {
-    run file_finder "${TEST_LOG_DIR}" "prefix" "suffix" "260115-0000"
+    run file_finder "${TEST_LOG_DIR}" "pattern" "260115-0000"
     assert_failure
 }
 
@@ -307,7 +307,7 @@ setup() {
     touch "${TEST_LOG_DIR}/coreslam_2D_${epoch_after}.log"
 
     file_finder "${TEST_LOG_DIR}" \
-        "coreslam_2D_<date:%s>*" ".log" \
+        "coreslam_2D_<date:%s>*.log" \
         "260115-0000" "260115-2359" "false"
 
     # epoch_in_range is within range
@@ -323,35 +323,35 @@ setup() {
     touch "${TEST_LOG_DIR}/log_20260115150000_c.dat"
 
     file_finder "${TEST_LOG_DIR}" \
-        "log_<date:%Y%m%d%H%M%S>*" ".dat" \
+        "log_<date:%Y%m%d%H%M%S>*.dat" \
         "260115-0000" "260115-2359" "false"
 
     # Both timestamps in range, no expansion possible (at boundaries)
     assert_equal "${#REPLY_FILES[@]}" 3
 }
 
-# --- Suffix in file_suffix parameter ---
+# --- File extension filter via plain-text suffix in pattern ---
 
-@test "file_finder: filters by suffix correctly" {
+@test "file_finder: filters by file extension via plain-text suffix" {
     touch "${TEST_LOG_DIR}/detect_shelf_20260115120000_data.pcd"
     touch "${TEST_LOG_DIR}/detect_shelf_20260115120000_data.dat"
 
     file_finder "${TEST_LOG_DIR}" \
-        "detect_shelf_<date:%Y%m%d%H%M%S>*" ".pcd" \
+        "detect_shelf_<date:%Y%m%d%H%M%S>*.pcd" \
         "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
     [[ "${REPLY_FILES[0]}" == *".pcd" ]]
 }
 
-# --- Date token in suffix position ---
+# --- Wildcards around date token ---
 
-@test "file_finder: handles date token in file_suffix" {
+@test "file_finder: handles pattern with wildcard before date and extension after" {
     touch "${TEST_LOG_DIR}/mylog_data_20260115120000.log"
     touch "${TEST_LOG_DIR}/mylog_data_20260116080000.log"
 
     file_finder "${TEST_LOG_DIR}" \
-        "mylog_data_*" "<date:%Y%m%d%H%M%S>*.log" \
+        "mylog_data_*<date:%Y%m%d%H%M%S>*.log" \
         "260115-0000" "260115-2359" "false"
 
     # In-range file plus boundary expansion includes adjacent file
@@ -368,7 +368,7 @@ setup() {
     # Override execute_cmd to fail
     execute_cmd() { return 1; }
 
-    file_finder "${TEST_LOG_DIR}" "some_prefix" "" "260115-0000" "260115-2359" "false"
+    file_finder "${TEST_LOG_DIR}" "some_prefix" "260115-0000" "260115-2359" "false"
     assert_equal "${#REPLY_FILES[@]}" 0
 
     # Restore original
@@ -383,7 +383,7 @@ setup() {
     touch "${TEST_LOG_DIR}/app_20260116-100000.log"
 
     file_finder "${TEST_LOG_DIR}" \
-        "app_<date:>*" ".log" \
+        "app_<date:>*.log" \
         "260115-0000" "260115-2359" "false"
 
     # With empty format, the raw start/end times are used for comparison
@@ -400,7 +400,7 @@ setup() {
 
     FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
-        "near_<date:%Y%m%d%H%M%S>*" ".log" \
+        "near_<date:%Y%m%d%H%M%S>*.log" \
         "260117-0000" "260117-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
@@ -412,7 +412,7 @@ setup() {
 
     FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
-        "far_<date:%Y%m%d%H%M%S>*" ".log" \
+        "far_<date:%Y%m%d%H%M%S>*.log" \
         "260117-0000" "260117-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 0
@@ -424,7 +424,7 @@ setup() {
 
     FILE_TIME_TOLERANCE_MIN=0
     file_finder "${TEST_LOG_DIR}" \
-        "zero_<date:%Y%m%d%H%M%S>*" ".log" \
+        "zero_<date:%Y%m%d%H%M%S>*.log" \
         "260117-0000" "260117-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 0
@@ -440,7 +440,7 @@ setup() {
 
     FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
-        "coreslam_2D_<date:%s>*" ".log" \
+        "coreslam_2D_<date:%s>*.log" \
         "260115-1100" "260115-1200" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
@@ -454,7 +454,7 @@ setup() {
 
     FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
-        "coreslam_2D_<date:%s>*" ".log" \
+        "coreslam_2D_<date:%s>*.log" \
         "260115-1100" "260115-1200" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
@@ -468,7 +468,7 @@ setup() {
 
     FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
-        "coreslam_2D_<date:%s>*" ".log" \
+        "coreslam_2D_<date:%s>*.log" \
         "260115-1100" "260115-1200" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 0
@@ -482,7 +482,7 @@ setup() {
 
     FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
-        "glog_<date:%Y%m%d-%H%M%S>*" ".log" \
+        "glog_<date:%Y%m%d-%H%M%S>*.log" \
         "260117-0000" "260117-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
@@ -494,7 +494,7 @@ setup() {
 
     FILE_TIME_TOLERANCE_MIN=30
     file_finder "${TEST_LOG_DIR}" \
-        "glog_far_<date:%Y%m%d-%H%M%S>*" ".log" \
+        "glog_far_<date:%Y%m%d-%H%M%S>*.log" \
         "260117-0000" "260117-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 0
@@ -510,7 +510,7 @@ setup() {
 
     # use_mtime=false — mtime is checked automatically regardless
     file_finder "${TEST_LOG_DIR}" \
-        "app_<date:%Y%m%d%H%M%S>*" ".log" \
+        "app_<date:%Y%m%d%H%M%S>*.log" \
         "260115-0000" "260115-2359" "false"
 
     [[ "${#REPLY_FILES[@]}" -ge 1 ]]
@@ -523,7 +523,7 @@ setup() {
     touch -t 202601161200 "${TEST_LOG_DIR}/app_20250101120000.log"
 
     file_finder "${TEST_LOG_DIR}" \
-        "app_<date:%Y%m%d%H%M%S>*" ".log" \
+        "app_<date:%Y%m%d%H%M%S>*.log" \
         "260115-0000" "260115-2359" "false"
 
     [[ "${#REPLY_FILES[@]}" -ge 1 ]]
@@ -536,7 +536,7 @@ setup() {
     touch -t 202601161200 "${TEST_LOG_DIR}/app_20260115120000.log"
 
     file_finder "${TEST_LOG_DIR}" \
-        "app_<date:%Y%m%d%H%M%S>*" ".log" \
+        "app_<date:%Y%m%d%H%M%S>*.log" \
         "260115-0000" "260115-2359" "false"
 
     [[ "${#REPLY_FILES[@]}" -ge 1 ]]
@@ -548,7 +548,7 @@ setup() {
     touch -t 202501011200 "${TEST_LOG_DIR}/app_20250101120000.log"
 
     file_finder "${TEST_LOG_DIR}" \
-        "app_<date:%Y%m%d%H%M%S>*" ".log" \
+        "app_<date:%Y%m%d%H%M%S>*.log" \
         "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 0
@@ -570,7 +570,7 @@ setup() {
     }
 
     file_finder "${TEST_LOG_DIR}" \
-        "stat_fail_<date:%Y%m%d%H%M%S>*" ".log" \
+        "stat_fail_<date:%Y%m%d%H%M%S>*.log" \
         "260115-0000" "260115-2359" "false"
 
     # stat fails → file skipped gracefully, no crash
@@ -600,7 +600,7 @@ setup() {
     }
 
     file_finder "${TEST_LOG_DIR}" \
-        "batch_<date:%Y%m%d%H%M%S>*" ".log" \
+        "batch_<date:%Y%m%d%H%M%S>*.log" \
         "260115-0000" "260115-2359" "false"
 
     eval "${_orig_exec}"
@@ -620,7 +620,7 @@ setup() {
     touch "${test_dir}/syslog"
 
     # use_sudo=false should work without sudo
-    file_finder "${test_dir}" "syslog" "" "260115-0000" "260115-2359" "false"
+    file_finder "${test_dir}" "syslog" "260115-0000" "260115-2359" "false"
     assert_equal "${#REPLY_FILES[@]}" 1
 }
 
@@ -630,7 +630,7 @@ setup() {
     mkdir -p "${test_dir}"
     touch "${test_dir}/syslog"
 
-    file_finder "${test_dir}" "syslog" "" "260115-0000" "260115-2359" "true"
+    file_finder "${test_dir}" "syslog" "260115-0000" "260115-2359" "true"
     assert_equal "${#REPLY_FILES[@]}" 1
 }
 
@@ -641,7 +641,7 @@ setup() {
     mkdir -p "${empty_dir}"
 
     file_finder "${empty_dir}" \
-        "detect_shelf_<date:%Y%m%d%H%M%S>*" ".dat" \
+        "detect_shelf_<date:%Y%m%d%H%M%S>*.dat" \
         "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 0
@@ -657,7 +657,7 @@ setup() {
 
     FILE_TIME_TOLERANCE_MIN=0
     file_finder "${BATS_TEST_TMPDIR}/raw" \
-        "log_<date:%Y%m%d%H%M%S>*" ".dat" \
+        "log_<date:%Y%m%d%H%M%S>*.dat" \
         "260115-0000" "260115-2359" "false"
 
     # No files in time range but 3 raw files found
@@ -669,7 +669,7 @@ setup() {
     mkdir -p "${BATS_TEST_TMPDIR}/cfg"
     touch "${BATS_TEST_TMPDIR}/cfg/app.yaml"
 
-    file_finder "${BATS_TEST_TMPDIR}/cfg" "app.yaml" "" "260115-0000" "260115-2359" "false"
+    file_finder "${BATS_TEST_TMPDIR}/cfg" "app.yaml" "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 1
     assert_equal "${REPLY_RAW_COUNT}" 1
@@ -678,7 +678,7 @@ setup() {
 @test "file_finder: REPLY_RAW_COUNT is 0 when execute_cmd fails" {
     execute_cmd() { return 1; }
 
-    file_finder "${TEST_LOG_DIR}" "some_prefix" "" "260115-0000" "260115-2359" "false"
+    file_finder "${TEST_LOG_DIR}" "some_prefix" "260115-0000" "260115-2359" "false"
 
     assert_equal "${#REPLY_FILES[@]}" 0
     assert_equal "${REPLY_RAW_COUNT}" 0

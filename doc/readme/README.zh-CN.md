@@ -19,7 +19,7 @@
 ## 功能特点
 
 - **多主机支持**：预设主机列表交互式选择，或直接输入 `user@host`。
-- **智能 Log 搜索**：Token 系统支持动态路径解析 — 环境变量（`<env:VAR>`）、Shell 指令（`<cmd:command>`）、日期格式（`<date:%Y%m%d>`）、扩展名筛选（`<suffix:.ext>`）。
+- **智能 Log 搜索**：Token 系统支持动态路径解析 — 环境变量（`<env:VAR>`）、Shell 指令（`<cmd:command>`）、日期格式（`<date:%Y%m%d>`）。扩展名直接写在 pattern 中（例如 `*.log`）。
 - **时间范围筛选**：在指定时间窗口内搜索 log 文件，自动扩展边界确保不遗漏。
 - **自动 SSH 密钥管理**：自动创建 SSH 密钥、复制到远程主机、处理 host key 更新。
 - **灵活传输方式**：支持 rsync、scp、sftp，自动检测可用工具并依序尝试。
@@ -119,7 +119,8 @@ Log 路径支持在运行时对远程主机动态解析的 token：
 | `<env:VAR>` | 远程环境变量 | `<env:HOME>/logs` |
 | `<cmd:command>` | 远程 shell 指令输出 | `<cmd:hostname>` |
 | `<date:format>` | 时间范围筛选用的日期格式 | `<date:%Y%m%d-%H%M%S>` |
-| `<suffix:ext>` | 扩展名筛选 | `<suffix:.pcd>` |
+
+扩展名直接写在 pattern 中（例如 `*.pcd`），不需特殊 token。
 
 **处理链**：`string_handler` → `special_string_parser` → `get_remote_value`
 
@@ -145,7 +146,7 @@ declare -a HOSTS=(
 
 # Log 路径: "<路径>::<文件样式>"
 declare -a LOG_PATHS=(
-  '<env:HOME>/logs::app_<date:%Y%m%d%H%M%S>*<suffix:.log>'
+  '<env:HOME>/logs::app_<date:%Y%m%d%H%M%S>*.log'
   '<env:HOME>/config::node_config.yaml'
 )
 ```

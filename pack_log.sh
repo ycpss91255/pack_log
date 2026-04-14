@@ -113,17 +113,17 @@ declare -a LOG_PATHS=(
   # AvoidStop (pana-04, local test with symlink dirs)
   # "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default"           "uimap.png"                                                        ""
   # "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default2"          "uimap.yaml"                                                       ""
-  # "<env:HOME>/Desktop/pack_log/log/avoid/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"                    ""
+  # "<env:HOME>/Desktop/pack_log/log/avoid/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png"                    ""
   # "<env:HOME>/Desktop/pack_log/log/avoid/log_core"                       "corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*"      ""
-  # "<env:HOME>/Desktop/pack_log/log/avoid/log_slam/record"                "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"               ""
+  # "<env:HOME>/Desktop/pack_log/log/avoid/log_slam/record"                "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"               ""
 
   # # Panasonic — LiDAR Detection shelf log path (docker)
   # "${COREROBOT_DOCKER_LOG_CORE}"                      "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
-  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"         ""
-  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"                          ""
+  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*.dat"         ""
+  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_<date:%Y%m%d%H%M%S>*.pcd"                          ""
   # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection/glog" "detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"                     ""
-  # "${COREROBOT_DOCKER_LOG_SLAM}"                      "coreslam_2D_<date:%s>*<suffix:.log>"                                     ""
-  # "${COREROBOT_DOCKER_LOG_SLAM}/record"               "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}"                      "coreslam_2D_<date:%s>*.log"                                     ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}/record"               "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                      ""
   # "${COREROBOT_DOCKER_STORAGE}"                       "node_config.yaml"                                                        ""
   # "${COREROBOT_DOCKER_STORAGE}"                       "shelf.ini"                                                               ""
   # "${COREROBOT_DOCKER_STORAGE}"                       "external_param.launch"                                                   ""
@@ -132,19 +132,19 @@ declare -a LOG_PATHS=(
   # sys_log kernal_log
   # # 2D LiDAR SLAM log path (docker)
   # "${COREROBOT_DOCKER_LOG_CORE}"        "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
-  # "${COREROBOT_DOCKER_LOG_SLAM}"        "coreslam_2D_<date:%s>*<suffix:.log>"                                     ""
-  # "${COREROBOT_DOCKER_LOG_SLAM}/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}"        "coreslam_2D_<date:%s>*.log"                                     ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                      ""
 
   # # 2D LiDAR AvoidStop log path (docker)
   # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"  "uimap.png"                                                              ""
   # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"  "uimap.yaml"                                                             ""
-  # "${COREROBOT_DOCKER_LOG}/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"                    ""
+  # "${COREROBOT_DOCKER_LOG}/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png"                    ""
   # "${COREROBOT_DOCKER_LOG_CORE}"                 "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
-  # "${COREROBOT_DOCKER_LOG_SLAM}/record"          "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>"                      ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}/record"          "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                      ""
 
   # # ASE Us — LiDAR Detection pallet log path
-  # "${COREROBOT_LOG_DATA}/lidar_detection"                                          "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.dat>"  ""
-  # "${COREROBOT_LOG_DATA}/lidar_detection"                                          "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*<suffix:.pcd>"  ""
+  # "${COREROBOT_LOG_DATA}/lidar_detection"                                          "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*.dat"  ""
+  # "${COREROBOT_LOG_DATA}/lidar_detection"                                          "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*.pcd"  ""
   # "${COREROBOT_LOG_DATA}/lidar_detection/glog"                                     "detect_pallet_node-DetectPallet-<date:%Y%m%d-%H%M%S>*"              ""
   # "${COREROBOT_CORETRONIC_AMR_NAVI_INSTALL}/share/lidar_detection_pkg/config"      "pallet.ini"                                                        ""
 )
@@ -291,7 +291,7 @@ load_lang() {
       MSG_DIR_NOT_FOUND='[%d/%d] 目錄不存在: %s'
       MSG_NO_PATTERN_MATCH='[%d/%d] 沒有符合樣式的檔案: %s'
       MSG_NO_TIME_MATCH='[%d/%d] 找到 %d 個檔案，但皆不在時間範圍 %s ~ %s 內'
-      MSG_RESOLVED_PATH='[%d/%d] 解析結果: %s :: %s%s'
+      MSG_RESOLVED_PATH='[%d/%d] 解析結果: %s :: %s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 個檔案，複製中...'
       MSG_STEP1='=== 步驟 1/6: 解析目標主機 ==='
       MSG_STEP2='=== 步驟 2/6: 驗證時間範圍 ==='
@@ -337,8 +337,6 @@ load_lang() {
       MSG_DBG_ORIGINAL_PATTERN='原始樣式: %s'
       MSG_DBG_DATE_TOKEN_DEFERRED='日期 token 延後處理: %s'
       MSG_DBG_PROCESSING_TOKEN='處理 token: %s'
-      MSG_DBG_SUFFIX_SET='副檔名設定為: %s'
-      MSG_DBG_DATE_TOKEN_POS='日期 token 位置: %s, 內容: %s'
       MSG_DBG_EXPANDED_RANGE='展開範圍: %d 到 %d (值: %s ~ %s)'
       MSG_TRACE_INPUT='%s 輸入:'
       MSG_TRACE_OUTPUT='%s 輸出:'
@@ -434,7 +432,7 @@ load_lang() {
       MSG_DIR_NOT_FOUND='[%d/%d] 目录不存在: %s'
       MSG_NO_PATTERN_MATCH='[%d/%d] 没有匹配模式的文件: %s'
       MSG_NO_TIME_MATCH='[%d/%d] 找到 %d 个文件，但均不在时间范围 %s ~ %s 内'
-      MSG_RESOLVED_PATH='[%d/%d] 解析结果: %s :: %s%s'
+      MSG_RESOLVED_PATH='[%d/%d] 解析结果: %s :: %s'
       MSG_FOUND_COPYING='[%d/%d] 找到 %d 个文件，复制中...'
       MSG_STEP1='=== 步骤 1/6: 解析目标主机 ==='
       MSG_STEP2='=== 步骤 2/6: 验证时间范围 ==='
@@ -480,8 +478,6 @@ load_lang() {
       MSG_DBG_ORIGINAL_PATTERN='原始模式: %s'
       MSG_DBG_DATE_TOKEN_DEFERRED='日期 token 延后处理: %s'
       MSG_DBG_PROCESSING_TOKEN='处理 token: %s'
-      MSG_DBG_SUFFIX_SET='后缀名设置为: %s'
-      MSG_DBG_DATE_TOKEN_POS='日期 token 位置: %s, 内容: %s'
       MSG_DBG_EXPANDED_RANGE='展开范围: %d 到 %d (值: %s ~ %s)'
       MSG_TRACE_INPUT='%s 输入:'
       MSG_TRACE_OUTPUT='%s 输出:'
@@ -577,7 +573,7 @@ load_lang() {
       MSG_DIR_NOT_FOUND='[%d/%d] ディレクトリが存在しません: %s'
       MSG_NO_PATTERN_MATCH='[%d/%d] パターンに一致するファイルがありません: %s'
       MSG_NO_TIME_MATCH='[%d/%d] %d 個のファイルが見つかりましたが、時間範囲 %s ~ %s 内にありません'
-      MSG_RESOLVED_PATH='[%d/%d] 解決済み: %s :: %s%s'
+      MSG_RESOLVED_PATH='[%d/%d] 解決済み: %s :: %s'
       MSG_FOUND_COPYING='[%d/%d] %d 個のファイルが見つかりました。コピー中...'
       MSG_STEP1='=== ステップ 1/6: ターゲットホストの解決 ==='
       MSG_STEP2='=== ステップ 2/6: 時間範囲の検証 ==='
@@ -623,8 +619,6 @@ load_lang() {
       MSG_DBG_ORIGINAL_PATTERN='元のパターン: %s'
       MSG_DBG_DATE_TOKEN_DEFERRED='日付トークンを後で処理: %s'
       MSG_DBG_PROCESSING_TOKEN='トークン処理中: %s'
-      MSG_DBG_SUFFIX_SET='サフィックス設定: %s'
-      MSG_DBG_DATE_TOKEN_POS='日付トークン位置: %s, 内容: %s'
       MSG_DBG_EXPANDED_RANGE='展開範囲: %d から %d (値: %s ~ %s)'
       MSG_TRACE_INPUT='%s 入力:'
       MSG_TRACE_OUTPUT='%s 出力:'
@@ -720,7 +714,7 @@ load_lang() {
       MSG_DIR_NOT_FOUND='[%d/%d] Directory does not exist: %s'
       MSG_NO_PATTERN_MATCH='[%d/%d] No files matching pattern: %s'
       MSG_NO_TIME_MATCH='[%d/%d] Found %d files but none in time range %s ~ %s'
-      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s :: %s%s'
+      MSG_RESOLVED_PATH='[%d/%d] Resolved: %s :: %s'
       MSG_FOUND_COPYING='[%d/%d] Found %d files, copying...'
       MSG_STEP1='=== Step 1/6: Resolving target host ==='
       MSG_STEP2='=== Step 2/6: Validating time range ==='
@@ -766,8 +760,6 @@ load_lang() {
       MSG_DBG_ORIGINAL_PATTERN='Original pattern: %s'
       MSG_DBG_DATE_TOKEN_DEFERRED='Date token deferred: %s'
       MSG_DBG_PROCESSING_TOKEN='Processing token: %s'
-      MSG_DBG_SUFFIX_SET='Suffix set to: %s'
-      MSG_DBG_DATE_TOKEN_POS='Date token position: %s, content: %s'
       MSG_DBG_EXPANDED_RANGE='Expanded range: %d to %d (Values: %s ~ %s)'
       MSG_TRACE_INPUT='%s input:'
       MSG_TRACE_OUTPUT='%s output:'
@@ -1692,7 +1684,7 @@ get_tools_checker() {
 # resolves it to a value.
 #
 # Globals:
-#   REPLY_TYPE  Written; token type (env, cmd, date, suffix).
+#   REPLY_TYPE  Written; token type (env, cmd, date).
 #   REPLY_STR   Written; resolved string value.
 #   REPLY       Read; receives output from get_remote_value for env/cmd tokens.
 #   MSG_INVALID_SPECIAL_STRING,
@@ -1717,7 +1709,7 @@ special_string_parser() {
   if [[ ${REPLY_TYPE} == "env"  || ${REPLY_TYPE} == "cmd" ]]; then
     get_remote_value "${REPLY_TYPE}" "${str}"
     REPLY_STR="${REPLY}"
-  elif [[ ${REPLY_TYPE} == "date" || ${REPLY_TYPE} == "suffix" ]]; then
+  elif [[ ${REPLY_TYPE} == "date" ]]; then
     REPLY_STR="${str}"
   else
     log_error "$(printf "${MSG_UNKNOWN_SPECIAL_STRING}" "${REPLY_TYPE}")"
@@ -1734,8 +1726,7 @@ special_string_parser() {
 # Globals:
 #   NUM, HOSTS    Read; used for <num> and <name> token substitution.
 #   REPLY_PATH    Written; resolved directory path.
-#   REPLY_PREFIX  Written; resolved file name pattern (without suffix token).
-#   REPLY_SUFFIX  Written; suffix filter from <suffix:> token, or empty.
+#   REPLY_PREFIX  Written; resolved file name pattern (date tokens deferred).
 #   REPLY_TYPE,
 #   REPLY_STR     Read; populated by special_string_parser.
 #   MSG_TOKEN_NUM_NO_HOST  Read; localized warning.
@@ -1749,7 +1740,6 @@ special_string_parser() {
 string_handler() {
   local path_str="${1:?"${FUNCNAME[0]} needs path argument."}"; shift
   local pattern_str="${1:?"${FUNCNAME[0]} needs pattern argument."}"; shift
-  REPLY_SUFFIX=""
 
   log_debug "$(printf "${MSG_DBG_ORIGINAL_PATH}" "${path_str}")"
   log_debug "$(printf "${MSG_DBG_ORIGINAL_PATTERN}" "${pattern_str}")"
@@ -1792,12 +1782,6 @@ string_handler() {
       # normal case, replace directly
       log_debug "$(printf "${MSG_DBG_PROCESSING_TOKEN}" "${token}")"
       special_string_parser "${token:1:-1}"
-      if [[ "${REPLY_TYPE}" == "suffix" ]]; then
-        REPLY_SUFFIX="${REPLY_STR}"
-        log_debug "$(printf "${MSG_DBG_SUFFIX_SET}" "${REPLY_SUFFIX}")"
-        str_ref="${str_ref//${token}/}"
-        continue
-      fi
       str_ref="${str_ref//${token}/${REPLY_STR}}"
     done
 
@@ -1895,8 +1879,8 @@ resolve_path_dates() {
 #                Multiple paths are walked in a single `find` invocation,
 #                which collapses N round-trips into one when called from a
 #                date-expansion loop.
-#   file_prefix: Filename pattern before the date token (may contain <date:>).
-#   file_suffix: Filename pattern after the date token (may contain <date:>).
+#   pattern:     Filename glob pattern (may contain at most one <date:>
+#                token anywhere in the string).
 #   start_time:  Range start in YYYYmmdd-HHMMSS format.
 #   end_time:    Range end in YYYYmmdd-HHMMSS format.
 #   use_sudo:    "true" to prefix the remote `find` and `stat` calls with
@@ -1929,8 +1913,7 @@ file_finder() {
   else
     _ff_folder_paths=("${_ff_first}")
   fi
-  local file_prefix="${1:-}"; shift
-  local file_suffix="${1:-}"; shift
+  local pattern="${1:-}"; shift
   local start_time="${1:?"${FUNCNAME[0]} need start time."}"; shift
   local end_time="${1:?"${FUNCNAME[0]} need end time."}"; shift
   local use_sudo="${1:-false}"; shift || true
@@ -1939,19 +1922,13 @@ file_finder() {
 
   log_verbose "$(printf "${MSG_TRACE_INPUT}" "${FUNCNAME[0]}")"
   log_verbose "$(printf "${MSG_TRACE_PARAM}" "Paths" "${_ff_folder_paths[*]}")"
-  log_verbose "$(printf "${MSG_TRACE_PARAM}" "Prefix" "${file_prefix}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "Pattern" "${pattern}")"
 
-  local token="" format_position=""
-  if [[ "${file_prefix}" =~ (<date:[^<>]*>) ]]; then
+  local token="" name_pattern="${pattern}"
+  if [[ "${name_pattern}" =~ (<date:[^<>]*>) ]]; then
     token="${BASH_REMATCH[1]}"
-    format_position="prefix"
-    file_prefix="${file_prefix//${token}/*}"
-  elif [[ "${file_suffix}" =~ (<date:[^<>]*>) ]]; then
-    token="${BASH_REMATCH[1]}"
-    format_position="suffix"
-    file_suffix="${file_suffix//${token}/*}"
+    name_pattern="${name_pattern//${token}/*}"
   fi
-  log_debug "$(printf "${MSG_DBG_DATE_TOKEN_POS}" "${format_position}" "${token}")"
 
   local format=""
   if [[ -n "${token}" ]]; then
@@ -1959,8 +1936,7 @@ file_finder() {
     format="${REPLY_STR}"
   fi
 
-  # Combine prefix+suffix, collapse consecutive * into single *
-  local name_pattern="${file_prefix}${file_suffix}"
+  # Collapse consecutive * into single *
   name_pattern="${name_pattern//\*\*/*}"
 
   # Build a single find command that walks every starting path. find natively
@@ -2618,8 +2594,7 @@ file_sender() {
 #
 # Globals:
 #   LOG_PATHS, START_TIME, END_TIME  Read; configuration for the search.
-#   REPLY_PATH, REPLY_PREFIX,
-#   REPLY_SUFFIX, REPLY_PATHS,
+#   REPLY_PATH, REPLY_PREFIX, REPLY_PATHS,
 #   REPLY_FILES                      Read; populated by string_handler /
 #                                    resolve_path_dates / file_finder.
 #   MSG_DRY_RUN_*, MSG_NO_FILES_FOUND  Read; localized output strings.
@@ -2650,12 +2625,12 @@ get_log_dry_run() {
 
     string_handler "${log_path}" "${log_pattern}"
     resolve_path_dates
-    local prefix="${REPLY_PREFIX}" suffix="${REPLY_SUFFIX}"
+    local pattern="${REPLY_PREFIX}"
 
     local path_found=false
     local rpath=""
     for rpath in "${REPLY_PATHS[@]}"; do
-      log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${rpath}" "${prefix}" "${suffix}")"
+      log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${rpath}" "${pattern}")"
 
       if [[ -z "${rpath}" ]]; then
         log_warn "$(printf "${MSG_EMPTY_PATH}" "${idx}" "${total}")"
@@ -2663,14 +2638,14 @@ get_log_dry_run() {
       fi
 
       log_info "$(printf "${MSG_DRY_RUN_RESOLVED}" "${rpath}")"
-      log_info "$(printf "${MSG_DRY_RUN_PATTERN}" "${prefix}${suffix}")"
+      log_info "$(printf "${MSG_DRY_RUN_PATTERN}" "${pattern}")"
 
       if ! execute_cmd "test -d $(printf '%q' "${rpath}")"; then
         log_warn "$(printf "${MSG_DRY_RUN_DIR_NOT_FOUND}" "${rpath}")"
         continue
       fi
 
-      file_finder "${rpath}" "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_sudo}"
+      file_finder "${rpath}" "${pattern}" "${START_TIME}" "${END_TIME}" "${use_sudo}"
       local -a files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
 
       if [[ "${#files[@]}" -gt 0 ]]; then
@@ -2683,7 +2658,7 @@ get_log_dry_run() {
         (( grand_total += ${#files[@]} ))
       else
         if [[ "${REPLY_RAW_COUNT:-0}" -eq 0 ]]; then
-          log_warn "$(printf "${MSG_NO_PATTERN_MATCH}" "${idx}" "${total}" "${prefix}${suffix}")"
+          log_warn "$(printf "${MSG_NO_PATTERN_MATCH}" "${idx}" "${total}" "${pattern}")"
         else
           log_warn "$(printf "${MSG_NO_TIME_MATCH}" "${idx}" "${total}" "${REPLY_RAW_COUNT}" "${START_TIME}" "${END_TIME}")"
         fi
@@ -2705,7 +2680,7 @@ get_log_dry_run() {
 #
 # Globals:
 #   LOG_PATHS, START_TIME, END_TIME, SAVE_FOLDER  Read; configuration / target.
-#   REPLY_PATH, REPLY_PREFIX, REPLY_SUFFIX,
+#   REPLY_PATH, REPLY_PREFIX,
 #   REPLY_PATHS, REPLY_FILES                      Read; populated by helpers.
 #   MSG_NO_FILES_FOUND, MSG_NO_FILES_IN_RANGE     Read; localized warnings.
 # Arguments:
@@ -2726,13 +2701,12 @@ get_log() {
   # exactly once, and _needs_sudo exactly once. Results are cached in parallel
   # arrays so the main loop below can reuse them without re-resolving tokens
   # or re-checking sudo for every date-expanded path.
-  local -a _resolved_path=() _resolved_prefix=() _resolved_suffix=()
+  local -a _resolved_path=() _resolved_pattern=()
   local -a _resolved_sudo=()
   for (( i=0; i<${#LOG_PATHS[@]}; i+=3 )); do
     string_handler "${LOG_PATHS[i]}" "${LOG_PATHS[i+1]}"
     _resolved_path+=("${REPLY_PATH}")
-    _resolved_prefix+=("${REPLY_PREFIX}")
-    _resolved_suffix+=("${REPLY_SUFFIX}")
+    _resolved_pattern+=("${REPLY_PREFIX}")
     if _needs_sudo "${REPLY_PATH}" "${LOG_PATHS[i+2]}"; then
       _resolved_sudo+=("true")
     else
@@ -2760,7 +2734,7 @@ get_log() {
   local idx=0
   for k in "${!_resolved_path[@]}"; do
     REPLY_PATH="${_resolved_path[k]}"
-    local prefix="${_resolved_prefix[k]}" suffix="${_resolved_suffix[k]}"
+    local pattern="${_resolved_pattern[k]}"
     local use_sudo=false
     [[ "${_resolved_sudo[k]}" == "true" ]] && use_sudo=true
     (( ++idx ))
@@ -2780,7 +2754,7 @@ get_log() {
       fi
       entry_paths+=("${rpath}")
     done
-    log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${REPLY_PATH}" "${prefix}" "${suffix}")"
+    log_info "$(printf "${MSG_RESOLVED_PATH}" "${idx}" "${total}" "${REPLY_PATH}" "${pattern}")"
 
     if [[ "${_had_empty_path}" == "true" && "${#entry_paths[@]}" -eq 0 ]]; then
       log_warn "$(printf "${MSG_EMPTY_PATH}" "${idx}" "${total}")"
@@ -2792,7 +2766,7 @@ get_log() {
     fi
 
     # Single batched find across every expanded path for this entry.
-    file_finder entry_paths "${prefix}" "${suffix}" "${START_TIME}" "${END_TIME}" "${use_sudo}"
+    file_finder entry_paths "${pattern}" "${START_TIME}" "${END_TIME}" "${use_sudo}"
     local -a all_found_files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
 
     # Group results back to their source rpath via longest-prefix match,
@@ -2835,7 +2809,7 @@ get_log() {
       done
       if [[ "${_dir_missing}" == "false" ]]; then
         if [[ "${REPLY_RAW_COUNT:-0}" -eq 0 ]]; then
-          log_warn "$(printf "${MSG_NO_PATTERN_MATCH}" "${idx}" "${total}" "${prefix}${suffix}")"
+          log_warn "$(printf "${MSG_NO_PATTERN_MATCH}" "${idx}" "${total}" "${pattern}")"
         else
           log_warn "$(printf "${MSG_NO_TIME_MATCH}" "${idx}" "${total}" "${REPLY_RAW_COUNT}" "${START_TIME}" "${END_TIME}")"
         fi

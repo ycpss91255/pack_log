@@ -88,7 +88,7 @@ teardown() {
 
 @test "remote: full pipeline with rsync transfers date-filtered files" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>" ""
+        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*.dat" ""
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -180,7 +180,7 @@ teardown() {
 @test "remote: mixed LOG_PATHS with config and date-based entries" {
     LOG_PATHS=(
         "<env:HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml" ""
-        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>" ""
+        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_<date:%Y%m%d%H%M%S>*.pcd" ""
         "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog" "detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*" ""
     )
 
@@ -210,7 +210,7 @@ teardown() {
 
 @test "remote: no files in range warns but succeeds" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>" ""
+        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*.dat" ""
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -292,9 +292,9 @@ teardown() {
 # 11. Suffix token filtering on remote
 # ---------------------------------------------------------------------------
 
-@test "remote: suffix token filters only .pcd files (not .dat)" {
+@test "remote: plain-text extension filters only .pcd files (not .dat)" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>" ""
+        "<env:HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_<date:%Y%m%d%H%M%S>*.pcd" ""
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -387,7 +387,7 @@ teardown() {
 
 @test "remote: epoch date format filters slam logs correctly" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_slam" "coreslam_2D_<date:%s>*<suffix:.log>" ""
+        "<env:HOME>/ros-docker/AMR/myuser/log_slam" "coreslam_2D_<date:%s>*.log" ""
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -473,7 +473,7 @@ teardown() {
 
 @test "remote: Y-m-d-H-M-S date format filters .rec files correctly" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_slam/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>" ""
+        "<env:HOME>/ros-docker/AMR/myuser/log_slam/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec" ""
     )
 
     run main -u "${INTEGRATION_HOST}" \
@@ -530,7 +530,7 @@ teardown() {
 
 @test "remote: all-files-older scenario returns no files" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_old" "app_<date:%Y%m%d%H%M%S>*<suffix:.log>" ""
+        "<env:HOME>/ros-docker/AMR/myuser/log_old" "app_<date:%Y%m%d%H%M%S>*.log" ""
     )
 
     # Query range is far in the future — all files are from 2025-01-01
@@ -636,7 +636,7 @@ teardown() {
 
 @test "remote: cross-date folders collect files from multiple days" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>" ""
+        "<env:HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png" ""
     )
     run main -u "${INTEGRATION_HOST}" \
         -s 260115-0000 -e 260116-2359 \
@@ -657,9 +657,9 @@ teardown() {
 @test "remote: full scenario with symlink dir, cross-date, and all log types" {
     LOG_PATHS=(
         "<env:HOME>/ros-docker/AMR/myuser/core_storage/default"                              "uimap.png" ""
-        "<env:HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>"                     "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>" ""
+        "<env:HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>"                     "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png" ""
         "<env:HOME>/ros-docker/AMR/myuser/log_core"                                          "corenavi_auto.<cmd:hostname>.<cmd:whoami>.log.INFO.<date:%Y%m%d-%H%M%S>*" ""
-        "<env:HOME>/ros-docker/AMR/myuser/log_slam/record"                                   "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>" ""
+        "<env:HOME>/ros-docker/AMR/myuser/log_slam/record"                                   "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec" ""
     )
     run main -u "${INTEGRATION_HOST}" \
         -s 260115-0000 -e 260116-2359 \

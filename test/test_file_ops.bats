@@ -665,7 +665,7 @@ FAKE
     touch "${log_dir}/myapp_20260115120000.log"
     touch "${log_dir}/myapp_20260116120000.log"
 
-    LOG_PATHS=("${log_dir}" "myapp_<date:%Y%m%d%H%M%S>*<suffix:.log>" "")
+    LOG_PATHS=("${log_dir}" "myapp_<date:%Y%m%d%H%M%S>*.log" "")
 
     get_log
 

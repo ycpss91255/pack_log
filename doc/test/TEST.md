@@ -10,7 +10,7 @@
 | `test_support_functions.bats` | 50 | `have_sudo_access` (incl. `command -v sudo` PATH hijack), `pkg_install_handler`, `execute_cmd`, `date_format` |
 | `test_option_parser.bats` | 57 | CLI argument parsing, `SAVE_FOLDER` default, `--dry-run`, `--extra-verbose`, `$LANG` auto-detect |
 | `test_host_handler.bats` | 22 | Host resolution (`-n`, `-u`, `-l`), interactive mode |
-| `test_string_handler.bats` | 37 | Token parsing (`<env:>`, `<cmd:>`, `<date:>`, `<suffix:>`), path splitting |
+| `test_string_handler.bats` | 36 | Token parsing (`<env:>`, `<cmd:>`, `<date:>`), path splitting |
 | `test_file_finder.bats` | 39 | Date filtering, boundary expansion, time tolerance, symlink, mtime, epoch support |
 | `test_file_ops.bats` | 67 | `folder_creator`, `file_copier`, `file_sender`, `get_log` (incl. sudo pre-scan, time-range summary, rsync fallback), `file_cleaner`, `archive_save_folder` |
 | `test_ssh_handler.bats` | 13 | SSH key creation, key copy, host key rotation, retry logic |
@@ -20,7 +20,7 @@
 
 `test/test_integration_local.bats` (24 tests):
 
-- Config files, date-filtered files, suffix filtering
+- Config files, date-filtered files, plain-text extension filtering
 - Multiple LOG_PATHS, empty directories, no files in range
 - `<env:>` and `<cmd:>` token resolution
 - Output folder structure and `/tmp` placement
@@ -38,7 +38,7 @@
 - File transfer with rsync, scp, sftp (content verification)
 - `<cmd:hostname>`, `<env:HOME>` token resolution on remote
 - Date format filtering: `%Y%m%d%H%M%S`, `%Y%m%d-%H%M%S`, `%s`, `%Y-%m-%d-%H-%M-%S`
-- Suffix filtering, mixed LOG_PATHS
+- Plain-text extension filtering, mixed LOG_PATHS
 - Directory structure preservation after transfer
 - Out-of-range file exclusion (false positive check)
 - Symlink file and symlink directory discovery and transfer
