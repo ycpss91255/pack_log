@@ -685,7 +685,7 @@ teardown() {
 
 @test "remote: mtime flag includes file with old filename but recent mtime" {
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_core"  "corenavi_auto.<cmd:hostname>.<cmd:whoami>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+        "<env:HOME>/ros-docker/AMR/myuser/log_core"  "corenavi_auto.<cmd:hostname>.<cmd:whoami>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
     )
     run main -u "${INTEGRATION_HOST}" \
         -s 260115-0000 -e 260115-2359 \
@@ -708,7 +708,7 @@ teardown() {
     execute_cmd "ln -sf /nonexistent/path '${HOME}/ros-docker/AMR/myuser/log_core/corenavi_auto.${REMOTE_HOSTNAME}.${REMOTE_USER}.log.INFO.20250101-120000.broken'"
 
     LOG_PATHS=(
-        "<env:HOME>/ros-docker/AMR/myuser/log_core"  "corenavi_auto.<cmd:hostname>.<cmd:whoami>.log.INFO.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+        "<env:HOME>/ros-docker/AMR/myuser/log_core"  "corenavi_auto.<cmd:hostname>.<cmd:whoami>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
     )
     # Should not crash even though stat fails on the broken symlink
     run main -u "${INTEGRATION_HOST}" \

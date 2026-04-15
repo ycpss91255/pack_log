@@ -30,7 +30,9 @@
 - **転送リトライと保持**：ファイル転送（rsync/scp/sftp）失敗時に自動リトライ（最大 3 回、5 秒間隔）。broken pipe やネットワーク障害などの一時的なエラーに対応。全リトライ失敗時はリモート一時フォルダを保持し、手動で取得可能。
 - **自動アーカイブ**：収集完了後、出力フォルダの隣に `.tar.gz` を自動作成。持ち運びや共有が容易。失敗時は `[R] 再試行 / [K] フォルダのみ保持 / [A] 中止` を対話で選択。`--dry-run` ではアーカイブしません。
 - **動的出力命名**：出力フォルダはデフォルトで `/tmp/<script_name>_<host>_<YYMMDD-HHMMSS>`、スクリプト名はファイル名から自動取得。`pack_log.sh` を `my_tool.sh` にリネームすると、出力フォルダは自動的に `my_tool_<host>_...` になり、複数インスタンスの並行実行に便利。`-n` モードは HOSTS 表示名、`-l`/`-u` モードは hostname を使用。`-o` で上書き可能。
-- 396 件のテスト（単体、ローカル結合、リモート結合）。CI は非 root ユーザーで実行。
+- **Liveness スピナー**：SSH 接続、リモート find、コピー、アーカイブ、フォルダサイズ計算など時間のかかる処理中に回転アニメーションを表示し、プログラムがハングしていないことを示します。非 tty 環境（CI、pipe）では単行のステータス表示にフォールバックし、ログをクリーンに保ちます。
+- **クリーンな Ctrl-C 中止**：任意のフェーズで Ctrl-C を押すと、1 秒以内に一時フォルダを削除し、終了コード 130 で終了します。
+- 439 件のテスト（単体、ローカル結合、リモート結合）。CI は非 root ユーザーで実行。
 
 ## クイックスタート
 
@@ -167,16 +169,18 @@ declare -a LOG_PATHS=(
 │
 ├── test/
 │   ├── test_helper.bash                 # 共通 bats テストヘルパー
-│   ├── test_log_functions.bats          # ログ関数テスト (27)
-│   ├── test_support_functions.bats      # サポート関数テスト (50)
+│   ├── test_log_functions.bats          # ログ関数テスト (31)
+│   ├── test_support_functions.bats      # サポート関数テスト (54)
 │   ├── test_option_parser.bats          # オプション解析テスト (57)
 │   ├── test_host_handler.bats           # ホストハンドラテスト (22)
-│   ├── test_string_handler.bats         # 文字列/トークン処理テスト (27)
-│   ├── test_file_finder.bats            # ファイル検索テスト (39)
-│   ├── test_file_ops.bats              # ファイル操作テスト (67)
+│   ├── test_string_handler.bats         # 文字列/トークン処理テスト (36)
+│   ├── test_file_finder.bats            # ファイル検索テスト (46)
+│   ├── test_file_ops.bats              # ファイル操作テスト (73)
 │   ├── test_ssh_handler.bats            # SSH ハンドラテスト (13)
-│   ├── test_main.bats                   # メインパイプラインテスト (30)
-│   ├── test_integration_local.bats      # ローカル結合テスト (24)
+│   ├── test_main.bats                   # メインパイプラインテスト (35)
+│   ├── test_spinner.bats                # Liveness スピナーテスト (10)
+│   ├── test_integration_local.bats      # ローカル結合テスト (26)
+│   ├── test_integration_sigint.bats     # Signal trap / Ctrl-C テスト (4)
 │   ├── Dockerfile.sshd                  # リモートテスト用 SSH サーバー
 │   ├── setup_remote_logs.sh             # リモートテストデータ作成スクリプト
 │   └── integration/
@@ -192,7 +196,7 @@ declare -a LOG_PATHS=(
 
 ## テスト
 
-396 テスト（341 ユニット + 23 ローカル結合 + 32 リモート結合）。詳細は **[TEST.md](../test/TEST.md)** を参照。
+439 テスト（377 ユニット + 30 ローカル結合 + 32 リモート結合）。詳細は **[TEST.md](../test/TEST.md)** を参照。
 
 ```bash
 ./ci.sh              # 全テスト（Docker が必要）

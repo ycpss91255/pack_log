@@ -167,7 +167,7 @@ setup() {
 # 5. Plain-text file extension filtering
 # ---------------------------------------------------------------------------
 
-@test "local-integration: plain-text extension filters by file extension" {
+@test "local-integration: plain-text suffix in pattern filters by file extension" {
     LOG_PATHS=(
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_<date:%Y%m%d%H%M%S>*.pcd" ""
     )
@@ -231,6 +231,43 @@ setup() {
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/nomatch_test"
     assert_success
     assert_output --partial "No files found"
+}
+
+@test "local-integration: missing directory triggers DIR_NOT_FOUND diagnostic" {
+    # Path literally does not exist — should hit the L2952-2953 diagnostic branch
+    LOG_PATHS=(
+        "${BATS_TEST_TMPDIR}/never_existed" "anything*.log" ""
+    )
+
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/missing_dir_test"
+    assert_success
+    assert_output --partial "Directory does not exist"
+}
+
+@test "local-integration: files outside time range trigger NO_TIME_MATCH diagnostic" {
+    # Files exist and pattern-match, but timestamps are far outside the
+    # search window AND well beyond the mtime tolerance window — should
+    # hit the L2960 diagnostic (REPLY_RAW_COUNT > 0 branch).
+    local out_range_dir="${BATS_TEST_TMPDIR}/out_of_range"
+    mkdir -p "${out_range_dir}"
+    # Year 2020 files (6 years off), and touch their mtime to the same
+    # old date to defeat the auto-mtime fallback window.
+    echo "old" > "${out_range_dir}/app_20200101-120000.log"
+    echo "old" > "${out_range_dir}/app_20200101-130000.log"
+    touch -t 202001011200 "${out_range_dir}/app_20200101-120000.log"
+    touch -t 202001011300 "${out_range_dir}/app_20200101-130000.log"
+
+    # Narrow the mtime tolerance so the 2020 mtimes can't sneak in.
+    FILE_TIME_TOLERANCE_MIN=1
+
+    LOG_PATHS=(
+        "${out_range_dir}" "app_<date:%Y%m%d-%H%M%S>*.log" ""
+    )
+
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/out_of_range_test"
+    assert_success
+    # MSG_NO_TIME_MATCH wording: "[x/y] Found N files but none in time range ..."
+    assert_output --partial "but none in time range"
 }
 
 # ---------------------------------------------------------------------------
@@ -563,7 +600,7 @@ setup() {
     sudo bash -c "echo 'test2' > '${test_dir}/corenavi_slam.host.user.log.WARNING.20260115-130000.2'"
 
     LOG_PATHS=(
-        "${test_dir}"  "corenavi_*.host.user.*.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+        "${test_dir}"  "corenavi_*.host.user.*.<date:%Y%m%d-%H%M%S>*"  ""
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/sudo_mtime"

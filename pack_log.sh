@@ -20,8 +20,8 @@
 # Run with --help for the full option reference.
 #
 # Author: Yunchien.chen <yunchien.chen@coretronic-robotics.com>
-# Date: 2026-04-08
-# Version: 1.7.1
+# Date: 2026-04-15
+# Version: 1.7.2
 
 # shellcheck disable=SC2059  # i18n: MSG_* variables used as printf format strings by design
 # shellcheck disable=SC2029  # SSH commands piped via stdin, not affected
@@ -109,44 +109,80 @@ declare COREROBOT_DOCKER_LOG_DATA="${COREROBOT_DOCKER_HOME}/log_data"
 declare COREROBOT_DOCKER_LOG_SLAM="${COREROBOT_DOCKER_HOME}/log_slam"
 
 declare -a LOG_PATHS=(
-  # PATH                                                                  FILE_PATTERN                                                      FLAGS
-  # AvoidStop (pana-04, local test with symlink dirs)
+  # # PATH                                                                  FILE_PATTERN                                                      FLAGS
+  # # AvoidStop (pana-04, local test with symlink dirs)
   # "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default"           "uimap.png"                                                        ""
   # "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default2"          "uimap.yaml"                                                       ""
-  # "<env:HOME>/Desktop/pack_log/log/avoid/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png"                    ""
+  # "<env:HOME>/Desktop/pack_log/log/avoid/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png"                             ""
   # "<env:HOME>/Desktop/pack_log/log/avoid/log_core"                       "corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*"      ""
-  # "<env:HOME>/Desktop/pack_log/log/avoid/log_slam/record"                "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"               ""
+  # "<env:HOME>/Desktop/pack_log/log/avoid/log_slam/record"                "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                        ""
 
   # # Panasonic — LiDAR Detection shelf log path (docker)
   # "${COREROBOT_DOCKER_LOG_CORE}"                      "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
-  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*.dat"         ""
-  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_<date:%Y%m%d%H%M%S>*.pcd"                          ""
+  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*.dat"                  ""
+  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_shelf_<date:%Y%m%d%H%M%S>*.pcd"                                   ""
   # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection/glog" "detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*"                     ""
-  # "${COREROBOT_DOCKER_LOG_SLAM}"                      "coreslam_2D_<date:%s>*.log"                                     ""
-  # "${COREROBOT_DOCKER_LOG_SLAM}/record"               "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                      ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}"                      "coreslam_2D_<date:%s>*.log"                                              ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}/record"               "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                               ""
   # "${COREROBOT_DOCKER_STORAGE}"                       "node_config.yaml"                                                        ""
   # "${COREROBOT_DOCKER_STORAGE}"                       "shelf.ini"                                                               ""
   # "${COREROBOT_DOCKER_STORAGE}"                       "external_param.launch"                                                   ""
   # "${COREROBOT_DOCKER_STORAGE}"                       "run_config.yaml"                                                         ""
 
-  # sys_log kernal_log
+  # # Panasonic — 2D LiDAR AvoidStop and EmergencyStop log path (docker)
+  # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"            "uimap.png"                                                                  ""
+  # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"            "uimap.yaml"                                                                 ""
+  # "${COREROBOT_DOCKER_LOG}/AvoidStop_<date:%Y-%m-%d>"      "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png"                                       ""
+  # "${COREROBOT_DOCKER_LOG}/EmergencyStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*_scan.png"                                        ""
+  # "${COREROBOT_DOCKER_LOG_CORE}"                           "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"     ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}/record"                    "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                                  ""
+  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_filter"              "lidar_filter_node.<cmd:hostname>.<env:USER>.log.*.<date:%Y%m%d-%H%M%S>*"    ""
+  # "${COREROBOT_DOCKER_LOG_DATA}/scan_fusion"               "scan_fusion_node.<cmd:hostname>.<env:USER>.log.*.<date:%Y%m%d-%H%M%S>*"     ""
+  # "${COREROBOT_DOCKER_LOG_DATA}/object_detector"           "object_detector_node.<cmd:hostname>.<env:USER>.log.*.<date:%Y%m%d-%H%M%S>*" ""
+
+  # # Panasonic — Battery Changed fail log path (docker)
+  # "${COREROBOT_DOCKER_LOG_CORE}"                 "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
+
+  # # Ubuntu system and kernal logs
+  # missing log path
+
   # # 2D LiDAR SLAM log path (docker)
   # "${COREROBOT_DOCKER_LOG_CORE}"        "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
-  # "${COREROBOT_DOCKER_LOG_SLAM}"        "coreslam_2D_<date:%s>*.log"                                     ""
-  # "${COREROBOT_DOCKER_LOG_SLAM}/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                      ""
-
-  # # 2D LiDAR AvoidStop log path (docker)
-  # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"  "uimap.png"                                                              ""
-  # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"  "uimap.yaml"                                                             ""
-  # "${COREROBOT_DOCKER_LOG}/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png"                    ""
-  # "${COREROBOT_DOCKER_LOG_CORE}"                 "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
-  # "${COREROBOT_DOCKER_LOG_SLAM}/record"          "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                      ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}"        "coreslam_2D_<date:%s>*.log"                                              ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}/record" "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                               ""
 
   # # ASE Us — LiDAR Detection pallet log path
   # "${COREROBOT_LOG_DATA}/lidar_detection"                                          "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*.dat"  ""
   # "${COREROBOT_LOG_DATA}/lidar_detection"                                          "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*.pcd"  ""
-  # "${COREROBOT_LOG_DATA}/lidar_detection/glog"                                     "detect_pallet_node-DetectPallet-<date:%Y%m%d-%H%M%S>*"              ""
-  # "${COREROBOT_CORETRONIC_AMR_NAVI_INSTALL}/share/lidar_detection_pkg/config"      "pallet.ini"                                                        ""
+  # "${COREROBOT_LOG_DATA}/lidar_detection/glog"                                     "detect_pallet_node-DetectPallet-<date:%Y%m%d-%H%M%S>*"     ""
+  # "${COREROBOT_CORETRONIC_AMR_NAVI_INSTALL}/share/lidar_detection_pkg/config"      "pallet.ini"                                                ""
+
+  # # ASE Us - LiDAR Detection pallet log path (docker)
+  # "${COREROBOT_DOCKER_LOG_CORE}"                      "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
+  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*.dat"                ""
+  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection"      "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*.pcd"                ""
+  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_detection/glog" "detect_pallet_node-DetectPallet-<date:%Y%m%d-%H%M%S>*"                   ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}"                      "coreslam_2D_<date:%s>*.log"                                              ""
+  # "${COREROBOT_DOCKER_LOG_SLAM}/record"               "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                               ""
+  # "${COREROBOT_DOCKER_STORAGE}"                       "node_config.yaml"                                                        ""
+  # "${COREROBOT_DOCKER_STORAGE}"                       "pallet.ini"                                                              ""
+  # "${COREROBOT_DOCKER_STORAGE}"                       "external_param.launch"                                                   ""
+  # "${COREROBOT_DOCKER_STORAGE}"                       "run_config.yaml"                                                         ""
+  # "${COREROBOT_DOCKER_STORAGE}"                       "pallet.ini"                                                              ""
+
+  # # ASE Us - LiDAR Detection pallet log path
+  # "${COREROBOT_LOG_CORE}"                      "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
+  # "${COREROBOT_LOG_DATA}/lidar_detection"      "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*.dat"                ""
+  # "${COREROBOT_LOG_DATA}/lidar_detection"      "detect_pallet_node-DetectPallet_<date:%Y%m%d%H%M%S>*.pcd"                ""
+  # "${COREROBOT_LOG_DATA}/lidar_detection/glog" "detect_pallet_node-DetectPallet-<date:%Y%m%d-%H%M%S>*"                   ""
+  # "${COREROBOT_LOG_SLAM}"                      "coreslam_2D_<date:%s>*.log"                                              ""
+  # "${COREROBOT_LOG_SLAM}/record"               "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                               ""
+  # "${COREROBOT_STORAGE}"                       "node_config.yaml"                                                        ""
+  # "${COREROBOT_STORAGE}"                       "pallet.ini"                                                              ""
+  # "${COREROBOT_STORAGE}"                       "external_param.launch"                                                   ""
+  # "${COREROBOT_STORAGE}"                       "run_config.yaml"                                                         ""
+  # "${COREROBOT_STORAGE}"                       "pallet.ini"                                                              ""
+
 )
 
 declare SAVE_FOLDER="${_PACK_LOG_SCRIPT_NAME}"
@@ -166,7 +202,7 @@ declare FILE_TIME_TOLERANCE_MIN=30
 # Internal Variables (do not modify)
 # ==============================================================================
 
-declare -r VERSION="1.7.1"
+declare -r VERSION="1.7.2"
 declare VERBOSE=0
 declare NUM="" HOST="" GET_LOG_TOOL=""
 declare START_TIME="" END_TIME=""
@@ -314,6 +350,12 @@ load_lang() {
       MSG_OUTPUT_NAME='輸出資料夾：%s'
       MSG_OUTPUT_ARCHIVE='輸出封存檔：%s'
       MSG_SUCCESS='打包 log 完成。'
+      MSG_SPINNER_SSH='正在連線至 %s...'
+      MSG_SPINNER_TOKEN='正在解析路徑 token...'
+      MSG_SPINNER_FINDING='[%d/%d] 正在搜尋檔案...'
+      MSG_SPINNER_COPYING='[%d/%d] 正在複製 %d 個檔案...'
+      MSG_SPINNER_SIZE='正在計算資料夾大小...'
+      MSG_SPINNER_ARCHIVE='正在建立封存檔...'
       MSG_DRY_RUN_BANNER='*** 模擬執行模式 — 不會複製或傳輸任何檔案 ***'
       MSG_DRY_RUN_RESOLVED='[模擬] 解析後路徑：%s'
       MSG_DRY_RUN_PATTERN='[模擬] 檔案樣式：  %s'
@@ -455,6 +497,12 @@ load_lang() {
       MSG_OUTPUT_NAME='输出文件夹：%s'
       MSG_OUTPUT_ARCHIVE='输出归档：  %s'
       MSG_SUCCESS='打包 log 完成。'
+      MSG_SPINNER_SSH='正在连接至 %s...'
+      MSG_SPINNER_TOKEN='正在解析路径 token...'
+      MSG_SPINNER_FINDING='[%d/%d] 正在搜索文件...'
+      MSG_SPINNER_COPYING='[%d/%d] 正在复制 %d 个文件...'
+      MSG_SPINNER_SIZE='正在计算文件夹大小...'
+      MSG_SPINNER_ARCHIVE='正在创建归档文件...'
       MSG_DRY_RUN_BANNER='*** 模拟执行模式 — 不会复制或传输任何文件 ***'
       MSG_DRY_RUN_RESOLVED='[模拟] 解析后路径：%s'
       MSG_DRY_RUN_PATTERN='[模拟] 文件模式：  %s'
@@ -596,6 +644,12 @@ load_lang() {
       MSG_OUTPUT_NAME='出力フォルダ：%s'
       MSG_OUTPUT_ARCHIVE='出力アーカイブ：%s'
       MSG_SUCCESS='ログのパッケージングが正常に完了しました。'
+      MSG_SPINNER_SSH='%s に接続中...'
+      MSG_SPINNER_TOKEN='パストークンを解決中...'
+      MSG_SPINNER_FINDING='[%d/%d] ファイルを検索中...'
+      MSG_SPINNER_COPYING='[%d/%d] %d ファイルをコピー中...'
+      MSG_SPINNER_SIZE='フォルダサイズを計算中...'
+      MSG_SPINNER_ARCHIVE='アーカイブを作成中...'
       MSG_DRY_RUN_BANNER='*** ドライランモード — ファイルのコピー・転送は行いません ***'
       MSG_DRY_RUN_RESOLVED='[ドライラン] 解決済みパス：%s'
       MSG_DRY_RUN_PATTERN='[ドライラン] ファイルパターン：%s'
@@ -737,6 +791,12 @@ load_lang() {
       MSG_OUTPUT_NAME='Output folder:  %s'
       MSG_OUTPUT_ARCHIVE='Output archive: %s'
       MSG_SUCCESS='Packaging log completed successfully.'
+      MSG_SPINNER_SSH='Connecting to %s...'
+      MSG_SPINNER_TOKEN='Resolving path tokens...'
+      MSG_SPINNER_FINDING='[%d/%d] Searching for files...'
+      MSG_SPINNER_COPYING='[%d/%d] Copying %d files...'
+      MSG_SPINNER_SIZE='Calculating folder size...'
+      MSG_SPINNER_ARCHIVE='Creating archive...'
       MSG_DRY_RUN_BANNER='*** DRY RUN MODE — no files will be copied or transferred ***'
       MSG_DRY_RUN_RESOLVED='[dry-run] Resolved path: %s'
       MSG_DRY_RUN_PATTERN='[dry-run] File pattern:  %s'
@@ -845,11 +905,84 @@ close_log_file() {
   fi
 }
 
+# --- Spinner (liveness indicator) ---
+# Shows a rotating character on stderr during long-running operations so the
+# user can tell the script hasn't hung. Non-interactive (non-tty) environments
+# print the message once and skip the animation to keep logs clean.
+declare _SPINNER_PID=""
+declare _SPINNER_FRAMES='\|/-'
+
+# Reports whether stderr is attached to a terminal. Extracted as a function
+# so tests can override it without relying on an actual tty.
+#
+# Globals:
+#   None.
+# Arguments:
+#   None.
+# Outputs:
+#   None.
+# Returns:
+#   0 if stderr is a tty; 1 otherwise.
+_spinner_is_tty() {
+  [[ -t 2 ]]
+}
+
+# Starts the spinner. Stops any previously running spinner first so repeated
+# calls don't leak background processes.
+#
+# Globals:
+#   _SPINNER_PID     Written; PID of the background animation process.
+#   _SPINNER_FRAMES  Read; frame characters to cycle through.
+# Arguments:
+#   $1  Message to display alongside the spinner.
+# Outputs:
+#   Animated frame + message on stderr (tty path), or a single message line
+#   (non-tty path).
+# Returns:
+#   0 always.
+spinner_start() {
+  local msg="$1"
+  spinner_stop
+  if ! _spinner_is_tty; then
+    printf '%s\n' "${msg}" >&2
+    return 0
+  fi
+  (
+    local i=0
+    local frames_len="${#_SPINNER_FRAMES}"
+    while true; do
+      printf '\r%s %s' "${_SPINNER_FRAMES:i++%frames_len:1}" "${msg}" >&2
+      sleep 0.15
+    done
+  ) &
+  _SPINNER_PID=$!
+}
+
+# Stops the spinner and clears the current line. Safe to call when no spinner
+# is running or to call multiple times.
+#
+# Globals:
+#   _SPINNER_PID  Read/written; cleared after the background process is reaped.
+# Arguments:
+#   None.
+# Outputs:
+#   ANSI erase sequence on stderr (tty path only).
+# Returns:
+#   0 always.
+spinner_stop() {
+  if [[ -n "${_SPINNER_PID}" ]]; then
+    kill "${_SPINNER_PID}" 2>/dev/null || true
+    wait "${_SPINNER_PID}" 2>/dev/null || true
+    _SPINNER_PID=""
+    printf '\r\033[K' >&2
+  fi
+}
+
 log_verbose() { [[ "${VERBOSE:-0}" -ge 2 ]] && printf "${_C_DIM}%s${_C_RESET}\n" "$*" >&2; _log_to_file "[VERBOSE] $*"; return 0; }
 log_debug()   { [[ "${VERBOSE:-0}" -ge 1 ]] && printf "${_C_CYAN}[DEBUG]${_C_RESET} %s\n" "$*" >&2; _log_to_file "[DEBUG] $*"; return 0; }
-log_info()    { printf "${_C_GREEN}[INFO]${_C_RESET}  %s\n" "$*"; _log_to_file "[INFO]  $*"; }
-log_warn()    { printf "${_C_YELLOW}[WARN]${_C_RESET}  %s\n" "$*" >&2; _log_to_file "[WARN]  $*"; }
-log_error()   { printf "${_C_RED}[ERROR]${_C_RESET} %s\n" "$*" >&2; _log_to_file "[ERROR] $*"; close_log_file; exit 1; }
+log_info()    { spinner_stop; printf "${_C_GREEN}[INFO]${_C_RESET}  %s\n" "$*"; _log_to_file "[INFO]  $*"; }
+log_warn()    { spinner_stop; printf "${_C_YELLOW}[WARN]${_C_RESET}  %s\n" "$*" >&2; _log_to_file "[WARN]  $*"; }
+log_error()   { spinner_stop; printf "${_C_RED}[ERROR]${_C_RESET} %s\n" "$*" >&2; _log_to_file "[ERROR] $*"; close_log_file; exit 1; }
 
 # Prints the help message for the script.
 #
@@ -1561,10 +1694,13 @@ ssh_handler() {
   while (( attempt < max_retries )); do
     log_debug "$(printf "${MSG_SSH_ATTEMPT}" "${HOST}" "$(( attempt + 1 ))" "${max_retries}")"
 
+    spinner_start "$(printf "${MSG_SPINNER_SSH}" "${HOST}")"
     if err_msg=$(execute_cmd "true" 2>&1); then
+        spinner_stop
         log_debug "$(printf "${MSG_SSH_SUCCESS}" "${HOST}")"
         return 0
     fi
+    spinner_stop
 
     err_msgs+=( "attempt $(( attempt + 1 )): ${err_msg}" )
 
@@ -2346,6 +2482,7 @@ save_script_data() {
 # Returns:
 #   0 always (best-effort cleanup).
 file_cleaner() {
+  spinner_stop
   if [[ -z "${SAVE_FOLDER}" ]]; then
     log_debug "${MSG_NO_SAVE_FOLDER}"
     close_log_file
@@ -2392,11 +2529,14 @@ archive_save_folder() {
 
   log_debug "$(printf "${MSG_ARCHIVING}" "${archive_path}")"
 
+  spinner_start "${MSG_SPINNER_ARCHIVE}"
   if ! tar -czf "${archive_path}" -C "${parent_dir}" "${base_name}"; then
+    spinner_stop
     rm -f "${archive_path}"
     log_warn "$(printf "${MSG_ARCHIVE_FAILED}" "${archive_path}")"
     return 1
   fi
+  spinner_stop
 
   local archive_size
   archive_size="$(du -h --apparent-size "${archive_path}" | cut -f1)"
@@ -2513,7 +2653,9 @@ file_sender() {
   # Single SSH `du -sb` traverses the tree once; format human-readable locally
   # in pure bash. Saves one round-trip on every run (was -sh + -sb).
   local size_bytes folder_size=""
+  spinner_start "${MSG_SPINNER_SIZE}"
   size_bytes=$(execute_cmd "du -sb ${remote_esc} | awk '{print \$1}'")
+  spinner_stop
   size_bytes="${size_bytes//[^0-9]/}"
   : "${size_bytes:=0}"
   if   (( size_bytes < 1024 ));        then folder_size="${size_bytes}B"
@@ -2766,7 +2908,9 @@ get_log() {
     fi
 
     # Single batched find across every expanded path for this entry.
+    spinner_start "$(printf "${MSG_SPINNER_FINDING}" "${idx}" "${total}")"
     file_finder entry_paths "${pattern}" "${START_TIME}" "${END_TIME}" "${use_sudo}"
+    spinner_stop
     local -a all_found_files=("${REPLY_FILES[@]+"${REPLY_FILES[@]}"}")
 
     # Group results back to their source rpath via longest-prefix match,
@@ -2792,7 +2936,9 @@ get_log() {
         [[ -n "${files_by_path[${rp}]+set}" ]] || continue
         local -a group=()
         mapfile -t group <<< "${files_by_path[${rp}]%$'\n'}"
+        spinner_start "$(printf "${MSG_SPINNER_COPYING}" "${idx}" "${total}" "${#group[@]}")"
         file_copier "${rp}" "${group[@]}"
+        spinner_stop
       done
       _SUDO_PREFIX=""
     fi
@@ -2841,6 +2987,9 @@ get_log() {
 # Returns:
 #   0 on full success; non-zero / log_error abort on any fatal failure.
 main() {
+  # Belt-and-suspenders: guarantee no spinner process leaks on any exit path
+  # (set -e failure, unhandled error, explicit exit from nested helpers).
+  trap spinner_stop EXIT
   option_parser "$@"
 
   if [[ -z "${LANG_CODE}" ]]; then
@@ -2875,7 +3024,9 @@ main() {
   # SSH RTT cost per unique token. Best-effort: failures fall through to lazy
   # resolution. Only meaningful for remote HOST.
   if [[ "${HOST}" != "local" ]]; then
+    spinner_start "${MSG_SPINNER_TOKEN}"
     prefetch_token_cache
+    spinner_stop
   fi
 
   log_info "${MSG_STEP4}"
@@ -2886,8 +3037,9 @@ main() {
     folder_creator
     init_log_file
 
-    # Trap only signals, not EXIT — preserve /tmp folder for debug after completion
-    trap file_cleaner SIGINT SIGTERM
+    # file_cleaner removes the temp folder; append `exit 130` so Ctrl-C actually
+    # aborts the script instead of resuming after cleanup.
+    trap 'file_cleaner; exit 130' SIGINT SIGTERM
 
     save_script_data
     get_log

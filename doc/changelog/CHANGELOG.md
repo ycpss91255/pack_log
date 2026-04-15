@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.7.2 (2026-04-15)
+
+### Features
+- **Liveness spinner**: added `spinner_start` / `spinner_stop` so the user can tell the script is still alive during slow operations (SSH connect, remote find, file copy, archive, folder-size calculation, token prefetch). Non-tty environments print a single status line instead of animating, keeping CI logs clean. Frame cadence is 0.15 s per step.
+
+### Bug Fixes
+- **Ctrl-C now actually aborts**: the SIGINT/SIGTERM trap was `file_cleaner` alone, which returned 0 after cleanup — so bash resumed execution at the interrupted line instead of exiting. Changed to `trap 'file_cleaner; exit 130' SIGINT SIGTERM` so Ctrl-C during the remote find / copy phase terminates the script within ~1 s after cleanup.
+- **Spinner leak-guard**: added a main-scope `trap spinner_stop EXIT` so an uncaught `set -e` failure mid-animation cannot leave the background frame process running.
+
+### Tests
+- New `test_spinner.bats` (10 tests) covering `_spinner_is_tty` override hook, tty / non-tty branches, repeated-start leak protection, and per-language `MSG_SPINNER_*` message coverage.
+- New `test_integration_sigint.bats` (4 tests) covering end-to-end SIGTERM trap behavior (exit 130 + SAVE_FOLDER cleanup) and source-level regression guards for both the SIGINT/SIGTERM and EXIT trap lines. SIGINT cannot be tested in non-interactive bats because bash auto-ignores SIGINT in async children and per POSIX the disposition cannot be re-trapped; SIGTERM exercises the identical handler.
+- Coverage backfill from kcov audit: `archive_save_folder` failure interactive prompt (`[R]etry` / `[K]eep folder only` / `[A]bort`, 3 tests), `file_sender` >1GB folder-size reporting branch (1 test), `get_log` per-entry `DIR_NOT_FOUND` and `NO_TIME_MATCH` diagnostic warnings (2 tests).
+- 439 tests (377 unit + 30 local integration + 32 remote integration); all green; ShellCheck `-x -S style` clean.
+
+### Docs
+- `CLAUDE.md` post-change checklist promoted to a mandatory step — doc alignment (README ×4 / CHANGELOG / TEST) and Google Shell Style code review are now required before a change is considered done.
+
 ## v1.7.1 (2026-04-10)
 
 ### Docs

@@ -344,7 +344,7 @@ setup() {
     [[ "${REPLY_FILES[0]}" == *".pcd" ]]
 }
 
-# --- Wildcards around date token ---
+# --- Date token followed by extension in single pattern ---
 
 @test "file_finder: handles pattern with wildcard before date and extension after" {
     touch "${TEST_LOG_DIR}/mylog_data_20260115120000.log"
