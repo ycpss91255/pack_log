@@ -262,6 +262,26 @@ setup() {
     refute_output --partial "cancelled"
 }
 
+@test "file_sender: reports size in GB when folder exceeds 1GB" {
+    GET_LOG_TOOL="rsync"
+    SAVE_FOLDER="${TEST_DIR}/fake_huge"
+    mkdir -p "${SAVE_FOLDER}"
+    echo "stub" > "${SAVE_FOLDER}/marker.txt"
+    TRANSFER_SIZE_WARN_MB=0  # Disable warning prompt path
+
+    # Mock execute_cmd so the du pipeline reports 2 GB, hitting the >=1GB branch.
+    execute_cmd() {
+        case "$1" in
+            "du -sb"*) printf '%s\n' "$((2 * 1073741824))" ;;
+            "test -d"*) return 0 ;;
+            *) return 0 ;;
+        esac
+    }
+
+    run file_sender
+    assert_output --partial "2G"
+}
+
 @test "file_sender: skips prompt when size below threshold" {
     GET_LOG_TOOL="rsync"
     SAVE_FOLDER="${TEST_DIR}/small_folder"
@@ -665,7 +685,7 @@ FAKE
     touch "${log_dir}/myapp_20260115120000.log"
     touch "${log_dir}/myapp_20260116120000.log"
 
-    LOG_PATHS=("${log_dir}" "myapp_<date:%Y%m%d%H%M%S>*<suffix:.log>" "")
+    LOG_PATHS=("${log_dir}" "myapp_<date:%Y%m%d%H%M%S>*.log" "")
 
     get_log
 

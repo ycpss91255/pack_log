@@ -19,7 +19,7 @@
 ## 功能特點
 
 - **多主機支援**：預設主機列表互動式選擇，或直接輸入 `user@host`。
-- **智慧 Log 搜尋**：Token 系統支援動態路徑解析 — 環境變數（`<env:VAR>`）、Shell 指令（`<cmd:command>`）、日期格式（`<date:%Y%m%d>`）、副檔名篩選（`<suffix:.ext>`）。
+- **智慧 Log 搜尋**：Token 系統支援動態路徑解析 — 環境變數（`<env:VAR>`）、Shell 指令（`<cmd:command>`）、日期格式（`<date:%Y%m%d>`）。副檔名直接寫在 pattern 中（例如 `*.log`）。
 - **時間範圍篩選**：在指定時間窗口內搜尋 log 檔案，自動擴展邊界確保不遺漏。
 - **自動 SSH 金鑰管理**：自動建立 SSH 金鑰、複製到遠端主機、處理 host key 更新。
 - **彈性傳輸方式**：支援 rsync、scp、sftp，自動偵測可用工具並依序嘗試。
@@ -30,7 +30,9 @@
 - **傳輸重試與保留**：檔案傳輸（rsync/scp/sftp）失敗時自動重試，最多 3 次，每次間隔 5 秒，能處理 broken pipe 或網路中斷等暫時性錯誤。若全部重試失敗，遠端暫存資料夾會保留以供手動取回。
 - **自動封存**：收集完成後自動在輸出資料夾旁產生 `.tar.gz`，方便攜帶與分享。失敗時互動提示 `[R] 重試 / [K] 僅保留資料夾 / [A] 中止`。`--dry-run` 不會封存。
 - **動態輸出命名**：輸出資料夾預設為 `/tmp/<script_name>_<host>_<YYMMDD-HHMMSS>`，腳本名稱由檔名自動取得。將 `pack_log.sh` 改名為 `my_tool.sh` 後，輸出資料夾會自動變成 `my_tool_<host>_...`，方便同時跑多個實例。`-n` 模式使用 HOSTS 顯示名稱，`-l`/`-u` 模式使用 hostname。可用 `-o` 覆寫。
-- 396 個測試，涵蓋單元測試、本機整合測試、遠端整合測試。CI 以非 root 使用者執行。
+- **存活指示器 (Liveness Spinner)**：SSH 連線、遠端 find、複製、封存、計算資料夾大小等緩慢操作會顯示旋轉動畫，避免讓使用者以為程式卡住。非互動終端（CI、pipe）改印單行狀態，維持 log 乾淨。
+- **乾淨的 Ctrl-C 中止**：任何階段按 Ctrl-C 都會在 1 秒內清除暫存資料夾並以 exit code 130 結束。
+- 439 個測試，涵蓋單元測試、本機整合測試、遠端整合測試。CI 以非 root 使用者執行。
 
 ## 快速開始
 
@@ -119,7 +121,8 @@ Log 路徑支援在執行時對遠端主機動態解析的 token：
 | `<env:VAR>` | 遠端環境變數 | `<env:HOME>/logs` |
 | `<cmd:command>` | 遠端 shell 指令輸出 | `<cmd:hostname>` |
 | `<date:format>` | 時間範圍篩選用的日期格式 | `<date:%Y%m%d-%H%M%S>` |
-| `<suffix:ext>` | 副檔名篩選 | `<suffix:.pcd>` |
+
+副檔名直接寫在 pattern 中（例如 `*.pcd`），不需特殊 token。
 
 **處理鏈**：`string_handler` → `special_string_parser` → `get_remote_value`
 
@@ -145,7 +148,7 @@ declare -a HOSTS=(
 
 # Log 路徑: "<路徑>::<檔案樣式>"
 declare -a LOG_PATHS=(
-  '<env:HOME>/logs::app_<date:%Y%m%d%H%M%S>*<suffix:.log>'
+  '<env:HOME>/logs::app_<date:%Y%m%d%H%M%S>*.log'
   '<env:HOME>/config::node_config.yaml'
 )
 ```
@@ -166,16 +169,18 @@ declare -a LOG_PATHS=(
 │
 ├── test/
 │   ├── test_helper.bash                 # 共用 bats 測試 helper
-│   ├── test_log_functions.bats          # 日誌函式測試 (27)
-│   ├── test_support_functions.bats      # 輔助函式測試 (50)
+│   ├── test_log_functions.bats          # 日誌函式測試 (31)
+│   ├── test_support_functions.bats      # 輔助函式測試 (54)
 │   ├── test_option_parser.bats          # 選項解析測試 (57)
 │   ├── test_host_handler.bats           # 主機選擇測試 (22)
-│   ├── test_string_handler.bats         # 字串/Token 處理測試 (27)
-│   ├── test_file_finder.bats            # 檔案搜尋測試 (39)
-│   ├── test_file_ops.bats              # 檔案操作測試 (67)
+│   ├── test_string_handler.bats         # 字串/Token 處理測試 (36)
+│   ├── test_file_finder.bats            # 檔案搜尋測試 (46)
+│   ├── test_file_ops.bats              # 檔案操作測試 (73)
 │   ├── test_ssh_handler.bats            # SSH 處理測試 (13)
-│   ├── test_main.bats                   # Main 流程測試 (30)
-│   ├── test_integration_local.bats      # 本機整合測試 (24)
+│   ├── test_main.bats                   # Main 流程測試 (35)
+│   ├── test_spinner.bats                # 存活指示器測試 (10)
+│   ├── test_integration_local.bats      # 本機整合測試 (26)
+│   ├── test_integration_sigint.bats     # Signal trap / Ctrl-C 測試 (4)
 │   ├── Dockerfile.sshd                  # 遠端測試用 SSH 伺服器
 │   ├── setup_remote_logs.sh             # 遠端測試資料建立腳本
 │   └── integration/
@@ -191,7 +196,7 @@ declare -a LOG_PATHS=(
 
 ## 測試
 
-396 個測試（341 單元 + 23 本機整合 + 32 遠端整合）。詳見 **[TEST.md](../test/TEST.md)**。
+439 個測試（377 單元 + 30 本機整合 + 32 遠端整合）。詳見 **[TEST.md](../test/TEST.md)**。
 
 ```bash
 ./ci.sh              # 全部測試（需要 Docker）

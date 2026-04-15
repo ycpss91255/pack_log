@@ -343,6 +343,47 @@ _setup_transfer_fail_test() {
 }
 
 # ---------------------------------------------------------------------------
+# 8c. Archive failure interactive prompt
+# ---------------------------------------------------------------------------
+
+_setup_archive_fail_test() {
+    # archive_save_folder always fails (simulates tar failure / disk full).
+    archive_save_folder() { return 1; }
+
+    local test_dir="${BATS_TEST_TMPDIR}/archive_fail"
+    mkdir -p "${test_dir}"
+    echo "data" > "${test_dir}/file.yaml"
+    LOG_PATHS=("${test_dir}" "file.yaml" "")
+}
+
+@test "main: archive failure with 'k' keeps folder only and succeeds" {
+    _setup_archive_fail_test
+
+    run main -l -s 260115-0000 -e 260115-2359 \
+        -o "${BATS_TEST_TMPDIR}/af_k" <<< "k"
+    assert_success
+    assert_output --partial "[K]eep folder only"
+}
+
+@test "main: archive failure with 'a' aborts with exit 1" {
+    _setup_archive_fail_test
+
+    run main -l -s 260115-0000 -e 260115-2359 \
+        -o "${BATS_TEST_TMPDIR}/af_a" <<< "a"
+    assert_failure
+    assert_output --partial "[A]bort"
+}
+
+@test "main: archive failure with empty input retries then 'k' succeeds" {
+    _setup_archive_fail_test
+    # First empty line → retry (archive fails again), second 'k' → break+success
+    run main -l -s 260115-0000 -e 260115-2359 \
+        -o "${BATS_TEST_TMPDIR}/af_r" < <(printf '\nk\n')
+    assert_success
+    assert_output --partial "[R]etry"
+}
+
+# ---------------------------------------------------------------------------
 # 9. Source guard (L1218)
 # ---------------------------------------------------------------------------
 

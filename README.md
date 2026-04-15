@@ -19,13 +19,13 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 ## Features
 
 - **Multi-Host Support**: Pre-configured host list with interactive selection, or direct `user@host` input.
-- **Smart Log Discovery**: Token system for dynamic path resolution — environment variables (`<env:VAR>`), shell commands (`<cmd:command>`), date formats (`<date:%Y%m%d>`), and file extension filters (`<suffix:.ext>`).
+- **Smart Log Discovery**: Token system for dynamic path resolution — environment variables (`<env:VAR>`), shell commands (`<cmd:command>`), and date formats (`<date:%Y%m%d>`). File extensions are written inline (e.g., `*.log`).
 - **Time-Range Filtering**: Finds log files within a specified time window with automatic boundary expansion. When no exact matches exist, files within a configurable time tolerance (default 30 minutes) are included.
 - **Auto SSH Key Management**: Creates SSH keys, copies them to remote hosts, and handles host key rotation automatically. Unknown SSH errors trigger retry instead of fatal exit.
 - **Flexible Transfer**: Supports rsync, scp, and sftp with automatic tool detection and fallback. Shows overall transfer progress by default (`--info=progress2`), per-file detail in verbose mode.
 - **Large Transfer Warning**: When remote folder exceeds `TRANSFER_SIZE_WARN_MB` (default 300MB), prompts for confirmation before transferring.
 - **Transfer Failure Recovery**: Automatically retries failed transfers up to 3 times. When all retries fail, interactively prompts to **[R]etry**, **[K]eep** remote data, or **[C]lean** remote data.
-- **Continuous Log Support**: `<mtime>` flag per LOG_PATH entry catches files still being written to — matches by file modification time when filename timestamp is outside the search range.
+- **Continuous Log Support**: Automatically catches files still being written to — matches by file modification time when filename timestamp is outside the search range.
 - **Resolved Path Display**: Shows the actual resolved path (with tokens expanded) alongside the original LOG_PATHS entry during processing.
 - **Local Mode**: Run without SSH for local log collection.
 - **i18n Support**: English, Traditional Chinese, Simplified Chinese, and Japanese via `--lang` or `$LANG`.
@@ -33,7 +33,9 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 - **Dry-Run Mode**: Preview which files would be collected without any copying or transferring (`--dry-run`).
 - **Dynamic Output Naming**: Output folder defaults to `/tmp/<script_name>_<host>_<YYMMDD-HHMMSS>`. The script name is derived from the filename (e.g., renaming `pack_log.sh` to `my_tool.sh` changes the output folder to `my_tool_<host>_...`). Uses HOSTS display name for `-n` mode, hostname for `-l`/`-u` mode. Override with `-o`.
 - **Auto Archive**: After collection, automatically creates a `.tar.gz` alongside the output folder for easy transport. Interactive `[R]etry / [K]eep folder only / [A]bort` on failure. Skipped in `--dry-run`.
-- 396 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
+- **Liveness Spinner**: Animated stderr indicator during slow operations (SSH connect, remote find, copy, archive, size calculation). Non-tty environments fall back to a single status line so CI logs stay clean.
+- **Clean Ctrl-C Abort**: Pressing Ctrl-C during any phase removes the temporary output folder and exits with status 130 within ~1 second.
+- 439 tests across unit, local integration, and remote integration test suites. CI runs as non-root for realistic permission testing.
 
 ## Quick Start
 
@@ -122,7 +124,8 @@ Log paths support dynamic tokens resolved at runtime on the target host:
 | `<env:VAR>` | Remote environment variable | `<env:HOME>/logs` |
 | `<cmd:command>` | Remote shell command output | `<cmd:hostname>` |
 | `<date:format>` | Date format for time filtering | `<date:%Y%m%d-%H%M%S>` |
-| `<suffix:ext>` | File extension filter | `<suffix:.pcd>` |
+
+File extensions are written inline in the pattern (e.g., `*.pcd`); no dedicated token is required.
 
 **Token processing chain**: `string_handler` → `special_string_parser` → `get_remote_value`
 
@@ -150,7 +153,7 @@ declare -a HOSTS=(
 declare -a LOG_PATHS=(
   # PATH                                    FILE_PATTERN                              FLAGS
   '<env:HOME>/config'                       'node_config.yaml'                        ''
-  '<env:HOME>/log_core'                     'app.<cmd:hostname>.log.<date:%Y%m%d-%H%M%S>*'  '<mtime>'
+  '<env:HOME>/log_core'                     'app.<cmd:hostname>.log.<date:%Y%m%d-%H%M%S>*'  ''
 )
 ```
 
@@ -165,16 +168,15 @@ Each entry is three elements: `"path"  "file_pattern"  "flags"`
 | `<env:VAR>` | Environment variable | `<env:HOME>/logs` |
 | `<cmd:command>` | Shell command output | `<cmd:hostname>` |
 | `<date:format>` | strftime date format for time filtering | `<date:%Y%m%d-%H%M%S>` |
-| `<suffix:ext>` | File extension filter | `<suffix:.log>` |
+
+File extensions are written inline in the pattern (e.g., `*.log`); no dedicated token is required.
 
 **Flags** (third element):
 
 | Flag | Description |
 |------|-------------|
 | `""` | No special flags (default) |
-| `"<mtime>"` | Also match by file modification time — for logs created once but written to continuously until node restart |
 | `"<sudo>"` | Use `sudo` for find/cp commands — for files requiring root permission (e.g., `/var/log/syslog`) |
-| `"<mtime><sudo>"` | Combine multiple flags |
 
 **Examples**:
 
@@ -185,24 +187,24 @@ declare -a LOG_PATHS=(
   # Config file (no date token, always collected)
   "<env:HOME>/core_storage"                       "node_config.yaml"                                              ""
 
-  # Date-filtered files with suffix
-  "<env:HOME>/log_data/detection"                 "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>"                ""
+  # Date-filtered files with extension in pattern
+  "<env:HOME>/log_data/detection"                 "detect_shelf_<date:%Y%m%d%H%M%S>*.dat"                         ""
 
   # Epoch-based timestamp
-  "<env:HOME>/log_slam"                           "coreslam_2D_<date:%s>*<suffix:.log>"                           ""
+  "<env:HOME>/log_slam"                           "coreslam_2D_<date:%s>*.log"                                    ""
 
   # Cross-date folder (path contains <date:>, expands all dates in range)
-  "<env:HOME>/log/AvoidStop_<date:%Y-%m-%d>"      "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>"                ""
+  "<env:HOME>/log/AvoidStop_<date:%Y-%m-%d>"      "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png"                          ""
 
-  # Continuous log with <mtime> (created once, written until restart)
-  "<env:HOME>/log_core"                           "app.<cmd:hostname>.<env:USER>.log.<date:%Y%m%d-%H%M%S>*"      "<mtime>"
+  # Continuous log (created once, written until restart — mtime auto-detected)
+  "<env:HOME>/log_core"                           "app.<cmd:hostname>.<env:USER>.log.<date:%Y%m%d-%H%M%S>*"      ""
 
   # System logs requiring sudo (e.g., /var/log/syslog)
   "/var/log"                                      "syslog*"                                                       "<sudo>"
   "/var/log"                                      "kern.log*"                                                     "<sudo>"
 
   # Using shell variables (defined at script top, expanded at source time)
-  "${MY_LOG_PATH}"                                "app_<date:%Y%m%d%H%M%S>*<suffix:.log>"                        ""
+  "${MY_LOG_PATH}"                                "app_<date:%Y%m%d%H%M%S>*.log"                                 ""
 )
 ```
 
@@ -275,16 +277,18 @@ Enter number, user@host, or 'local':
 │
 ├── test/
 │   ├── test_helper.bash                 # Shared bats test helper
-│   ├── test_log_functions.bats          # Log function tests (27)
-│   ├── test_support_functions.bats      # Support function tests (50)
+│   ├── test_log_functions.bats          # Log function tests (31)
+│   ├── test_support_functions.bats      # Support function tests (54)
 │   ├── test_option_parser.bats          # Option parser tests (57)
 │   ├── test_host_handler.bats           # Host handler tests (22)
-│   ├── test_string_handler.bats         # String/token handler tests (37)
-│   ├── test_file_finder.bats            # File finder tests (39)
-│   ├── test_file_ops.bats              # File operation tests (67)
+│   ├── test_string_handler.bats         # String/token handler tests (36)
+│   ├── test_file_finder.bats            # File finder tests (46)
+│   ├── test_file_ops.bats              # File operation tests (73)
 │   ├── test_ssh_handler.bats            # SSH handler tests (13)
-│   ├── test_main.bats                   # Main pipeline tests (30)
-│   ├── test_integration_local.bats      # Local integration tests (24)
+│   ├── test_main.bats                   # Main pipeline tests (35)
+│   ├── test_spinner.bats                # Liveness spinner tests (10)
+│   ├── test_integration_local.bats      # Local integration tests (26)
+│   ├── test_integration_sigint.bats     # Signal trap / Ctrl-C tests (4)
 │   ├── Dockerfile.sshd                  # SSH server for remote tests
 │   ├── setup_remote_logs.sh             # Remote test data seeder
 │   └── integration/
@@ -305,7 +309,7 @@ Enter number, user@host, or 'local':
 
 ## Testing
 
-396 tests (341 unit + 23 local integration + 32 remote integration). See **[TEST.md](doc/test/TEST.md)** for full details.
+439 tests (377 unit + 30 local integration + 32 remote integration). See **[TEST.md](doc/test/TEST.md)** for full details.
 
 ```bash
 ./ci.sh              # All tests (Docker required)

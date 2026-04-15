@@ -5,7 +5,7 @@
 #
 # Tests the full main() pipeline in local mode (-l) with realistic LOG_PATHS
 # patterns exercising all token types: <env:VAR>, <cmd:command>,
-# <date:format>, <suffix:ext>.
+# <date:format>.
 # =============================================================================
 
 setup() {
@@ -132,7 +132,7 @@ setup() {
 
 @test "local-integration: date token filters files by time range" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>" ""
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*.dat" ""
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/date_test"
@@ -151,7 +151,7 @@ setup() {
 
 @test "local-integration: epoch date format filters correctly" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam" "coreslam_2D_<date:%s>*<suffix:.log>" ""
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam" "coreslam_2D_<date:%s>*.log" ""
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/epoch_test"
@@ -164,12 +164,12 @@ setup() {
 }
 
 # ---------------------------------------------------------------------------
-# 5. <suffix:ext> filtering
+# 5. Plain-text file extension filtering
 # ---------------------------------------------------------------------------
 
-@test "local-integration: suffix token filters by file extension" {
+@test "local-integration: plain-text suffix in pattern filters by file extension" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_<date:%Y%m%d%H%M%S>*<suffix:.pcd>" ""
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_<date:%Y%m%d%H%M%S>*.pcd" ""
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/suffix_test"
@@ -192,7 +192,7 @@ setup() {
     LOG_PATHS=(
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage" "node_config.yaml" ""
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage" "shelf.ini" ""
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*<suffix:.dat>" ""
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection" "detect_shelf_node-DetectShelf_<date:%Y%m%d%H%M%S>*.dat" ""
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_data/lidar_detection/glog" "detect_shelf_node-DetectShelf-<date:%Y%m%d-%H%M%S>*" ""
     )
 
@@ -231,6 +231,43 @@ setup() {
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/nomatch_test"
     assert_success
     assert_output --partial "No files found"
+}
+
+@test "local-integration: missing directory triggers DIR_NOT_FOUND diagnostic" {
+    # Path literally does not exist — should hit the L2952-2953 diagnostic branch
+    LOG_PATHS=(
+        "${BATS_TEST_TMPDIR}/never_existed" "anything*.log" ""
+    )
+
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/missing_dir_test"
+    assert_success
+    assert_output --partial "Directory does not exist"
+}
+
+@test "local-integration: files outside time range trigger NO_TIME_MATCH diagnostic" {
+    # Files exist and pattern-match, but timestamps are far outside the
+    # search window AND well beyond the mtime tolerance window — should
+    # hit the L2960 diagnostic (REPLY_RAW_COUNT > 0 branch).
+    local out_range_dir="${BATS_TEST_TMPDIR}/out_of_range"
+    mkdir -p "${out_range_dir}"
+    # Year 2020 files (6 years off), and touch their mtime to the same
+    # old date to defeat the auto-mtime fallback window.
+    echo "old" > "${out_range_dir}/app_20200101-120000.log"
+    echo "old" > "${out_range_dir}/app_20200101-130000.log"
+    touch -t 202001011200 "${out_range_dir}/app_20200101-120000.log"
+    touch -t 202001011300 "${out_range_dir}/app_20200101-130000.log"
+
+    # Narrow the mtime tolerance so the 2020 mtimes can't sneak in.
+    FILE_TIME_TOLERANCE_MIN=1
+
+    LOG_PATHS=(
+        "${out_range_dir}" "app_<date:%Y%m%d-%H%M%S>*.log" ""
+    )
+
+    run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/out_of_range_test"
+    assert_success
+    # MSG_NO_TIME_MATCH wording: "[x/y] Found N files but none in time range ..."
+    assert_output --partial "but none in time range"
 }
 
 # ---------------------------------------------------------------------------
@@ -337,7 +374,7 @@ setup() {
     mkdir -p "${empty_dir}"
 
     LOG_PATHS=(
-        "${empty_dir}" "some_pattern_<date:%Y%m%d%H%M%S>*<suffix:.log>" ""
+        "${empty_dir}" "some_pattern_<date:%Y%m%d%H%M%S>*.log" ""
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/empty_test"
@@ -346,10 +383,10 @@ setup() {
 }
 
 # ---------------------------------------------------------------------------
-# 13. Date token in suffix position
+# 13. Wildcard before and after date token
 # ---------------------------------------------------------------------------
 
-@test "local-integration: date token in suffix position works" {
+@test "local-integration: pattern with wildcards around date token works" {
     local log_dir="${BATS_TEST_TMPDIR}/suffix_date_logs"
     mkdir -p "${log_dir}"
     touch "${log_dir}/mylog_data_20260115120000.log"
@@ -430,7 +467,7 @@ setup() {
 
 @test "local-integration: cross-date folders collect files from all days" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>" ""
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png" ""
     )
 
     # Range spans Jan 15-16
@@ -468,7 +505,7 @@ setup() {
 
 @test "local-integration: epoch date format filters slam logs" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam"  "coreslam_2D_<date:%s>*<suffix:.log>" ""
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam"  "coreslam_2D_<date:%s>*.log" ""
     )
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/epoch_test2"
     assert_success
@@ -484,7 +521,7 @@ setup() {
 
 @test "local-integration: Y-m-d-H-M-S date format filters record files" {
     LOG_PATHS=(
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam/record"  "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>" ""
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam/record"  "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec" ""
     )
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/rec_test"
     assert_success
@@ -506,9 +543,9 @@ setup() {
     LOG_PATHS=(
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage/default"                              "uimap.png" ""
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/core_storage/default"                              "uimap.yaml" ""
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>"                     "<date:%Y-%m-%d-%H.%M.%S>_*<suffix:_avoid.png>" ""
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log/AvoidStop_<date:%Y-%m-%d>"                     "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png" ""
         "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_core"                                          "corenavi_auto.${hostname_val}.${user_val}.log.INFO.<date:%Y%m%d-%H%M%S>*" ""
-        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam/record"                                   "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*<suffix:.rec>" ""
+        "<env:FAKE_HOME>/ros-docker/AMR/myuser/log_slam/record"                                   "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec" ""
     )
 
     # Range spans both Jan 15-16 for cross-date
@@ -563,7 +600,7 @@ setup() {
     sudo bash -c "echo 'test2' > '${test_dir}/corenavi_slam.host.user.log.WARNING.20260115-130000.2'"
 
     LOG_PATHS=(
-        "${test_dir}"  "corenavi_*.host.user.*.<date:%Y%m%d-%H%M%S>*"  "<mtime>"
+        "${test_dir}"  "corenavi_*.host.user.*.<date:%Y%m%d-%H%M%S>*"  ""
     )
 
     run main -l -s 260115-0000 -e 260115-2359 -o "${OUTPUT_DIR}/sudo_mtime"

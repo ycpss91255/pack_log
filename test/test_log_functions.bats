@@ -272,13 +272,14 @@ setup() {
 
 @test "load_lang: format arg counts match across all languages" {
     # Get English format arg counts
+    # Match both %d/%s and positional %N$d/%N$s forms
     LANG_CODE="en"
     load_lang
     local -A en_fmt_counts=()
     local var val count
     for var in $(compgen -v MSG_); do
         val="${!var}"
-        count=$(echo "${val}" | grep -oP '%[sd]' | wc -l)
+        count=$(echo "${val}" | grep -oP '%[0-9]*\$?[sd]' | wc -l)
         en_fmt_counts["${var}"]="${count}"
     done
 
@@ -288,7 +289,7 @@ setup() {
         load_lang
         for var in "${!en_fmt_counts[@]}"; do
             val="${!var}"
-            count=$(echo "${val}" | grep -oP '%[sd]' | wc -l)
+            count=$(echo "${val}" | grep -oP '%[0-9]*\$?[sd]' | wc -l)
             if [[ "${count}" -ne "${en_fmt_counts["${var}"]}" ]]; then
                 echo "MISMATCH: ${var} in ${lang}: expected ${en_fmt_counts["${var}"]} format args, got ${count}"
                 return 1
@@ -296,6 +297,111 @@ setup() {
         done
     done
 
+    # Restore
+    LANG_CODE="en"
+    load_lang
+}
+
+# --- MSG_INFO_* / MSG_SUMMARY_* / MSG_RETRY_* variables ---
+
+@test "load_lang: info i18n variables are defined for all languages" {
+    local -a info_vars=(
+        MSG_RETRY_TRANSFER MSG_RETRY_ARCHIVE
+        MSG_SUMMARY_HOST MSG_SUMMARY_TIME_RANGE
+        MSG_SUMMARY_TOOL MSG_SUMMARY_SAVE_FOLDER
+    )
+    for lang in en zh-TW zh-CN ja; do
+        LANG_CODE="${lang}"
+        load_lang
+        for var in "${info_vars[@]}"; do
+            [[ -n "${!var+set}" ]] || {
+                echo "MISSING: ${var} in ${lang}"
+                return 1
+            }
+            [[ -n "${!var}" ]] || {
+                echo "EMPTY: ${var} in ${lang}"
+                return 1
+            }
+        done
+    done
+    # Restore
+    LANG_CODE="en"
+    load_lang
+}
+
+# --- MSG_TRACE_* variables ---
+
+@test "load_lang: MSG_TRACE_* variables are defined for all languages" {
+    local -a trace_vars=(
+        MSG_TRACE_INPUT MSG_TRACE_OUTPUT
+        MSG_TRACE_PARAM MSG_TRACE_SINGLE_OUTPUT
+    )
+    for lang in en zh-TW zh-CN ja; do
+        LANG_CODE="${lang}"
+        load_lang
+        for var in "${trace_vars[@]}"; do
+            [[ -n "${!var+set}" ]] || {
+                echo "MISSING: ${var} in ${lang}"
+                return 1
+            }
+            [[ -n "${!var}" ]] || {
+                echo "EMPTY: ${var} in ${lang}"
+                return 1
+            }
+        done
+    done
+    # Restore
+    LANG_CODE="en"
+    load_lang
+}
+
+# --- MSG_FILES_SELECTED positional args ---
+
+@test "load_lang: MSG_DBG_* variables are defined for all languages" {
+    local -a dbg_vars=(
+        MSG_DBG_CACHE_HIT MSG_DBG_EXECUTING_CMD
+        MSG_DBG_PREFETCH_BATCHING MSG_DBG_PREFETCH_FAILED
+        MSG_DBG_PREFETCH_MISMATCH MSG_DBG_PREFETCH_RESULT
+        MSG_DBG_NO_INPUT_PROMPTING MSG_DBG_USER_SELECTED_NUM
+        MSG_DBG_USER_PROVIDED_HOST MSG_DBG_USE_NUM_FOR_HOST
+        MSG_DBG_PARSED_SPECIAL MSG_DBG_RESOLVED_STRING
+        MSG_DBG_ORIGINAL_PATH MSG_DBG_ORIGINAL_PATTERN
+        MSG_DBG_DATE_TOKEN_DEFERRED MSG_DBG_PROCESSING_TOKEN
+        MSG_DBG_EXPANDED_RANGE
+    )
+    for lang in en zh-TW zh-CN ja; do
+        LANG_CODE="${lang}"
+        load_lang
+        for var in "${dbg_vars[@]}"; do
+            [[ -n "${!var+set}" ]] || {
+                echo "MISSING: ${var} in ${lang}"
+                return 1
+            }
+            [[ -n "${!var}" ]] || {
+                echo "EMPTY: ${var} in ${lang}"
+                return 1
+            }
+        done
+    done
+    # Restore
+    LANG_CODE="en"
+    load_lang
+}
+
+@test "load_lang: MSG_FILES_SELECTED all languages show selected before candidates" {
+    # printf args order: selected=5, candidates=20
+    for lang in en zh-TW zh-CN ja; do
+        LANG_CODE="${lang}"
+        load_lang
+        local result
+        # shellcheck disable=SC2059
+        result=$(printf "${MSG_FILES_SELECTED}" 5 20)
+        # All languages: "5" (selected) appears before "20" (candidates)
+        [[ "${result}" == *"5"*"20"* ]] || {
+            echo "FAIL: ${lang}: ${result} — expected 5 before 20"
+            return 1
+        }
+    done
     # Restore
     LANG_CODE="en"
     load_lang
