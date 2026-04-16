@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.8.0 (2026-04-16)
 
 ### Features
 - **Bandwidth limit (`--bwlimit <rate>`)**: new option to cap transfer throughput, preventing the script from saturating shared network links. Accepts plain KB/s (`500`) or `K` / `M` / `G` suffixes (`500K`, `10M`, `1G`, case-insensitive, trailing `B` optional, IEC 1024-based to match rsync). `0` = unlimited (default). rsync uses `--bwlimit=N` directly; scp/sftp use `-l` in Kbit/s (converted as `N * 8`). Invalid (non-numeric / negative / unsupported suffix) values exit with a clear error. Help text added in all 4 languages. Closes #2.
