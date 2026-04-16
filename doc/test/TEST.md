@@ -1,6 +1,6 @@
 # Tests
 
-453 tests (391 unit + 30 local integration + 32 remote integration)
+474 tests (412 unit + 30 local integration + 32 remote integration)
 
 ## Unit Tests
 
@@ -8,7 +8,7 @@
 |-----------|------:|-------|
 | `test_log_functions.bats` | 31 | Log output, verbosity, i18n, file descriptor management |
 | `test_support_functions.bats` | 54 | `have_sudo_access` (incl. `command -v sudo` PATH hijack), `pkg_install_handler`, `execute_cmd`, `date_format` |
-| `test_option_parser.bats` | 63 | CLI argument parsing, `SAVE_FOLDER` default, `--dry-run`, `--bwlimit`, `--extra-verbose`, `$LANG` auto-detect |
+| `test_option_parser.bats` | 84 | CLI argument parsing, `SAVE_FOLDER` default, `--dry-run`, `--bwlimit` (incl. `_parse_bwlimit` K/M/G[B] suffix handling), `--extra-verbose`, `$LANG` auto-detect |
 | `test_host_handler.bats` | 22 | Host resolution (`-n`, `-u`, `-l`), interactive mode |
 | `test_string_handler.bats` | 36 | Token parsing (`<env:>`, `<cmd:>`, `<date:>`), path splitting |
 | `test_file_finder.bats` | 46 | Date filtering, boundary expansion, time tolerance, symlink, auto-mtime, epoch support |
