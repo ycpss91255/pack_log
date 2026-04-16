@@ -367,3 +367,39 @@ setup() {
     [[ "${REPLY_PATHS[1]}" == "/var/log/run_2026-01-16-00" ]]
     [[ "${REPLY_PATHS[2]}" == "/var/log/run_2026-01-16-01" ]]
 }
+
+# %k / %I / %l are the other date specifiers that represent an hour. Without
+# dedicated coverage the step-detection code only tests %H, so a future
+# refactor that accidentally drops one of the alternatives would silently
+# collapse the day step back in. Each specifier gets its own test because
+# strftime output differs (space-padding, 12-hour wrap) and we want a clear
+# failure message if only one variant regresses.
+
+@test "resolve_path_dates: %k (space-padded 24-hour) triggers hourly step" {
+    START_TIME="260115-0000"
+    END_TIME="260115-0300"
+    REPLY_PATH="/var/log/run_<date:%k>"
+    resolve_path_dates
+    # Four distinct hours (0,1,2,3) become four paths. Leading-space padding
+    # is part of %k output; the exact strings aren't asserted because bash
+    # parameter expansion in the production dedupe set preserves them as-is.
+    assert_equal "${#REPLY_PATHS[@]}" 4
+}
+
+@test "resolve_path_dates: %I (zero-padded 12-hour) triggers hourly step" {
+    # Stay inside AM to avoid 12-hour wrap collapsing two different real
+    # hours onto the same label (e.g. 11 AM vs 11 PM).
+    START_TIME="260115-0900"
+    END_TIME="260115-1200"
+    REPLY_PATH="/var/log/run_<date:%I>"
+    resolve_path_dates
+    assert_equal "${#REPLY_PATHS[@]}" 4
+}
+
+@test "resolve_path_dates: %l (space-padded 12-hour) triggers hourly step" {
+    START_TIME="260115-0900"
+    END_TIME="260115-1200"
+    REPLY_PATH="/var/log/run_<date:%l>"
+    resolve_path_dates
+    assert_equal "${#REPLY_PATHS[@]}" 4
+}

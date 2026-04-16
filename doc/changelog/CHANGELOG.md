@@ -9,9 +9,9 @@
 
 ### Tests
 - `test_option_parser.bats`: 2 new tests covering the strict `START < END` ordering (equal-times and off-by-one rejection) plus an existing test rewritten from "passes" to "exits with error".
-- `test_string_handler.bats`: 5 new tests for `resolve_path_dates` fmt-based step (hourly expansion, minute expansion, second-level warning, month-level dedupe, hourly crossing a day boundary).
+- `test_string_handler.bats`: 8 new tests for `resolve_path_dates` fmt-based step — hourly (%H) expansion, minute expansion, second-level warning, month-level dedupe, hourly crossing a day boundary, plus dedicated coverage for the %k / %I / %l hour variants so the step-detection path doesn't regress on non-%H specifiers.
 - `test_file_finder.bats`: 1 new test mocking `date -f -` failure and asserting the warning is emitted.
-- 450 tests (420 unit + 30 local integration + 32 remote integration); all green; ShellCheck `-x -S style` clean.
+- 453 tests (423 unit + 30 local integration + 32 remote integration); all green; ShellCheck `-x -S style` clean.
 
 ### i18n
 - Added `MSG_WARN_DATE_STEP_UNSUPPORTED` and `MSG_WARN_FILE_FINDER_BATCH_FAILED` in all four languages (en / zh-TW / zh-CN / ja).
