@@ -57,6 +57,34 @@ teardown() {
     spinner_stop
 }
 
+@test "spinner_start: outputs frame characters and message to stderr in tty mode" {
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
+        source "'"${PROJECT_ROOT}"'/pack_log.sh"
+        _spinner_is_tty() { return 0; }
+        _SPINNER_PID=""
+        spinner_start "working hard"
+        sleep 0.5
+        spinner_stop
+    '
+    assert_success
+    # Verify message text appears in output
+    [[ "${output}" == *"working hard"* ]]
+    # Verify at least one frame character appears (from _SPINNER_FRAMES '\|/-')
+    [[ "${output}" == *'|'* ]]
+}
+
+@test "spinner_start: prints single status line to stderr in non-tty mode" {
+    run env -u LD_PRELOAD -u BASH_ENV bash -c '
+        source "'"${PROJECT_ROOT}"'/pack_log.sh"
+        _spinner_is_tty() { return 1; }
+        _SPINNER_PID=""
+        spinner_start "non-tty message"
+    '
+    assert_success
+    # Non-tty mode prints the message once as a plain line
+    [[ "${output}" == *"non-tty message"* ]]
+}
+
 # --- spinner_stop ---
 
 @test "spinner_stop: kills the spinner process" {

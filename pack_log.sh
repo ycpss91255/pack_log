@@ -129,16 +129,16 @@ declare -a LOG_PATHS=(
   # "${COREROBOT_DOCKER_STORAGE}"                       "external_param.launch"                                                   ""
   # "${COREROBOT_DOCKER_STORAGE}"                       "run_config.yaml"                                                         ""
 
-  # # Panasonic — 2D LiDAR AvoidStop and EmergencyStop log path (docker)
-  # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"            "uimap.png"                                                                  ""
-  # "${COREROBOT_DOCKER_STORAGE}/mapfile/default"            "uimap.yaml"                                                                 ""
-  # "${COREROBOT_DOCKER_LOG}/AvoidStop_<date:%Y-%m-%d>"      "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png"                                       ""
-  # "${COREROBOT_DOCKER_LOG}/EmergencyStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*_scan.png"                                        ""
-  # "${COREROBOT_DOCKER_LOG_CORE}"                           "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"     ""
-  # "${COREROBOT_DOCKER_LOG_SLAM}/record"                    "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                                  ""
-  # "${COREROBOT_DOCKER_LOG_DATA}/lidar_filter"              "lidar_filter_node.<cmd:hostname>.<env:USER>.log.*.<date:%Y%m%d-%H%M%S>*"    ""
-  # "${COREROBOT_DOCKER_LOG_DATA}/scan_fusion"               "scan_fusion_node.<cmd:hostname>.<env:USER>.log.*.<date:%Y%m%d-%H%M%S>*"     ""
-  # "${COREROBOT_DOCKER_LOG_DATA}/object_detector"           "object_detector_node.<cmd:hostname>.<env:USER>.log.*.<date:%Y%m%d-%H%M%S>*" ""
+  # Panasonic — 2D LiDAR AvoidStop and EmergencyStop log path (docker)
+  "${COREROBOT_DOCKER_STORAGE}/mapfile/default"            "uimap.png"                                                                  ""
+  "${COREROBOT_DOCKER_STORAGE}/mapfile/default"            "uimap.yaml"                                                                 ""
+  "${COREROBOT_DOCKER_LOG}/AvoidStop_<date:%Y-%m-%d>"      "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png"                                       ""
+  "${COREROBOT_DOCKER_LOG}/EmergencyStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*_scan.png"                                        ""
+  "${COREROBOT_DOCKER_LOG_CORE}"                           "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"     ""
+  "${COREROBOT_DOCKER_LOG_SLAM}/record"                    "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                                  ""
+  "${COREROBOT_DOCKER_LOG_DATA}/lidar_filter"              "lidar_filter_node.<cmd:hostname>.<env:USER>.log.*.<date:%Y%m%d-%H%M%S>*"    ""
+  "${COREROBOT_DOCKER_LOG_DATA}/scan_fusion"               "scan_fusion_node.<cmd:hostname>.<env:USER>.log.*.<date:%Y%m%d-%H%M%S>*"     ""
+  "${COREROBOT_DOCKER_LOG_DATA}/object_detector"           "object_detector_node.<cmd:hostname>.<env:USER>.log.*.<date:%Y%m%d-%H%M%S>*" ""
 
   # # Panasonic — Battery Changed fail log path (docker)
   # "${COREROBOT_DOCKER_LOG_CORE}"                 "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
