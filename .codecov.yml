@@ -1,0 +1,17 @@
+# Codecov configuration for pack_log
+#
+# Why the patch target is not 100%:
+#   kcov (our coverage tool) does not count individual elements inside bash
+#   array literals — e.g. every entry of `long_opts_arr=( "number:" ... )` is
+#   reported as lineNoCov even though it is exercised on every invocation.
+#   A 5% buffer accommodates that tooling gap without masking real regressions.
+
+coverage:
+  status:
+    patch:
+      default:
+        target: 95%
+    project:
+      default:
+        target: auto
+        threshold: 0.5%
