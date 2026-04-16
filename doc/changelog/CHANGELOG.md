@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Bug Fixes
+- **`time_handler` now rejects equal / reversed times.** Previously `-s 260101-1200 -e 260101-1200` was accepted; the range is empty so the tool silently produced zero files. Switched from lexicographic `>` to `! <`, so anything that isn't strictly `START < END` fails with the existing `MSG_START_BEFORE_END` error. Closes #5.
+- **`resolve_path_dates` now picks `step_sec` from the smallest specifier in `<date:fmt>`.** The hard-coded 86400 step skipped 23/24 directories for hourly path tokens like `<date:%Y-%m-%d-%H>`. Day (`%Y-%m-%d`, default), hour (`%H`/`%k`/`%I`/`%l`), minute (`%M`) are supported directly; second-level specifiers (`%S`, `%s`) log a warning and fall back to day step. Closes #5.
+- **`file_finder` surfaces batch-parse failures instead of silently dropping files.** When `date -f -` fails during the tolerance path, every candidate was dropped without a log message, so a user seeing zero files had no way to tell it was a `date` error vs. a genuine no-match. Added `MSG_WARN_FILE_FINDER_BATCH_FAILED` via `log_warn`. Closes #5.
+
+### Tests
+- `test_option_parser.bats`: 2 new tests covering the strict `START < END` ordering (equal-times and off-by-one rejection) plus an existing test rewritten from "passes" to "exits with error".
+- `test_string_handler.bats`: 5 new tests for `resolve_path_dates` fmt-based step (hourly expansion, minute expansion, second-level warning, month-level dedupe, hourly crossing a day boundary).
+- `test_file_finder.bats`: 1 new test mocking `date -f -` failure and asserting the warning is emitted.
+- 450 tests (420 unit + 30 local integration + 32 remote integration); all green; ShellCheck `-x -S style` clean.
+
+### i18n
+- Added `MSG_WARN_DATE_STEP_UNSUPPORTED` and `MSG_WARN_FILE_FINDER_BATCH_FAILED` in all four languages (en / zh-TW / zh-CN / ja).
+
 ## v1.8.0 (2026-04-16)
 
 ### Features

@@ -311,3 +311,59 @@ setup() {
     [[ "${REPLY_PATHS[0]}" == "/home/user/corenavi_0309_#7" ]]
     [[ "$REPLY_PREFIX" == "app.<date:%Y%m%d-%H%M%S>*.log" ]]
 }
+
+# --- fmt-aware step size ---
+# The production code must pick a step matching the smallest time specifier,
+# otherwise hourly/minute directories get skipped (only start/end expansions
+# survive).
+
+@test "resolve_path_dates: hourly fmt expands every hour in range" {
+    START_TIME="260115-0000"
+    END_TIME="260115-0300"
+    REPLY_PATH="/var/log/run_<date:%Y-%m-%d-%H>"
+    resolve_path_dates
+    assert_equal "${#REPLY_PATHS[@]}" 4
+    [[ "${REPLY_PATHS[0]}" == "/var/log/run_2026-01-15-00" ]]
+    [[ "${REPLY_PATHS[1]}" == "/var/log/run_2026-01-15-01" ]]
+    [[ "${REPLY_PATHS[2]}" == "/var/log/run_2026-01-15-02" ]]
+    [[ "${REPLY_PATHS[3]}" == "/var/log/run_2026-01-15-03" ]]
+}
+
+@test "resolve_path_dates: minute fmt expands every minute in range" {
+    START_TIME="260115-1200"
+    END_TIME="260115-1205"
+    REPLY_PATH="/var/log/run_<date:%Y-%m-%d-%H%M>"
+    resolve_path_dates
+    assert_equal "${#REPLY_PATHS[@]}" 6
+    [[ "${REPLY_PATHS[0]}" == "/var/log/run_2026-01-15-1200" ]]
+    [[ "${REPLY_PATHS[5]}" == "/var/log/run_2026-01-15-1205" ]]
+}
+
+@test "resolve_path_dates: second-level fmt warns and falls back safely" {
+    START_TIME="260115-0000"
+    END_TIME="260115-0001"
+    REPLY_PATH="/var/log/run_<date:%Y-%m-%d-%H%M%S>"
+    run resolve_path_dates
+    assert_success
+    assert_output --partial "second-level"
+}
+
+@test "resolve_path_dates: month-level fmt dedupes without warning on duplicates" {
+    START_TIME="260115-0000"
+    END_TIME="260117-2359"
+    REPLY_PATH="/var/log/<date:%Y-%m>"
+    resolve_path_dates
+    assert_equal "${#REPLY_PATHS[@]}" 1
+    [[ "${REPLY_PATHS[0]}" == "/var/log/2026-01" ]]
+}
+
+@test "resolve_path_dates: hourly fmt across day boundary covers both days" {
+    START_TIME="260115-2300"
+    END_TIME="260116-0100"
+    REPLY_PATH="/var/log/run_<date:%Y-%m-%d-%H>"
+    resolve_path_dates
+    assert_equal "${#REPLY_PATHS[@]}" 3
+    [[ "${REPLY_PATHS[0]}" == "/var/log/run_2026-01-15-23" ]]
+    [[ "${REPLY_PATHS[1]}" == "/var/log/run_2026-01-16-00" ]]
+    [[ "${REPLY_PATHS[2]}" == "/var/log/run_2026-01-16-01" ]]
+}

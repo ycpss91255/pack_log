@@ -348,6 +348,8 @@ load_lang() {
       MSG_ARCHIVE_CHOICE='選擇：[R] 重試 / [K] 僅保留資料夾 / [A] 中止：'
       MSG_ARCHIVE_KEEP_FOLDER='略過封存，資料夾保留於：%s'
       MSG_ARCHIVE_ABORTED='使用者中止封存，資料夾保留於：%s'
+      MSG_WARN_DATE_STEP_UNSUPPORTED='%s 包含秒級 specifier，不支援秒級步進，回退為日級步進（可能漏掉目錄）'
+      MSG_WARN_FILE_FINDER_BATCH_FAILED='批次時間戳解析失敗（%d 個時間戳），此範圍內所有候選檔案已跳過（可能漏檔）'
       MSG_OUTPUT_SECTION='=== 輸出 ==='
       MSG_OUTPUT_NAME='輸出資料夾：%s'
       MSG_OUTPUT_ARCHIVE='輸出封存檔：%s'
@@ -496,6 +498,8 @@ load_lang() {
       MSG_ARCHIVE_CHOICE='选择：[R] 重试 / [K] 仅保留文件夹 / [A] 中止：'
       MSG_ARCHIVE_KEEP_FOLDER='跳过归档，文件夹保留于：%s'
       MSG_ARCHIVE_ABORTED='用户中止归档，文件夹保留于：%s'
+      MSG_WARN_DATE_STEP_UNSUPPORTED='%s 包含秒级 specifier，不支持秒级步进，回退为日级步进（可能漏掉目录）'
+      MSG_WARN_FILE_FINDER_BATCH_FAILED='批次时间戳解析失败（%d 个时间戳），此范围内所有候选档案已跳过（可能漏档）'
       MSG_OUTPUT_SECTION='=== 输出 ==='
       MSG_OUTPUT_NAME='输出文件夹：%s'
       MSG_OUTPUT_ARCHIVE='输出归档：  %s'
@@ -644,6 +648,8 @@ load_lang() {
       MSG_ARCHIVE_CHOICE='選択：[R] 再試行 / [K] フォルダのみ保持 / [A] 中止：'
       MSG_ARCHIVE_KEEP_FOLDER='アーカイブをスキップしました。フォルダは保持されています：%s'
       MSG_ARCHIVE_ABORTED='ユーザーによってアーカイブが中止されました。フォルダは保持されています：%s'
+      MSG_WARN_DATE_STEP_UNSUPPORTED='%s に秒単位の specifier が含まれます。秒単位ステップは未対応のため日単位にフォールバックします（ディレクトリを取りこぼす可能性あり）'
+      MSG_WARN_FILE_FINDER_BATCH_FAILED='タイムスタンプの一括解析に失敗しました（%d 件）。この範囲内の候補ファイルはすべてスキップされます（ファイル漏れの可能性あり）'
       MSG_OUTPUT_SECTION='=== 出力 ==='
       MSG_OUTPUT_NAME='出力フォルダ：%s'
       MSG_OUTPUT_ARCHIVE='出力アーカイブ：%s'
@@ -792,6 +798,8 @@ load_lang() {
       MSG_ARCHIVE_CHOICE='Choose: [R]etry / [K]eep folder only / [A]bort:'
       MSG_ARCHIVE_KEEP_FOLDER='Skipping archive, folder kept at: %s'
       MSG_ARCHIVE_ABORTED='Archive aborted by user, folder kept at: %s'
+      MSG_WARN_DATE_STEP_UNSUPPORTED='%s contains a second-level specifier; second-level stepping is unsupported, falling back to day step (may miss directories)'
+      MSG_WARN_FILE_FINDER_BATCH_FAILED='batch timestamp parse failed (%d timestamps); all candidate files in this range were skipped (possible missed files)'
       MSG_OUTPUT_SECTION='=== Output ==='
       MSG_OUTPUT_NAME='Output folder:  %s'
       MSG_OUTPUT_ARCHIVE='Output archive: %s'
@@ -1704,8 +1712,10 @@ time_handler() {
     fi
   done
 
-  # Validate start < end
-  if [[ "${START_TIME}" > "${END_TIME}" ]]; then
+  # Validate start < end. `>=` rejects equal values because an empty range would
+  # otherwise silently yield zero files — the error message already promises
+  # strict ordering.
+  if [[ ! "${START_TIME}" < "${END_TIME}" ]]; then
     log_error "$(printf "${MSG_START_BEFORE_END}" "${START_TIME}" "${END_TIME}")"
   fi
 }
@@ -2020,8 +2030,20 @@ resolve_path_dates() {
   date_format "${START_TIME}" "%s"; start_epoch="${REPLY}"
   date_format "${END_TIME}" "%s"; end_epoch="${REPLY}"
 
-  # Determine step size from format (daily for most formats)
-  local step_sec=86400  # default: 1 day
+  # Determine step size from the smallest specifier present in fmt. Month and
+  # year-only formats stay at the day default — the per-day expansion collapses
+  # into the same directory string via the dedupe set below. Second-level
+  # specifiers (%s/%S) would require 86400 iterations per day, so we warn and
+  # fall back to day step instead; users hitting this need a coarser fmt.
+  local step_sec=86400
+  if [[ "${fmt}" == *%s* || "${fmt}" == *%S* ]]; then
+    log_warn "$(printf "${MSG_WARN_DATE_STEP_UNSUPPORTED}" "${token}")"
+  elif [[ "${fmt}" == *%M* ]]; then
+    step_sec=60
+  elif [[ "${fmt}" == *%H* || "${fmt}" == *%k* \
+       || "${fmt}" == *%I* || "${fmt}" == *%l* ]]; then
+    step_sec=3600
+  fi
 
   # Batch-format every epoch in the range with a single `date -f -` call.
   # Replaces N forks (one per day) with 1, mirroring file_finder's tolerance
@@ -2282,8 +2304,12 @@ file_finder() {
           for k in "${!uniq_ts[@]}"; do
             epoch_map["${uniq_ts[k]}"]="${epochs[k]}"
           done
+        else
+          # Batch parse failed → map stays empty and every candidate would
+          # silently drop below. Surface a warning so users aren't confused by
+          # a zero-file result caused by a date-tool issue.
+          log_warn "$(printf "${MSG_WARN_FILE_FINDER_BATCH_FAILED}" "${#uniq_ts[@]}")"
         fi
-        # else: batch failed → map stays empty → all files skipped below
       fi
 
       local -a selected=()
