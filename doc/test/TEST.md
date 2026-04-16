@@ -1,6 +1,6 @@
 # Tests
 
-439 tests (377 unit + 30 local integration + 32 remote integration)
+474 tests (412 unit + 30 local integration + 32 remote integration)
 
 ## Unit Tests
 
@@ -8,14 +8,14 @@
 |-----------|------:|-------|
 | `test_log_functions.bats` | 31 | Log output, verbosity, i18n, file descriptor management |
 | `test_support_functions.bats` | 54 | `have_sudo_access` (incl. `command -v sudo` PATH hijack), `pkg_install_handler`, `execute_cmd`, `date_format` |
-| `test_option_parser.bats` | 57 | CLI argument parsing, `SAVE_FOLDER` default, `--dry-run`, `--extra-verbose`, `$LANG` auto-detect |
+| `test_option_parser.bats` | 84 | CLI argument parsing, `SAVE_FOLDER` default, `--dry-run`, `--bwlimit` (incl. `_parse_bwlimit` K/M/G[B] suffix handling), `--extra-verbose`, `$LANG` auto-detect |
 | `test_host_handler.bats` | 22 | Host resolution (`-n`, `-u`, `-l`), interactive mode |
 | `test_string_handler.bats` | 36 | Token parsing (`<env:>`, `<cmd:>`, `<date:>`), path splitting |
 | `test_file_finder.bats` | 46 | Date filtering, boundary expansion, time tolerance, symlink, auto-mtime, epoch support |
-| `test_file_ops.bats` | 73 | `folder_creator`, `file_copier`, `file_sender` (incl. >1GB size branch), `get_log` (incl. sudo pre-scan, time-range summary, rsync fallback), `file_cleaner`, `archive_save_folder` |
+| `test_file_ops.bats` | 79 | `folder_creator`, `file_copier`, `file_sender` (incl. >1GB size branch, `--bwlimit` rsync/scp/sftp), `get_log` (incl. sudo pre-scan, time-range summary, rsync fallback), `file_cleaner`, `archive_save_folder` |
 | `test_ssh_handler.bats` | 13 | SSH key creation, key copy, host key rotation, retry logic |
 | `test_main.bats` | 35 | Full pipeline (local/remote), dry-run, transfer failure prompt, archive failure prompt (K/A/retry) |
-| `test_spinner.bats` | 10 | Liveness spinner (`spinner_start` / `spinner_stop`), tty detection, i18n message coverage |
+| `test_spinner.bats` | 12 | Liveness spinner (`spinner_start` / `spinner_stop`), tty detection, i18n message coverage |
 
 ## Local Integration Tests
 

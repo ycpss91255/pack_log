@@ -11,6 +11,7 @@ setup() {
   END_TIME=""
   SAVE_FOLDER="pack_log"
   DRY_RUN=false
+  BANDWIDTH_LIMIT=0
 }
 
 # ===========================================================================
@@ -256,6 +257,156 @@ setup() {
 @test "option_parser: DRY_RUN defaults to false" {
   option_parser -l -s 260101-0000 -e 260101-2359
   [[ "${DRY_RUN}" == "false" ]]
+}
+
+# --- --bwlimit ---
+
+@test "option_parser: --bwlimit sets BANDWIDTH_LIMIT" {
+  option_parser --bwlimit 500 -l -s 260101-0000 -e 260101-2359
+  [[ "${BANDWIDTH_LIMIT}" -eq 500 ]]
+}
+
+@test "option_parser: --bwlimit 0 means unlimited (default)" {
+  option_parser --bwlimit 0 -l -s 260101-0000 -e 260101-2359
+  [[ "${BANDWIDTH_LIMIT}" -eq 0 ]]
+}
+
+@test "option_parser: BANDWIDTH_LIMIT defaults to 0 when --bwlimit not given" {
+  option_parser -l -s 260101-0000 -e 260101-2359
+  [[ "${BANDWIDTH_LIMIT}" -eq 0 ]]
+}
+
+@test "option_parser: --bwlimit with negative value exits with error" {
+  run option_parser --bwlimit -1
+  assert_failure
+}
+
+@test "option_parser: --bwlimit with non-numeric value exits with error" {
+  run option_parser --bwlimit abc
+  assert_failure
+}
+
+@test "option_parser: --help includes --bwlimit description" {
+  run option_parser --help
+  assert_success
+  assert_output --partial "--bwlimit"
+}
+
+# --- --bwlimit unit suffixes (K/M/G, case-insensitive, optional B) ---
+
+@test "_parse_bwlimit: plain number returns same value as KB/s" {
+  run _parse_bwlimit 500
+  assert_success
+  assert_output "500"
+}
+
+@test "_parse_bwlimit: K suffix keeps value as KB/s" {
+  run _parse_bwlimit 500K
+  assert_success
+  assert_output "500"
+}
+
+@test "_parse_bwlimit: KB suffix keeps value as KB/s" {
+  run _parse_bwlimit 500KB
+  assert_success
+  assert_output "500"
+}
+
+@test "_parse_bwlimit: M suffix multiplies by 1024" {
+  run _parse_bwlimit 10M
+  assert_success
+  assert_output "10240"
+}
+
+@test "_parse_bwlimit: MB suffix multiplies by 1024" {
+  run _parse_bwlimit 10MB
+  assert_success
+  assert_output "10240"
+}
+
+@test "_parse_bwlimit: G suffix multiplies by 1048576" {
+  run _parse_bwlimit 1G
+  assert_success
+  assert_output "1048576"
+}
+
+@test "_parse_bwlimit: GB suffix multiplies by 1048576" {
+  run _parse_bwlimit 2GB
+  assert_success
+  assert_output "2097152"
+}
+
+@test "_parse_bwlimit: lowercase suffix accepted" {
+  run _parse_bwlimit 10m
+  assert_success
+  assert_output "10240"
+}
+
+@test "_parse_bwlimit: mixed case suffix accepted" {
+  run _parse_bwlimit 10Mb
+  assert_success
+  assert_output "10240"
+}
+
+@test "_parse_bwlimit: zero returns zero" {
+  run _parse_bwlimit 0
+  assert_success
+  assert_output "0"
+}
+
+@test "_parse_bwlimit: invalid suffix T exits 1" {
+  run _parse_bwlimit 10T
+  assert_failure
+}
+
+@test "_parse_bwlimit: non-numeric exits 1" {
+  run _parse_bwlimit abc
+  assert_failure
+}
+
+@test "_parse_bwlimit: negative exits 1" {
+  run _parse_bwlimit -5
+  assert_failure
+}
+
+@test "_parse_bwlimit: empty string exits 1" {
+  run _parse_bwlimit ""
+  assert_failure
+}
+
+@test "_parse_bwlimit: suffix only (no digits) exits 1" {
+  run _parse_bwlimit M
+  assert_failure
+}
+
+@test "option_parser: --bwlimit 500K sets BANDWIDTH_LIMIT to 500" {
+  option_parser --bwlimit 500K -l -s 260101-0000 -e 260101-2359
+  [[ "${BANDWIDTH_LIMIT}" -eq 500 ]]
+}
+
+@test "option_parser: --bwlimit 10M sets BANDWIDTH_LIMIT to 10240" {
+  option_parser --bwlimit 10M -l -s 260101-0000 -e 260101-2359
+  [[ "${BANDWIDTH_LIMIT}" -eq 10240 ]]
+}
+
+@test "option_parser: --bwlimit 10MB sets BANDWIDTH_LIMIT to 10240" {
+  option_parser --bwlimit 10MB -l -s 260101-0000 -e 260101-2359
+  [[ "${BANDWIDTH_LIMIT}" -eq 10240 ]]
+}
+
+@test "option_parser: --bwlimit 1G sets BANDWIDTH_LIMIT to 1048576" {
+  option_parser --bwlimit 1G -l -s 260101-0000 -e 260101-2359
+  [[ "${BANDWIDTH_LIMIT}" -eq 1048576 ]]
+}
+
+@test "option_parser: --bwlimit 1gb (lowercase) sets BANDWIDTH_LIMIT to 1048576" {
+  option_parser --bwlimit 1gb -l -s 260101-0000 -e 260101-2359
+  [[ "${BANDWIDTH_LIMIT}" -eq 1048576 ]]
+}
+
+@test "option_parser: --bwlimit with invalid unit T exits with error" {
+  run option_parser --bwlimit 10T
+  assert_failure
 }
 
 # --- invalid option ---
