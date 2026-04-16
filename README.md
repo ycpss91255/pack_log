@@ -25,6 +25,7 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 - **Flexible Transfer**: Supports rsync, scp, and sftp with automatic tool detection and fallback. Shows overall transfer progress by default (`--info=progress2`), per-file detail in verbose mode.
 - **Large Transfer Warning**: When remote folder exceeds `TRANSFER_SIZE_WARN_MB` (default 300MB), prompts for confirmation before transferring.
 - **Transfer Failure Recovery**: Automatically retries failed transfers up to 3 times. When all retries fail, interactively prompts to **[R]etry**, **[K]eep** remote data, or **[C]lean** remote data.
+- **Bandwidth Limit**: Throttle transfer speed with `--bwlimit <KB/s>` to avoid saturating shared network links (rsync uses `--bwlimit`; scp/sftp use `-l` in Kbit/s).
 - **Continuous Log Support**: Automatically catches files still being written to — matches by file modification time when filename timestamp is outside the search range.
 - **Resolved Path Display**: Shows the actual resolved path (with tokens expanded) alongside the original LOG_PATHS entry during processing.
 - **Local Mode**: Run without SSH for local log collection.
@@ -62,6 +63,9 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 
 # Dry run — see which files would be collected without copying
 ./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359 --dry-run
+
+# Throttle transfer to 500 KB/s (useful on shared networks)
+./pack_log.sh -n 1 -s 260115-0000 -e 260115-2359 --bwlimit 500
 ```
 
 ### Command-Line Options
@@ -78,6 +82,7 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 | `--very-verbose` | Enable debug output |
 | `--extra-verbose` | Enable trace output (`set -x`) |
 | `--dry-run` | Simulate run: find files without copying or transferring |
+| `--bwlimit <KB/s>` | Limit transfer bandwidth (KB/s, 0 = unlimited) |
 | `--lang <code>` | Language: `en`, `zh-TW`, `zh-CN`, `ja` |
 | `-h, --help` | Show help message |
 | `--version` | Show version |

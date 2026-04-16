@@ -7,6 +7,7 @@ setup() {
     TRANSFER_MAX_RETRIES=3
     TRANSFER_RETRY_DELAY=0
     TRANSFER_SIZE_WARN_MB=300
+    BANDWIDTH_LIMIT=0
 
     TEST_DIR="${BATS_TEST_TMPDIR}/file_ops"
     mkdir -p "${TEST_DIR}"
@@ -531,6 +532,144 @@ FAKE
     run file_sender
     assert_failure
     assert_output --partial "Remote folder not found"
+}
+
+# --- --bwlimit integration with file_sender ---
+
+@test "file_sender: rsync includes --bwlimit flag when BANDWIDTH_LIMIT > 0" {
+    _setup_fake_transfer_bin
+    cat > "${FAKE_BIN}/rsync" <<'FAKE'
+#!/bin/bash
+echo "fake-rsync $*"
+exit 0
+FAKE
+    chmod +x "${FAKE_BIN}/rsync"
+    PATH="${FAKE_BIN}:${PATH}"
+
+    GET_LOG_TOOL="rsync"
+    SAVE_FOLDER="${TEST_DIR}/rsync_bwlimit"
+    mkdir -p "${SAVE_FOLDER}"
+    HOST="user@fakehost"
+    TRANSFER_SIZE_WARN_MB=0
+    BANDWIDTH_LIMIT=500
+
+    run file_sender
+    assert_success
+    assert_output --partial "--bwlimit=500"
+}
+
+@test "file_sender: rsync omits --bwlimit when BANDWIDTH_LIMIT is 0" {
+    _setup_fake_transfer_bin
+    cat > "${FAKE_BIN}/rsync" <<'FAKE'
+#!/bin/bash
+echo "fake-rsync $*"
+exit 0
+FAKE
+    chmod +x "${FAKE_BIN}/rsync"
+    PATH="${FAKE_BIN}:${PATH}"
+
+    GET_LOG_TOOL="rsync"
+    SAVE_FOLDER="${TEST_DIR}/rsync_no_bwlimit"
+    mkdir -p "${SAVE_FOLDER}"
+    HOST="user@fakehost"
+    TRANSFER_SIZE_WARN_MB=0
+    BANDWIDTH_LIMIT=0
+
+    run file_sender
+    assert_success
+    refute_output --partial "--bwlimit"
+}
+
+@test "file_sender: scp includes -l flag with Kbit/s when BANDWIDTH_LIMIT > 0" {
+    _setup_fake_transfer_bin
+    cat > "${FAKE_BIN}/scp" <<'FAKE'
+#!/bin/bash
+echo "fake-scp $*"
+exit 0
+FAKE
+    chmod +x "${FAKE_BIN}/scp"
+    PATH="${FAKE_BIN}:${PATH}"
+
+    GET_LOG_TOOL="scp"
+    SAVE_FOLDER="${TEST_DIR}/scp_bwlimit"
+    mkdir -p "${SAVE_FOLDER}"
+    HOST="user@fakehost"
+    TRANSFER_SIZE_WARN_MB=0
+    BANDWIDTH_LIMIT=500
+
+    run file_sender
+    assert_success
+    # 500 KB/s * 8 = 4000 Kbit/s
+    assert_output --partial "-l 4000"
+}
+
+@test "file_sender: scp omits -l flag when BANDWIDTH_LIMIT is 0" {
+    _setup_fake_transfer_bin
+    cat > "${FAKE_BIN}/scp" <<'FAKE'
+#!/bin/bash
+echo "fake-scp $*"
+exit 0
+FAKE
+    chmod +x "${FAKE_BIN}/scp"
+    PATH="${FAKE_BIN}:${PATH}"
+
+    GET_LOG_TOOL="scp"
+    SAVE_FOLDER="${TEST_DIR}/scp_no_bwlimit"
+    mkdir -p "${SAVE_FOLDER}"
+    HOST="user@fakehost"
+    TRANSFER_SIZE_WARN_MB=0
+    BANDWIDTH_LIMIT=0
+
+    run file_sender
+    assert_success
+    refute_output --partial " -l "
+}
+
+@test "file_sender: sftp includes -l flag with Kbit/s when BANDWIDTH_LIMIT > 0" {
+    _setup_fake_transfer_bin
+    cat > "${FAKE_BIN}/sftp" <<'FAKE'
+#!/bin/bash
+cat >/dev/null
+echo "fake-sftp $*"
+exit 0
+FAKE
+    chmod +x "${FAKE_BIN}/sftp"
+    PATH="${FAKE_BIN}:${PATH}"
+
+    GET_LOG_TOOL="sftp"
+    SAVE_FOLDER="${TEST_DIR}/sftp_bwlimit"
+    mkdir -p "${SAVE_FOLDER}"
+    HOST="user@fakehost"
+    TRANSFER_SIZE_WARN_MB=0
+    BANDWIDTH_LIMIT=500
+
+    run file_sender
+    assert_success
+    # 500 KB/s * 8 = 4000 Kbit/s
+    assert_output --partial "-l 4000"
+}
+
+@test "file_sender: sftp omits -l flag when BANDWIDTH_LIMIT is 0" {
+    _setup_fake_transfer_bin
+    cat > "${FAKE_BIN}/sftp" <<'FAKE'
+#!/bin/bash
+cat >/dev/null
+echo "fake-sftp $*"
+exit 0
+FAKE
+    chmod +x "${FAKE_BIN}/sftp"
+    PATH="${FAKE_BIN}:${PATH}"
+
+    GET_LOG_TOOL="sftp"
+    SAVE_FOLDER="${TEST_DIR}/sftp_no_bwlimit"
+    mkdir -p "${SAVE_FOLDER}"
+    HOST="user@fakehost"
+    TRANSFER_SIZE_WARN_MB=0
+    BANDWIDTH_LIMIT=0
+
+    run file_sender
+    assert_success
+    refute_output --partial " -l "
 }
 
 # =============================================================================

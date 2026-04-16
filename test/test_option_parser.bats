@@ -11,6 +11,7 @@ setup() {
   END_TIME=""
   SAVE_FOLDER="pack_log"
   DRY_RUN=false
+  BANDWIDTH_LIMIT=0
 }
 
 # ===========================================================================
@@ -256,6 +257,39 @@ setup() {
 @test "option_parser: DRY_RUN defaults to false" {
   option_parser -l -s 260101-0000 -e 260101-2359
   [[ "${DRY_RUN}" == "false" ]]
+}
+
+# --- --bwlimit ---
+
+@test "option_parser: --bwlimit sets BANDWIDTH_LIMIT" {
+  option_parser --bwlimit 500 -l -s 260101-0000 -e 260101-2359
+  [[ "${BANDWIDTH_LIMIT}" -eq 500 ]]
+}
+
+@test "option_parser: --bwlimit 0 means unlimited (default)" {
+  option_parser --bwlimit 0 -l -s 260101-0000 -e 260101-2359
+  [[ "${BANDWIDTH_LIMIT}" -eq 0 ]]
+}
+
+@test "option_parser: BANDWIDTH_LIMIT defaults to 0 when --bwlimit not given" {
+  option_parser -l -s 260101-0000 -e 260101-2359
+  [[ "${BANDWIDTH_LIMIT}" -eq 0 ]]
+}
+
+@test "option_parser: --bwlimit with negative value exits with error" {
+  run option_parser --bwlimit -1
+  assert_failure
+}
+
+@test "option_parser: --bwlimit with non-numeric value exits with error" {
+  run option_parser --bwlimit abc
+  assert_failure
+}
+
+@test "option_parser: --help includes --bwlimit description" {
+  run option_parser --help
+  assert_success
+  assert_output --partial "--bwlimit"
 }
 
 # --- invalid option ---

@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Features
+- **Bandwidth limit (`--bwlimit <KB/s>`)**: new option to cap transfer throughput, preventing the script from saturating shared network links. Value is in KB/s (0 = unlimited, default). rsync uses `--bwlimit=N` directly; scp/sftp use `-l` in Kbit/s (converted as `N * 8`). Invalid (non-numeric / negative) values exit with a clear error. Help text added in all 4 languages. Closes #2.
+
+### Tests
+- `test_option_parser.bats`: 6 new tests for `--bwlimit` (value set, default, unlimited, invalid negative, invalid non-numeric, help text presence).
+- `test_file_ops.bats`: 6 new tests for `file_sender` bandwidth-flag wiring (rsync/scp/sftp × limited/unlimited).
+
 ## v1.7.2 (2026-04-15)
 
 ### Features

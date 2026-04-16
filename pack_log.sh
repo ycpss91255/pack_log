@@ -196,6 +196,7 @@ declare SSH_TIMEOUT=3
 declare TRANSFER_MAX_RETRIES=3
 declare TRANSFER_RETRY_DELAY=5
 declare TRANSFER_SIZE_WARN_MB=300
+declare BANDWIDTH_LIMIT=0
 declare FILE_TIME_TOLERANCE_MIN=30
 
 # ==============================================================================
@@ -258,6 +259,7 @@ load_lang() {
       MSG_HELP_VERY_VERBOSE='    -vv, --very-verbose           啟用更詳細輸出 (debug)'
       MSG_HELP_EXTRA_VERBOSE='    -vvv, --extra-verbose         啟用最詳細輸出 (set -x)'
       MSG_HELP_DRY_RUN='    --dry-run                     模擬執行，不複製或傳輸檔案'
+      MSG_HELP_BWLIMIT='    --bwlimit <KB/s>              限制傳輸速度（KB/s，0 = 不限制）'
       MSG_HELP_HELP='    -h, --help                    顯示此說明訊息並結束'
       MSG_HELP_VERSION='    --version                     顯示版本並結束'
       MSG_CHECKING_SUDO='正在檢查 sudo 權限。'
@@ -405,6 +407,7 @@ load_lang() {
       MSG_HELP_VERY_VERBOSE='    -vv, --very-verbose           启用更详细输出 (debug)'
       MSG_HELP_EXTRA_VERBOSE='    -vvv, --extra-verbose         启用最详细输出 (set -x)'
       MSG_HELP_DRY_RUN='    --dry-run                     模拟执行，不复制或传输文件'
+      MSG_HELP_BWLIMIT='    --bwlimit <KB/s>              限制传输速度（KB/s，0 = 不限制）'
       MSG_HELP_HELP='    -h, --help                    显示此帮助信息并退出'
       MSG_HELP_VERSION='    --version                     显示版本并退出'
       MSG_CHECKING_SUDO='正在检查 sudo 权限。'
@@ -552,6 +555,7 @@ load_lang() {
       MSG_HELP_VERY_VERBOSE='    -vv, --very-verbose           より詳細な出力を有効化 (debug)'
       MSG_HELP_EXTRA_VERBOSE='    -vvv, --extra-verbose         最も詳細な出力を有効化 (set -x)'
       MSG_HELP_DRY_RUN='    --dry-run                     シミュレーション実行（ファイルのコピー・転送なし）'
+      MSG_HELP_BWLIMIT='    --bwlimit <KB/s>              転送速度制限（KB/s、0 = 無制限）'
       MSG_HELP_HELP='    -h, --help                    このヘルプメッセージを表示して終了'
       MSG_HELP_VERSION='    --version                     バージョンを表示して終了'
       MSG_CHECKING_SUDO='sudo アクセスを確認中。'
@@ -699,6 +703,7 @@ load_lang() {
       MSG_HELP_VERY_VERBOSE='    -vv, --very-verbose           Enable very verbose output (debug)'
       MSG_HELP_EXTRA_VERBOSE='    -vvv, --extra-verbose         Enable extra verbose output (set -x)'
       MSG_HELP_DRY_RUN='    --dry-run                     Simulate without copying or transferring files'
+      MSG_HELP_BWLIMIT='    --bwlimit <KB/s>              Limit transfer bandwidth (KB/s, 0 = unlimited)'
       MSG_HELP_HELP='    -h, --help                    Show this help message and exit'
       MSG_HELP_VERSION='    --version                     Show version and exit'
       MSG_CHECKING_SUDO='Checking sudo access.'
@@ -1008,6 +1013,7 @@ print_help() {
   echo "${MSG_HELP_OUTPUT}"
   echo "${MSG_HELP_LANG}"
   echo "${MSG_HELP_DRY_RUN}"
+  echo "${MSG_HELP_BWLIMIT}"
   echo "${MSG_HELP_VERBOSE}"
   echo "${MSG_HELP_VERY_VERBOSE}"
   echo "${MSG_HELP_EXTRA_VERBOSE}"
@@ -1469,6 +1475,7 @@ option_parser() {
     "verbose" "very-verbose" "extra-verbose"
     "lang:"
     "dry-run"
+    "bwlimit:"
     "help" "version"
   )
 
@@ -1505,6 +1512,14 @@ option_parser() {
         VERBOSE=3; shift ;;
       --dry-run)
         DRY_RUN=true; shift ;;
+      --bwlimit)
+        if [[ "$2" =~ ^[0-9]+$ ]]; then
+          BANDWIDTH_LIMIT="$2"
+        else
+          echo "[ERROR] --bwlimit requires a non-negative integer (KB/s), got: '$2'" >&2
+          exit 1
+        fi
+        shift 2 ;;
       --lang)
         case "$2" in
           en|zh-TW|zh-CN|ja) LANG_CODE="$2" ;;
@@ -2628,6 +2643,17 @@ file_sender() {
   local -a scp_flags=("-p" "-r")
   local sftp_progress="progress\n" sftp_output="/dev/stdout"
 
+  local -a sftp_flags=()
+
+  # Apply bandwidth limit if configured
+  if [[ "${BANDWIDTH_LIMIT:-0}" -gt 0 ]]; then
+    rsync_flags+=("--bwlimit=${BANDWIDTH_LIMIT}")
+    # scp and sftp use -l in Kbit/s; convert KB/s -> Kbit/s (* 8)
+    local kbits=$(( BANDWIDTH_LIMIT * 8 ))
+    scp_flags+=("-l" "${kbits}")
+    sftp_flags+=("-l" "${kbits}")
+  fi
+
   if [[ "${VERBOSE:-0}" -ge 1 ]]; then
     rsync_flags+=("-v" "--progress")
     scp_flags+=("-v")
@@ -2706,7 +2732,7 @@ file_sender() {
         printf -v local_esc '%q' "${local_save_folder}"
 
         printf '%sget -r %s %s\n' "${sftp_progress}" "${remote_esc}" "${local_esc}" | \
-          sftp "${SSH_OPTS[@]}" \
+          sftp "${sftp_flags[@]}" "${SSH_OPTS[@]}" \
           "${HOST}" > "${sftp_output}" \
           && transfer_ok=true
         ;;
