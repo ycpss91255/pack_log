@@ -11,7 +11,13 @@
 - `test_option_parser.bats`: 2 new tests covering the strict `START < END` ordering (equal-times and off-by-one rejection) plus an existing test rewritten from "passes" to "exits with error".
 - `test_string_handler.bats`: 8 new tests for `resolve_path_dates` fmt-based step — hourly (%H) expansion, minute expansion, second-level warning, month-level dedupe, hourly crossing a day boundary, plus dedicated coverage for the %k / %I / %l hour variants so the step-detection path doesn't regress on non-%H specifiers.
 - `test_file_finder.bats`: 1 new test mocking `date -f -` failure and asserting the warning is emitted.
-- 453 tests (423 unit + 30 local integration + 32 remote integration); all green; ShellCheck `-x -S style` clean.
+- Coverage expansion filling gaps identified in the same audit that surfaced the bugs above (closes #6):
+  - `test_support_functions.bats`: `prefetch_token_cache` reply-count mismatch fallback (previously untested — would silently pair token N with value N-1 on partial remote output).
+  - `test_file_ops.bats`: `file_sender` exact `TRANSFER_MAX_RETRIES` invocation count (prior test asserted the failure message, not the loop-boundary count); `archive_save_folder` `[R]etry` loop count via mock that always fails (guards against a silently dropped `continue`).
+  - `test_main.bats`: `--dry-run` must not invoke `archive_save_folder`; `--lang ja` and `--lang zh-CN` end-to-end error localization via `time_handler` bad-input path (prior `--lang` tests only exercised `--help`).
+  - `test_ssh_handler.bats`: `SSH_KEY` path pointing at an existing directory aborts with `MSG_SSH_KEY_CREATE_FAILED` instead of looping 3x silently.
+  - `test_integration_sigint.bats`: SIGTERM mid-spinner leaves no orphan animation process under the parent PID (guards the `trap spinner_stop EXIT` path that the source-level grep test only checks existence of).
+- 493 tests (430 unit + 31 local integration + 32 remote integration); all green; ShellCheck `-x -S style` clean.
 
 ### i18n
 - Added `MSG_WARN_DATE_STEP_UNSUPPORTED` and `MSG_WARN_FILE_FINDER_BATCH_FAILED` in all four languages (en / zh-TW / zh-CN / ja).

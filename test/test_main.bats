@@ -536,6 +536,44 @@ _setup_archive_fail_test() {
     assert_output --partial "No files found"
 }
 
+@test "main: --dry-run does not invoke archive_save_folder" {
+    # The existing dry-run suite verifies that file_sender is not called and
+    # that the output folder is never created. This closes the matching gap
+    # on the archive phase: even if the user resolves a file list, the dry
+    # run must not write a .tar.gz.
+    local archive_called="${BATS_TEST_TMPDIR}/archive_dryrun_marker"
+    archive_save_folder() { touch "${archive_called}"; }
+
+    local test_dir="${BATS_TEST_TMPDIR}/dry_archive_check"
+    mkdir -p "${test_dir}"
+    echo "data" > "${test_dir}/payload.yaml"
+    LOG_PATHS=("${test_dir}" "payload.yaml" "")
+
+    run main --dry-run -l -s 260115-0000 -e 260115-2359 \
+        -o "${BATS_TEST_TMPDIR}/output_dry_archive"
+    assert_success
+    [[ ! -f "${archive_called}" ]] || {
+        echo "archive_save_folder was invoked during --dry-run" >&2
+        return 1
+    }
+}
+
+@test "main: --lang ja localizes time_handler error messages" {
+    # Previous coverage only asserted that --help text was translated. A
+    # regression that stopped threading LANG_CODE into load_lang before
+    # time_handler ran could ship untranslated errors without the help
+    # assertion noticing.
+    run main -l --lang ja -s "badtime" -e 260115-2359
+    assert_failure
+    assert_output --partial "無効"
+}
+
+@test "main: --lang zh-CN localizes time_handler error messages" {
+    run main -l --lang zh-CN -s "badtime" -e 260115-2359
+    assert_failure
+    assert_output --partial "无效"
+}
+
 @test "main: --dry-run processes multiple LOG_PATHS without crashing" {
     local dir1="${BATS_TEST_TMPDIR}/dry_multi1"
     local dir2="${BATS_TEST_TMPDIR}/dry_multi2"
