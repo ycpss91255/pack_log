@@ -13,6 +13,29 @@ jobs:
         with:
           submodules: true
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-docker-ci-${{ hashFiles('test/Dockerfile.ci') }}
+          restore-keys: ${{ runner.os }}-docker-ci-
+
+      - name: Pre-build CI image
+        run: |
+          docker buildx build \
+            --file test/Dockerfile.ci \
+            --tag pack-log-ci:local \
+            --cache-from type=local,src=/tmp/.buildx-cache \
+            --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max \
+            --load \
+            .
+          # Rotate cache to avoid unbounded growth
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
       - name: Run CI (Lint & Test) via Docker
         run: |
           chmod +x ci.sh
@@ -61,6 +84,31 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers (CI + sshd)
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-docker-int-${{ hashFiles('test/Dockerfile.ci', 'test/Dockerfile.sshd') }}
+          restore-keys: ${{ runner.os }}-docker-int-
+
+      - name: Pre-build CI and sshd images
+        run: |
+          for df in test/Dockerfile.ci test/Dockerfile.sshd; do
+            tag="pack-log-$(basename "${df}" .Dockerfile | sed 's/Dockerfile\.//')"
+            docker buildx build \
+              --file "${df}" \
+              --tag "${tag}:local" \
+              --cache-from type=local,src=/tmp/.buildx-cache \
+              --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max \
+              --load \
+              .
+          done
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Run Integration Tests via Docker
         run: |
