@@ -500,6 +500,19 @@ setup() {
     assert_equal "${#REPLY_FILES[@]}" 0
 }
 
+@test "file_finder: tolerance works with short date-only format (%Y%m%d)" {
+    # File dated Jan 16, search range Jan 17 → 1 day gap
+    # With tolerance of 1500 min (25h), should include it
+    touch -t 202601161200 "${TEST_LOG_DIR}/daily_20260116.log"
+
+    FILE_TIME_TOLERANCE_MIN=1500
+    file_finder "${TEST_LOG_DIR}" \
+        "daily_<date:%Y%m%d>*.log" \
+        "260117-0000" "260117-2359" "false"
+
+    assert_equal "${#REPLY_FILES[@]}" 1
+}
+
 # --- mtime auto-detection (always enabled, no flag needed) ---
 
 @test "file_finder: auto-mtime includes file with recent mtime but old filename timestamp" {
