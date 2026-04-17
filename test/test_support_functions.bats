@@ -205,6 +205,14 @@ setup() {
     assert_failure
 }
 
+@test "execute_cmd_from_array: succeeds with empty array (no extra args)" {
+    HOST="local"
+    # Only the command argument, no array elements — xargs -0 -r does nothing
+    run execute_cmd_from_array "xargs -0 -r printf '%s\n'"
+    assert_success
+    assert_output ""
+}
+
 # --- have_sudo_access: /usr/bin/sudo not executable (L196-197) ---
 
 @test "have_sudo_access: returns 1 when /usr/bin/sudo is not executable" {
@@ -476,6 +484,21 @@ WRAPPER
     prefetch_token_cache
 
     [ "${#_TOKEN_CACHE[@]}" -eq 0 ]
+}
+
+@test "prefetch_token_cache: handles env value containing separator-like substring" {
+    HOST="local"
+    # Set an env var whose value resembles the internal separator pattern.
+    # The cache should still populate correctly because the real separator
+    # is unique (contains PID + two RANDOM values).
+    export PACK_LOG_TEST_SEP="__PACK_LOG_TOK_SEP_fake__"
+    LOG_PATHS=("<env:PACK_LOG_TEST_SEP>/a" "*.log" "")
+    _TOKEN_CACHE=()
+
+    prefetch_token_cache
+
+    assert_equal "${_TOKEN_CACHE["env:PACK_LOG_TEST_SEP"]}" "__PACK_LOG_TOK_SEP_fake__"
+    unset PACK_LOG_TEST_SEP
 }
 
 @test "_needs_sudo: returns true for path outside HOME" {
