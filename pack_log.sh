@@ -2631,18 +2631,21 @@ archive_save_folder() {
 #   SAVE_FOLDER  Read; destination directory on local or remote host.
 #   HOST         Read via execute_cmd_from_array.
 # Arguments:
-#   log_path: The resolved source directory path.
-#   ...:      File paths to copy.
+#   log_path:  The resolved source directory path.
+#   use_sudo:  "true" to prefix cp with sudo; defaults to "false".
+#   ...:       File paths to copy.
 # Outputs:
 #   Verbose log lines; cp/install output from the executed command.
 # Returns:
 #   The exit status of the underlying copy command.
 file_copier() {
   local log_path="${1:?"${FUNCNAME[0]} need log path."}"; shift
+  local use_sudo="${1:-false}"; shift || true
   local -a fc_log_files=("$@")
 
   log_verbose "$(printf "${MSG_TRACE_INPUT}" "${FUNCNAME[0]}")"
   log_verbose "$(printf "${MSG_TRACE_PARAM}" "log_path" "${log_path}")"
+  log_verbose "$(printf "${MSG_TRACE_PARAM}" "use_sudo" "${use_sudo}")"
   log_verbose "$(printf "${MSG_TRACE_PARAM}" "files count" "${#fc_log_files[@]}")"
   log_verbose "$(printf "${MSG_TRACE_PARAM}" "SAVE_FOLDER" "${SAVE_FOLDER}")"
   log_verbose "$(printf "${MSG_TRACE_PARAM}" "HOST" "${HOST}")"
@@ -2664,9 +2667,11 @@ file_copier() {
     cp_opts+=("-v")
   fi
 
-  # Construct the xargs command (use _SUDO_PREFIX if set by get_log)
+  local sudo_prefix=""
+  [[ "${use_sudo}" == "true" ]] && sudo_prefix="sudo "
+
   local xargs_cmd
-  printf -v xargs_cmd "xargs -0 -r %scp %s -t %q" "${_SUDO_PREFIX:-}" "${cp_opts[*]}" "${save_path}/"
+  printf -v xargs_cmd "xargs -0 -r %scp %s -t %q" "${sudo_prefix}" "${cp_opts[*]}" "${save_path}/"
 
   # Execute by piping the array directly (avoiding variable truncation)
   if ! execute_cmd_from_array "${xargs_cmd}" "${fc_log_files[@]}"; then
@@ -3022,16 +3027,14 @@ get_log() {
         fi
       done
 
-      _SUDO_PREFIX=""; [[ "${use_sudo}" == "true" ]] && _SUDO_PREFIX="sudo "
       for rp in "${entry_paths[@]}"; do
         [[ -n "${files_by_path[${rp}]+set}" ]] || continue
         local -a group=()
         mapfile -t group <<< "${files_by_path[${rp}]%$'\n'}"
         spinner_start "$(printf "${MSG_SPINNER_COPYING}" "${idx}" "${total}" "${#group[@]}")"
-        file_copier "${rp}" "${group[@]}"
+        file_copier "${rp}" "${use_sudo}" "${group[@]}"
         spinner_stop
       done
-      _SUDO_PREFIX=""
     fi
 
     if [[ "${#all_found_files[@]}" -eq 0 ]]; then

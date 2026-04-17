@@ -192,7 +192,7 @@ setup() {
     echo "content1" > "${src_dir}/file1.log"
     echo "content2" > "${src_dir}/file2.log"
 
-    file_copier "${src_dir}" "${src_dir}/file1.log" "${src_dir}/file2.log"
+    file_copier "${src_dir}" "false" "${src_dir}/file1.log" "${src_dir}/file2.log"
 
     # Files should be copied into SAVE_FOLDER/<stripped_path>/
     [ -d "${SAVE_FOLDER}" ]
@@ -220,7 +220,7 @@ setup() {
     echo "data" > "${src_file}"
 
     local fake_path="/home/testuser/ros-docker/logs"
-    file_copier "${fake_path}" "${src_file}"
+    file_copier "${fake_path}" "false" "${src_file}"
 
     # After stripping /home/testuser/, save_path should be SAVE_FOLDER/ros-docker/logs
     [ -d "${SAVE_FOLDER}/ros-docker/logs" ]
@@ -1102,7 +1102,7 @@ FAKE
     mkdir -p "${src_dir}"
     touch "${src_dir}/a.log"
     execute_cmd_from_array() { return 1; }
-    run file_copier "${src_dir}" "${src_dir}/a.log"
+    run file_copier "${src_dir}" "false" "${src_dir}/a.log"
     assert_failure
     assert_output --partial "Failed to copy"
 }
