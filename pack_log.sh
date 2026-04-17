@@ -2036,14 +2036,13 @@ resolve_path_dates() {
   # specifiers (%s/%S) would require 86400 iterations per day, so we warn and
   # fall back to day step instead; users hitting this need a coarser fmt.
   local step_sec=86400
-  if [[ "${fmt}" == *%s* || "${fmt}" == *%S* ]]; then
-    log_warn "$(printf "${MSG_WARN_DATE_STEP_UNSUPPORTED}" "${token}")"
-  elif [[ "${fmt}" == *%M* ]]; then
-    step_sec=60
-  elif [[ "${fmt}" == *%H* || "${fmt}" == *%k* \
-       || "${fmt}" == *%I* || "${fmt}" == *%l* ]]; then
-    step_sec=3600
-  fi
+  case "${fmt}" in
+    *%s*|*%S*)
+      log_warn "$(printf "${MSG_WARN_DATE_STEP_UNSUPPORTED}" "${token}")"
+      ;;
+    *%M*)        step_sec=60   ;;
+    *%H*|*%k*|*%I*|*%l*) step_sec=3600 ;;
+  esac
 
   # Batch-format every epoch in the range with a single `date -f -` call.
   # Replaces N forks (one per day) with 1, mirroring file_finder's tolerance
