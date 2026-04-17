@@ -226,6 +226,34 @@ setup() {
     [ -d "${SAVE_FOLDER}/ros-docker/logs" ]
 }
 
+@test "file_copier: preserves full path structure for non-home paths" {
+    SAVE_FOLDER="${TEST_DIR}/copy_nonhome"
+    mkdir -p "${SAVE_FOLDER}"
+
+    local src_file="${TEST_DIR}/nonhome_test.log"
+    echo "data" > "${src_file}"
+
+    file_copier "/var/log/myapp" "${src_file}"
+
+    # save_path should be SAVE_FOLDER/var/log/myapp
+    [ -d "${SAVE_FOLDER}/var/log/myapp" ]
+}
+
+@test "file_copier: handles path with colon character" {
+    SAVE_FOLDER="${TEST_DIR}/copy_colon"
+    mkdir -p "${SAVE_FOLDER}"
+
+    local src_file="${TEST_DIR}/colon_test.log"
+    echo "data" > "${src_file}"
+
+    # Path containing a colon — should NOT be truncated
+    local path_with_colon="/opt/app:v2/logs"
+    file_copier "${path_with_colon}" "${src_file}"
+
+    # The full path after the colon should be preserved, not stripped
+    [ -d "${SAVE_FOLDER}/opt/app:v2/logs" ]
+}
+
 @test "file_copier: errors with missing arguments" {
     run file_copier
     assert_failure
