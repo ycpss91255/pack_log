@@ -132,6 +132,18 @@ setup() {
     [[ "$REPLY_PREFIX" == "app_<date:%Y%m%d>*" ]]
 }
 
+@test "string_handler: resolves env and date tokens in path, then resolve_path_dates expands" {
+    START_TIME="260115-0000"
+    END_TIME="260117-2359"
+    string_handler "<env:HOME>/log/AvoidStop_<date:%Y-%m-%d>" "*.log"
+    [[ "$REPLY_PATH" == "$HOME/log/AvoidStop_<date:%Y-%m-%d>" ]]
+    [[ "$REPLY_PREFIX" == "*.log" ]]
+    resolve_path_dates
+    assert_equal "${#REPLY_PATHS[@]}" 3
+    [[ "${REPLY_PATHS[0]}" == "$HOME/log/AvoidStop_2026-01-15" ]]
+    [[ "${REPLY_PATHS[2]}" == "$HOME/log/AvoidStop_2026-01-17" ]]
+}
+
 @test "string_handler: resolves env and keeps plain-text file extension" {
     string_handler "<env:HOME>/data" "file_<date:%Y%m%d>*.log"
     [[ "$REPLY_PATH" == "$HOME/data" ]]

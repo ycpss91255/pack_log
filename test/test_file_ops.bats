@@ -1468,3 +1468,32 @@ EOF
     assert_output --partial "Failed to create archive"
     [ ! -e "${SAVE_FOLDER}.tar.gz" ]
 }
+
+# =============================================================================
+# get_log / get_log_dry_run: empty LOG_PATHS
+# =============================================================================
+
+@test "get_log: succeeds with empty LOG_PATHS array" {
+    SAVE_FOLDER="${TEST_DIR}/empty_lp"
+    mkdir -p "${SAVE_FOLDER}"
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
+    LOG_PATHS=()
+
+    get_log
+
+    # Should succeed silently with no files copied
+    assert_equal "${?}" 0
+}
+
+@test "get_log_dry_run: succeeds with empty LOG_PATHS array" {
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
+    LOG_PATHS=()
+
+    run get_log_dry_run
+
+    assert_success
+    # Grand total should be 0
+    assert_output --partial "0"
+}
