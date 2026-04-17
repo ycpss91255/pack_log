@@ -448,6 +448,36 @@ WRAPPER
     [ "${#_TOKEN_CACHE[@]}" -eq 0 ]
 }
 
+@test "prefetch_token_cache: falls back when remote output returns wrong number of values" {
+    # Guards the mismatch branch that fires when the remote host returns fewer
+    # separator-delimited values than tokens requested — for example when one
+    # of the backticked commands produced nothing and its output collapsed.
+    # The cache must stay empty rather than silently pairing token N with
+    # value N-1.
+    HOST="testremote"
+    LOG_PATHS=(
+        "<env:HOME>/a" "a.log" ""
+        "<env:HOME>/b" "<cmd:hostname>.log" ""
+    )
+    _TOKEN_CACHE=()
+
+    # Swallow the batched script and print a single value + separator, so the
+    # parse loop sees 1 value but 2 tokens were requested.
+    execute_cmd() {
+        # Separator carries a recognizable prefix from pack_log.sh:
+        # __PACK_LOG_TOK_SEP_$$_<rand>_<rand>__. We can't know it, but the
+        # script appends the sep after each printf, so emitting a truncated
+        # stream (one value + sep) exercises the mismatch branch.
+        local sep
+        sep=$(printf '%s' "$1" | sed -n 's/.*\(__PACK_LOG_TOK_SEP_[^"]*__\).*/\1/p' | head -1)
+        printf '%s%s' "only-one-value" "${sep}"
+    }
+
+    prefetch_token_cache
+
+    [ "${#_TOKEN_CACHE[@]}" -eq 0 ]
+}
+
 @test "_needs_sudo: returns true for path outside HOME" {
     HOST="local"
     _needs_sudo "/var/log" ""

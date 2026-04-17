@@ -467,6 +467,40 @@ FAKE
     assert_output --partial "failed after 2 attempts"
 }
 
+@test "file_sender: invokes rsync exactly TRANSFER_MAX_RETRIES times on persistent failure" {
+    # The existing retry test asserts the failure message, not the loop count.
+    # A log bug that silently changed `< MAX` to `<= MAX` (or vice versa) would
+    # still produce the same message text, so this test counts actual binary
+    # invocations to guard the boundary.
+    _setup_fake_transfer_bin
+    local call_log="${BATS_TEST_TMPDIR}/rsync_calls.log"
+    : > "${call_log}"
+    cat > "${FAKE_BIN}/rsync" <<FAKE
+#!/bin/bash
+echo x >> "${call_log}"
+exit 1
+FAKE
+    chmod +x "${FAKE_BIN}/rsync"
+    PATH="${FAKE_BIN}:${PATH}"
+
+    GET_LOG_TOOL="rsync"
+    SAVE_FOLDER="${TEST_DIR}/rsync_count"
+    mkdir -p "${SAVE_FOLDER}"
+    HOST="user@fakehost"
+    TRANSFER_SIZE_WARN_MB=0
+    TRANSFER_MAX_RETRIES=3
+    TRANSFER_RETRY_DELAY=0
+
+    run file_sender
+    assert_failure
+    local n
+    n=$(wc -l < "${call_log}")
+    [[ "${n}" -eq 3 ]] || {
+        echo "expected rsync invoked 3 times, got ${n}" >&2
+        return 1
+    }
+}
+
 @test "file_sender: rsync mode transfers files locally" {
     GET_LOG_TOOL="rsync"
     SAVE_FOLDER="${TEST_DIR}/rsync_src"
@@ -1318,6 +1352,37 @@ FAKE
     run archive_save_folder
     assert_failure
     assert_output --partial "Cannot archive"
+}
+
+@test "archive_save_folder: interactive [R]etry loop invokes archive again before accepting [K]" {
+    # Gap filled: existing tests check the final exit state, but not that the
+    # retry branch actually re-runs archive_save_folder when the user enters
+    # an empty line. A silent regression dropping the `continue` would pass
+    # the current tests because the second response ('k') eventually succeeds.
+    SAVE_FOLDER="${TEST_DIR}/retry_loop"
+    mkdir -p "${SAVE_FOLDER}"
+    local call_log="${BATS_TEST_TMPDIR}/archive_calls.log"
+    : > "${call_log}"
+    archive_save_folder() {
+        echo x >> "${call_log}"
+        return 1
+    }
+    export -f archive_save_folder 2>/dev/null || true
+
+    # First empty line → retry, second 'k' → break and succeed.
+    run main -l -s 260115-0000 -e 260115-2359 \
+        -o "${BATS_TEST_TMPDIR}/ar_loop" < <(printf '\nk\n')
+
+    # Regardless of exit code, the retry loop must have hit the failing
+    # archive function at least twice (initial + retry).
+    local n
+    n=$(wc -l < "${call_log}")
+    [[ "${n}" -ge 2 ]] || {
+        echo "expected archive_save_folder to be invoked >=2 times, got ${n}" >&2
+        echo "---output---"
+        echo "${output}"
+        return 1
+    }
 }
 
 @test "archive_save_folder: returns 1 and removes partial archive when tar fails" {

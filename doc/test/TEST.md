@@ -1,20 +1,20 @@
 # Tests
 
-485 tests (423 unit + 30 local integration + 32 remote integration)
+493 tests (430 unit + 31 local integration + 32 remote integration)
 
 ## Unit Tests
 
 | Test File | Tests | Scope |
 |-----------|------:|-------|
 | `test_log_functions.bats` | 31 | Log output, verbosity, i18n, file descriptor management |
-| `test_support_functions.bats` | 54 | `have_sudo_access` (incl. `command -v sudo` PATH hijack), `pkg_install_handler`, `execute_cmd`, `date_format` |
+| `test_support_functions.bats` | 55 | `have_sudo_access` (incl. `command -v sudo` PATH hijack), `pkg_install_handler`, `execute_cmd`, `date_format`, `prefetch_token_cache` (incl. reply-count mismatch fallback) |
 | `test_option_parser.bats` | 86 | CLI argument parsing, `SAVE_FOLDER` default, `--dry-run`, `--bwlimit` (incl. `_parse_bwlimit` K/M/G[B] suffix handling), `--extra-verbose`, `$LANG` auto-detect, strict `START < END` ordering |
 | `test_host_handler.bats` | 22 | Host resolution (`-n`, `-u`, `-l`), interactive mode |
 | `test_string_handler.bats` | 44 | Token parsing (`<env:>`, `<cmd:>`, `<date:>`), path splitting, fmt-based step detection (day/hour/minute/sec warn; %H/%k/%I/%l hour variants) |
 | `test_file_finder.bats` | 47 | Date filtering, boundary expansion, time tolerance, symlink, auto-mtime, epoch support, batch-parse failure warning |
-| `test_file_ops.bats` | 79 | `folder_creator`, `file_copier`, `file_sender` (incl. >1GB size branch, `--bwlimit` rsync/scp/sftp), `get_log` (incl. sudo pre-scan, time-range summary, rsync fallback), `file_cleaner`, `archive_save_folder` |
-| `test_ssh_handler.bats` | 13 | SSH key creation, key copy, host key rotation, retry logic |
-| `test_main.bats` | 35 | Full pipeline (local/remote), dry-run, transfer failure prompt, archive failure prompt (K/A/retry) |
+| `test_file_ops.bats` | 81 | `folder_creator`, `file_copier`, `file_sender` (incl. >1GB size branch, `--bwlimit` rsync/scp/sftp, exact `TRANSFER_MAX_RETRIES` invocation count), `get_log` (incl. sudo pre-scan, time-range summary, rsync fallback), `file_cleaner`, `archive_save_folder` (incl. [R]etry loop invocation count) |
+| `test_ssh_handler.bats` | 14 | SSH key creation, key copy, host key rotation, retry logic, `SSH_KEY` path-is-a-directory guard |
+| `test_main.bats` | 38 | Full pipeline (local/remote), dry-run (incl. archive-not-invoked guard), transfer failure prompt, archive failure prompt (K/A/retry), `--lang ja` / `--lang zh-CN` end-to-end error localization |
 | `test_spinner.bats` | 12 | Liveness spinner (`spinner_start` / `spinner_stop`), tty detection, i18n message coverage |
 
 ## Local Integration Tests
@@ -32,12 +32,13 @@
 - Full AvoidStop scenario (symlink dir + cross-date + corenavi + rec)
 - `get_log` diagnostics: `DIR_NOT_FOUND` and `NO_TIME_MATCH` per-entry warnings
 
-`test/test_integration_sigint.bats` (4 tests):
+`test/test_integration_sigint.bats` (5 tests):
 
 - SIGTERM during `get_log` triggers trap handler and exits with 130
 - SIGTERM cleanup removes `SAVE_FOLDER` via `file_cleaner`
 - Source-level guard: `trap 'file_cleaner; exit 130' SIGINT SIGTERM` is installed in `main()`
 - Source-level guard: `trap spinner_stop EXIT` is installed for spinner cleanup
+- SIGTERM mid-spinner leaves no orphan animation process under the parent PID
 
 ## Remote Integration Tests
 

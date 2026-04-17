@@ -111,6 +111,27 @@ _mock_execute_cmd_fail_then_succeed() {
 # 3. SSH key doesn't exist -> creates key and copies
 # ---------------------------------------------------------------------------
 
+@test "ssh_handler: aborts with SSH_KEY_CREATE_FAILED when SSH_KEY path is a directory" {
+    # Guards against a silent mode where SSH_KEY was set to an existing
+    # directory (e.g. trailing slash, or user accidentally pointed it at
+    # ~/.ssh). `[[ -f ... ]]` is false, ssh-keygen can't write there, so the
+    # loop must abort via MSG_SSH_KEY_CREATE_FAILED instead of looping 3x
+    # silently and exhausting retries with a misleading error.
+    rm -f "${SSH_KEY}" "${SSH_KEY}.pub"
+    mkdir -p "${SSH_KEY}"
+
+    pkg_install_handler() { return 0; }
+    execute_cmd() { echo "Connection refused" >&2; return 1; }
+
+    run ssh_handler
+    assert_failure
+    assert_output --partial "Failed to create SSH key"
+
+    # The key path must still be the directory we created — the function
+    # should not have attempted to overwrite it.
+    [[ -d "${SSH_KEY}" ]]
+}
+
 @test "ssh_handler: creates SSH key when it does not exist" {
     # Ensure no key exists
     rm -f "${SSH_KEY}" "${SSH_KEY}.pub"
