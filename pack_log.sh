@@ -2300,13 +2300,16 @@ file_finder() {
         # (which produce "20260410-100238") are normalised to "20260410100238"
         # before positional extraction.
         local -a date_strs=()
-        local sec stripped
+        local stripped padded
         for ts in "${uniq_ts[@]}"; do
           stripped="${ts//[^0-9]/}"
-          sec="${stripped:12:2}"
+          # Pad to at least 14 digits (YYYYMMDDHHmmss) so positional
+          # extraction never yields empty fields for short formats like
+          # %Y%m%d (8 digits) or %Y%m%d%H%M (12 digits).
+          padded="${stripped}00000000000000"
           date_strs+=( "$(printf '%s-%s-%s %s:%s:%s' \
-            "${stripped:0:4}" "${stripped:4:2}" "${stripped:6:2}" \
-            "${stripped:8:2}" "${stripped:10:2}" "${sec:-00}")" )
+            "${padded:0:4}" "${padded:4:2}" "${padded:6:2}" \
+            "${padded:8:2}" "${padded:10:2}" "${padded:12:2}")" )
         done
         local -a epochs=()
         mapfile -t epochs < <(printf '%s\n' "${date_strs[@]}" \
