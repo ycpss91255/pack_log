@@ -1,7 +1,9 @@
 services:
   # --- Unit test + ShellCheck + Coverage ---
   ci:
-    image: kcov/kcov
+    build:
+      context: .
+      dockerfile: test/Dockerfile.ci
     security_opt:
       - seccomp=unconfined
     volumes:
@@ -15,16 +17,6 @@ services:
       - -c
       - |
         set -e
-        apt-get update && \
-        apt-get install -y --no-install-recommends \
-            bats \
-            bats-support \
-            bats-assert \
-            bats-file \
-            shellcheck \
-            openssh-client \
-            rsync \
-            sudo
 
         echo "--- Running ShellCheck ---"
         shellcheck -x -S style pack_log.sh
@@ -56,7 +48,9 @@ services:
     hostname: test-sshd
 
   integration:
-    image: kcov/kcov
+    build:
+      context: .
+      dockerfile: test/Dockerfile.ci
     security_opt:
       - seccomp=unconfined
     depends_on:
@@ -74,16 +68,6 @@ services:
       - -c
       - |
         set -e
-
-        # ---- Install dependencies ----
-        apt-get update && apt-get install -y --no-install-recommends \
-            bats \
-            bats-support \
-            bats-assert \
-            bats-file \
-            openssh-client \
-            rsync \
-            sshpass
 
         # ---- Generate SSH key pair ----
         mkdir -p /root/.ssh

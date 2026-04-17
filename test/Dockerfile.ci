@@ -1,0 +1,13 @@
+FROM kcov/kcov
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bats \
+    bats-support \
+    bats-assert \
+    bats-file \
+    shellcheck \
+    openssh-client \
+    rsync \
+    sudo \
+    sshpass \
+    && rm -rf /var/lib/apt/lists/*
