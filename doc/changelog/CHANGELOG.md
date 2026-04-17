@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Bug Fixes
+- **`_needs_sudo` HOME prefix collision**: The glob `"${home_dir}"*` matched paths from other users with overlapping prefixes (e.g. `/home/user` matched `/home/username/...`). Switched to `"${home_dir}/"*` for exact directory-boundary comparison. Closes #9.
+- **`get_log_dry_run` now uses `_needs_sudo()` for sudo auto-detection**: Previously dry-run only checked the explicit `<sudo>` flag, while `get_log` also auto-detected paths outside HOME. This could cause dry-run to miss files that the real run would find via sudo. Closes #9.
+- **`file_finder` find pattern with single quotes**: The `-name` pattern was placed in raw single quotes, so patterns containing `'` would break the generated find command. Added single-quote escaping (`'\''`) while preserving glob characters for find. Closes #9.
 - **`time_handler` now rejects equal / reversed times.** Previously `-s 260101-1200 -e 260101-1200` was accepted; the range is empty so the tool silently produced zero files. Switched from lexicographic `>` to `! <`, so anything that isn't strictly `START < END` fails with the existing `MSG_START_BEFORE_END` error. Closes #5.
 - **`resolve_path_dates` now picks `step_sec` from the smallest specifier in `<date:fmt>`.** The hard-coded 86400 step skipped 23/24 directories for hourly path tokens like `<date:%Y-%m-%d-%H>`. Day (`%Y-%m-%d`, default), hour (`%H`/`%k`/`%I`/`%l`), minute (`%M`) are supported directly; second-level specifiers (`%S`, `%s`) log a warning and fall back to day step. Closes #5.
 - **`file_finder` surfaces batch-parse failures instead of silently dropping files.** When `date -f -` fails during the tolerance path, every candidate was dropped without a log message, so a user seeing zero files had no way to tell it was a `date` error vs. a genuine no-match. Added `MSG_WARN_FILE_FINDER_BATCH_FAILED` via `log_warn`. Closes #5.
@@ -17,7 +20,10 @@
   - `test_main.bats`: `--dry-run` must not invoke `archive_save_folder`; `--lang ja` and `--lang zh-CN` end-to-end error localization via `time_handler` bad-input path (prior `--lang` tests only exercised `--help`).
   - `test_ssh_handler.bats`: `SSH_KEY` path pointing at an existing directory aborts with `MSG_SSH_KEY_CREATE_FAILED` instead of looping 3x silently.
   - `test_integration_sigint.bats`: SIGTERM mid-spinner leaves no orphan animation process under the parent PID (guards the `trap spinner_stop EXIT` path that the source-level grep test only checks existence of).
-- 493 tests (430 unit + 31 local integration + 32 remote integration); all green; ShellCheck `-x -S style` clean.
+- `test_support_functions.bats`: 1 new test for `_needs_sudo` HOME prefix collision (overlapping usernames).
+- `test_file_ops.bats`: 1 new test verifying `get_log_dry_run` calls `_needs_sudo()` instead of inlining the flag check.
+- `test_file_finder.bats`: 1 new test for filename patterns containing single quotes.
+- 464 tests; all green; ShellCheck `-x -S style` clean.
 
 ### i18n
 - Added `MSG_WARN_DATE_STEP_UNSUPPORTED` and `MSG_WARN_FILE_FINDER_BATCH_FAILED` in all four languages (en / zh-TW / zh-CN / ja).

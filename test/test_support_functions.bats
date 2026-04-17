@@ -506,6 +506,15 @@ WRAPPER
     assert_failure
 }
 
+@test "_needs_sudo: returns true for path with HOME as prefix but different user" {
+    HOST="local"
+    # If HOME=/home/user, /home/username/logs should need sudo
+    local fake_home="/home/testuser"
+    HOME="${fake_home}"
+    run _needs_sudo "/home/testusername/logs" ""
+    assert_success
+}
+
 # --- date_format: date command failure (L282) ---
 
 @test "date_format: log_error when date command fails" {

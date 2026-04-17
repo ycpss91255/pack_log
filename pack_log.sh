@@ -1382,7 +1382,7 @@ _needs_sudo() {
   [[ "${path}" == /tmp/* ]] && return 1
 
   # Path outside HOME → needs sudo
-  [[ "${path}" != "${home_dir}"* ]] && return 0
+  [[ "${path}" != "${home_dir}/"* && "${path}" != "${home_dir}" ]] && return 0
 
   return 1
 }
@@ -2153,9 +2153,12 @@ file_finder() {
     [[ -z "${_ff_p}" ]] && continue
     printf -v _ff_paths_quoted "%s %q" "${_ff_paths_quoted}" "${_ff_p}"
   done
+  # Escape single quotes in name_pattern so the generated -name '...' is safe.
+  # Glob characters (* ?) must pass through unescaped for find to interpret.
+  local _ff_name_esc="${name_pattern//\'/\'\\\'\'}"
   local find_cmd
   printf -v find_cmd "%sfind -L%s -maxdepth 1 \\( -type f -o -type l \\) -name '%s' 2>/dev/null | sort" \
-    "${sudo_prefix}" "${_ff_paths_quoted}" "${name_pattern}"
+    "${sudo_prefix}" "${_ff_paths_quoted}" "${_ff_name_esc}"
 
   # get file list
   local -a raw_files=()
@@ -2847,11 +2850,13 @@ get_log_dry_run() {
     log_path="${LOG_PATHS[i]}"
     log_pattern="${LOG_PATHS[i+1]}"
     log_flags="${LOG_PATHS[i+2]}"
-    local use_sudo=false
-    [[ "${log_flags}" == *"<sudo>"* ]] && use_sudo=true
     (( ++idx ))
 
     string_handler "${log_path}" "${log_pattern}"
+    local use_sudo=false
+    if _needs_sudo "${REPLY_PATH}" "${log_flags}"; then
+      use_sudo=true
+    fi
     resolve_path_dates
     local pattern="${REPLY_PREFIX}"
 
