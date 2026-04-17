@@ -415,3 +415,24 @@ setup() {
     resolve_path_dates
     assert_equal "${#REPLY_PATHS[@]}" 4
 }
+
+@test "resolve_path_dates: warns when date batch-format produces empty results" {
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
+    REPLY_PATH="/var/log/test_<date:%Y-%m-%d>"
+
+    # Mock date: allow epoch conversions (-d / +%s) but fail on batch
+    # expansion (-f -) so resolved_dates ends up empty.
+    date() {
+        if [[ " $* " == *" -f "* ]]; then
+            # Batch expansion call — produce no output
+            return 1
+        fi
+        command date "$@"
+    }
+
+    run resolve_path_dates
+
+    assert_success
+    assert_output --partial "date"
+}
