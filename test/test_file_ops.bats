@@ -233,7 +233,7 @@ setup() {
     local src_file="${TEST_DIR}/nonhome_test.log"
     echo "data" > "${src_file}"
 
-    file_copier "/var/log/myapp" "${src_file}"
+    file_copier "/var/log/myapp" "false" "${src_file}"
 
     # save_path should be SAVE_FOLDER/var/log/myapp
     [ -d "${SAVE_FOLDER}/var/log/myapp" ]
@@ -248,7 +248,7 @@ setup() {
 
     # Path containing a colon — should NOT be truncated
     local path_with_colon="/opt/app:v2/logs"
-    file_copier "${path_with_colon}" "${src_file}"
+    file_copier "${path_with_colon}" "false" "${src_file}"
 
     # The full path after the colon should be preserved, not stripped
     [ -d "${SAVE_FOLDER}/opt/app:v2/logs" ]
