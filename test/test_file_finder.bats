@@ -683,3 +683,44 @@ setup() {
     assert_equal "${#REPLY_FILES[@]}" 0
     assert_equal "${REPLY_RAW_COUNT}" 0
 }
+
+# --- Tolerance batch date failure ---
+
+@test "file_finder: batch date parse failure surfaces a warning instead of silently dropping files" {
+    # Files are ~2 days before the search range so no exact match occurs and
+    # the tolerance path runs. Mocking `date -f -` to fail exercises the
+    # batch-parse branch that historically returned empty REPLY_FILES with no
+    # indication to the user. Mtime is also set before the range so the
+    # unrelated mtime fallback cannot smuggle the files back in.
+    touch -t 202601131000 "${TEST_LOG_DIR}/app_20260113-100000.log"
+    touch -t 202601131100 "${TEST_LOG_DIR}/app_20260113-110000.log"
+
+    FILE_TIME_TOLERANCE_MIN=30
+
+    # Replace `date` only when invoked as batch parser (`-f` flag). Other
+    # call sites (date_format's `date -d`) must keep working.
+    date() {
+        local a
+        for a in "$@"; do
+            if [[ "$a" == "-f" ]]; then
+                cat >/dev/null
+                return 1
+            fi
+        done
+        command date "$@"
+    }
+
+    local stderr_file="${BATS_TEST_TMPDIR}/file_finder_warn.err"
+    file_finder "${TEST_LOG_DIR}" \
+        "app_<date:%Y%m%d-%H%M%S>*.log" \
+        "260115-0000" "260115-2359" "false" 2> "${stderr_file}"
+
+    unset -f date
+
+    assert_equal "${#REPLY_FILES[@]}" 0
+    grep -q "batch" "${stderr_file}" || {
+        echo "expected warning in stderr, got:"
+        cat "${stderr_file}"
+        return 1
+    }
+}

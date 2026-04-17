@@ -674,10 +674,29 @@ setup() {
   assert_output --partial "must be before end_time"
 }
 
-@test "time_handler: equal start and end times passes validation" {
+@test "time_handler: equal start and end times exits with error" {
+  # Identical times yield an empty range, which is never useful — treat as an
+  # ordering error rather than silently producing zero files.
   START_TIME="260115-1200"
   END_TIME="260115-1200"
+  run time_handler
+  assert_failure
+  assert_output --partial "must be before end_time"
+}
+
+@test "time_handler: start one minute after end exits with error" {
+  # Tight guard: off-by-one ordering must still be rejected.
+  START_TIME="260115-1201"
+  END_TIME="260115-1200"
+  run time_handler
+  assert_failure
+  assert_output --partial "must be before end_time"
+}
+
+@test "time_handler: start one minute before end passes validation" {
+  START_TIME="260115-1200"
+  END_TIME="260115-1201"
   time_handler
   [[ "${START_TIME}" == "260115-1200" ]]
-  [[ "${END_TIME}" == "260115-1200" ]]
+  [[ "${END_TIME}" == "260115-1201" ]]
 }
