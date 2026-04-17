@@ -349,6 +349,7 @@ load_lang() {
       MSG_ARCHIVE_KEEP_FOLDER='略過封存，資料夾保留於：%s'
       MSG_ARCHIVE_ABORTED='使用者中止封存，資料夾保留於：%s'
       MSG_WARN_DATE_STEP_UNSUPPORTED='%s 包含秒級 specifier，不支援秒級步進，回退為日級步進（可能漏掉目錄）'
+      MSG_WARN_DATE_EXPAND_FAILED='date 批次展開失敗（格式：%s），路徑 %s 可能未正確展開'
       MSG_WARN_FILE_FINDER_BATCH_FAILED='批次時間戳解析失敗（%d 個時間戳），此範圍內所有候選檔案已跳過（可能漏檔）'
       MSG_OUTPUT_SECTION='=== 輸出 ==='
       MSG_OUTPUT_NAME='輸出資料夾：%s'
@@ -499,6 +500,7 @@ load_lang() {
       MSG_ARCHIVE_KEEP_FOLDER='跳过归档，文件夹保留于：%s'
       MSG_ARCHIVE_ABORTED='用户中止归档，文件夹保留于：%s'
       MSG_WARN_DATE_STEP_UNSUPPORTED='%s 包含秒级 specifier，不支持秒级步进，回退为日级步进（可能漏掉目录）'
+      MSG_WARN_DATE_EXPAND_FAILED='date 批次展开失败（格式：%s），路径 %s 可能未正确展开'
       MSG_WARN_FILE_FINDER_BATCH_FAILED='批次时间戳解析失败（%d 个时间戳），此范围内所有候选档案已跳过（可能漏档）'
       MSG_OUTPUT_SECTION='=== 输出 ==='
       MSG_OUTPUT_NAME='输出文件夹：%s'
@@ -649,6 +651,7 @@ load_lang() {
       MSG_ARCHIVE_KEEP_FOLDER='アーカイブをスキップしました。フォルダは保持されています：%s'
       MSG_ARCHIVE_ABORTED='ユーザーによってアーカイブが中止されました。フォルダは保持されています：%s'
       MSG_WARN_DATE_STEP_UNSUPPORTED='%s に秒単位の specifier が含まれます。秒単位ステップは未対応のため日単位にフォールバックします（ディレクトリを取りこぼす可能性あり）'
+      MSG_WARN_DATE_EXPAND_FAILED='date の一括展開に失敗しました（フォーマット：%s）。パス %s が正しく展開されていない可能性があります'
       MSG_WARN_FILE_FINDER_BATCH_FAILED='タイムスタンプの一括解析に失敗しました（%d 件）。この範囲内の候補ファイルはすべてスキップされます（ファイル漏れの可能性あり）'
       MSG_OUTPUT_SECTION='=== 出力 ==='
       MSG_OUTPUT_NAME='出力フォルダ：%s'
@@ -799,6 +802,7 @@ load_lang() {
       MSG_ARCHIVE_KEEP_FOLDER='Skipping archive, folder kept at: %s'
       MSG_ARCHIVE_ABORTED='Archive aborted by user, folder kept at: %s'
       MSG_WARN_DATE_STEP_UNSUPPORTED='%s contains a second-level specifier; second-level stepping is unsupported, falling back to day step (may miss directories)'
+      MSG_WARN_DATE_EXPAND_FAILED='date batch expansion failed (format: %s); path %s may not have expanded correctly'
       MSG_WARN_FILE_FINDER_BATCH_FAILED='batch timestamp parse failed (%d timestamps); all candidate files in this range were skipped (possible missed files)'
       MSG_OUTPUT_SECTION='=== Output ==='
       MSG_OUTPUT_NAME='Output folder:  %s'
@@ -2059,6 +2063,12 @@ resolve_path_dates() {
   local -a resolved_dates=()
   mapfile -t resolved_dates < <(printf '%s\n' "${epoch_lines[@]}" \
     | date -f - "+${fmt}" 2>/dev/null) || true
+
+  if [[ ${#resolved_dates[@]} -eq 0 ]]; then
+    log_warn "$(printf "${MSG_WARN_DATE_EXPAND_FAILED}" "${fmt}" "${path}")"
+    REPLY_PATHS=("${path}")
+    return 0
+  fi
 
   local -a paths=()
   local -A seen=()
