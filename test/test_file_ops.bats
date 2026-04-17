@@ -192,7 +192,7 @@ setup() {
     echo "content1" > "${src_dir}/file1.log"
     echo "content2" > "${src_dir}/file2.log"
 
-    file_copier "${src_dir}" "${src_dir}/file1.log" "${src_dir}/file2.log"
+    file_copier "${src_dir}" "false" "${src_dir}/file1.log" "${src_dir}/file2.log"
 
     # Files should be copied into SAVE_FOLDER/<stripped_path>/
     [ -d "${SAVE_FOLDER}" ]
@@ -220,7 +220,7 @@ setup() {
     echo "data" > "${src_file}"
 
     local fake_path="/home/testuser/ros-docker/logs"
-    file_copier "${fake_path}" "${src_file}"
+    file_copier "${fake_path}" "false" "${src_file}"
 
     # After stripping /home/testuser/, save_path should be SAVE_FOLDER/ros-docker/logs
     [ -d "${SAVE_FOLDER}/ros-docker/logs" ]
@@ -233,7 +233,7 @@ setup() {
     local src_file="${TEST_DIR}/nonhome_test.log"
     echo "data" > "${src_file}"
 
-    file_copier "/var/log/myapp" "${src_file}"
+    file_copier "/var/log/myapp" "false" "${src_file}"
 
     # save_path should be SAVE_FOLDER/var/log/myapp
     [ -d "${SAVE_FOLDER}/var/log/myapp" ]
@@ -248,7 +248,7 @@ setup() {
 
     # Path containing a colon — should NOT be truncated
     local path_with_colon="/opt/app:v2/logs"
-    file_copier "${path_with_colon}" "${src_file}"
+    file_copier "${path_with_colon}" "false" "${src_file}"
 
     # The full path after the colon should be preserved, not stripped
     [ -d "${SAVE_FOLDER}/opt/app:v2/logs" ]
@@ -1130,7 +1130,7 @@ FAKE
     mkdir -p "${src_dir}"
     touch "${src_dir}/a.log"
     execute_cmd_from_array() { return 1; }
-    run file_copier "${src_dir}" "${src_dir}/a.log"
+    run file_copier "${src_dir}" "false" "${src_dir}/a.log"
     assert_failure
     assert_output --partial "Failed to copy"
 }
