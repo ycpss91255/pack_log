@@ -2666,7 +2666,7 @@ file_copier() {
     log_path="${log_path#/home/*/}"
   fi
 
-  local save_path="${SAVE_FOLDER}/${log_path#*:}"
+  local save_path="${SAVE_FOLDER}/${log_path}"
   create_folder "${save_path}"
 
   local -a cp_opts=("-r")
