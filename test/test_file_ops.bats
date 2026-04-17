@@ -1117,6 +1117,38 @@ FAKE
     assert_output --partial "LOG_PATHS"
 }
 
+@test "get_log_dry_run: uses _needs_sudo for auto-detection, not just explicit flag" {
+    START_TIME="260115-0000"
+    END_TIME="260115-2359"
+    HOST="local"
+
+    # _needs_sudo returns false for /tmp/* paths, so we must simulate a path
+    # outside both /tmp and HOME. Override _needs_sudo to control the result
+    # and verify get_log_dry_run calls it (rather than inlining the flag check).
+    local log_dir="${TEST_DIR}/outside_home"
+    mkdir -p "${log_dir}"
+    touch "${log_dir}/app.log"
+
+    LOG_PATHS=("${log_dir}" "app.log" "")
+
+    # Stub _needs_sudo to always return 0 (needs sudo) and record the call
+    _needs_sudo() { echo "_NEEDS_SUDO_CALLED" >&2; return 0; }
+
+    # Track whether file_finder receives use_sudo=true
+    local orig_file_finder
+    orig_file_finder="$(declare -f file_finder)"
+    eval "orig_${orig_file_finder}"
+    file_finder() {
+        local _ff_use_sudo="${5:-false}"
+        echo "SUDO_FLAG=${_ff_use_sudo}" >&2
+        eval "orig_file_finder" "$@"
+    }
+
+    run get_log_dry_run
+    assert_output --partial "_NEEDS_SUDO_CALLED"
+    assert_output --partial "SUDO_FLAG=true"
+}
+
 @test "get_log: sudo pre-scan warns when sudo -v fails" {
     SAVE_FOLDER="${TEST_DIR}/sudo_fail"
     mkdir -p "${SAVE_FOLDER}"

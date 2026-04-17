@@ -724,3 +724,14 @@ setup() {
         return 1
     }
 }
+
+@test "file_finder: pattern with single quote in filename is handled safely" {
+    local dir="${BATS_TEST_TMPDIR}/quote_dir"
+    mkdir -p "${dir}"
+    touch "${dir}/it's_a_log.txt"
+
+    file_finder "${dir}" "it's_a_log.txt" "260115-0000" "260115-2359" "false"
+
+    assert_equal "${#REPLY_FILES[@]}" 1
+    [[ "${REPLY_FILES[0]}" == *"it's_a_log.txt" ]]
+}
