@@ -8,6 +8,7 @@ setup() {
     START_TIME=""
     END_TIME=""
     DRY_RUN=false
+    NO_SYNC=false
 
     # Use temp paths for SSH and output
     SSH_KEY="${BATS_TEST_TMPDIR}/test_ssh_key"
@@ -595,4 +596,109 @@ _setup_archive_fail_test() {
     assert_output --partial "[2/3]"
     assert_output --partial "[3/3]"
     assert_output --partial "3"
+}
+
+# ---------------------------------------------------------------------------
+# --no-sync
+# ---------------------------------------------------------------------------
+
+@test "main: --no-sync skips file_sender in remote mode" {
+    ssh_handler() { :; }
+    get_tools_checker() { GET_LOG_TOOL="rsync"; }
+    prefetch_token_cache() { :; }
+
+    local sender_called="${BATS_TEST_TMPDIR}/nosync_sender_called"
+    file_sender() { touch "${sender_called}"; }
+
+    execute_cmd() {
+        printf '%s' "$1" | bash -ls
+    }
+    execute_cmd_from_array() {
+        local -r inner_cmd="$1"; shift
+        printf "%s\0" "$@" | eval "${inner_cmd}"
+    }
+
+    local test_dir="${BATS_TEST_TMPDIR}/nosync_remote"
+    mkdir -p "${test_dir}"
+    echo "data" > "${test_dir}/file.yaml"
+
+    LOG_PATHS=("${test_dir}" "file.yaml" "")
+
+    run main --no-sync -u "testuser@fakehost" -s 260115-0000 -e 260115-2359 \
+        -o "${BATS_TEST_TMPDIR}/nosync_remote_out"
+    assert_success
+    [[ ! -f "${sender_called}" ]] || {
+        echo "file_sender was invoked during --no-sync" >&2
+        return 1
+    }
+}
+
+@test "main: --no-sync skips archive in remote mode" {
+    ssh_handler() { :; }
+    get_tools_checker() { GET_LOG_TOOL="rsync"; }
+    prefetch_token_cache() { :; }
+
+    local archive_called="${BATS_TEST_TMPDIR}/nosync_archive_called"
+    archive_save_folder() { touch "${archive_called}"; }
+
+    execute_cmd() {
+        printf '%s' "$1" | bash -ls
+    }
+    execute_cmd_from_array() {
+        local -r inner_cmd="$1"; shift
+        printf "%s\0" "$@" | eval "${inner_cmd}"
+    }
+
+    local test_dir="${BATS_TEST_TMPDIR}/nosync_archive"
+    mkdir -p "${test_dir}"
+    echo "data" > "${test_dir}/file.yaml"
+
+    LOG_PATHS=("${test_dir}" "file.yaml" "")
+
+    run main --no-sync -u "testuser@fakehost" -s 260115-0000 -e 260115-2359 \
+        -o "${BATS_TEST_TMPDIR}/nosync_archive_out"
+    assert_success
+    [[ ! -f "${archive_called}" ]] || {
+        echo "archive_save_folder was invoked during --no-sync remote mode" >&2
+        return 1
+    }
+}
+
+@test "main: --no-sync shows skip message in remote mode" {
+    ssh_handler() { :; }
+    get_tools_checker() { GET_LOG_TOOL="rsync"; }
+    prefetch_token_cache() { :; }
+
+    execute_cmd() {
+        printf '%s' "$1" | bash -ls
+    }
+    execute_cmd_from_array() {
+        local -r inner_cmd="$1"; shift
+        printf "%s\0" "$@" | eval "${inner_cmd}"
+    }
+
+    local test_dir="${BATS_TEST_TMPDIR}/nosync_msg"
+    mkdir -p "${test_dir}"
+    echo "data" > "${test_dir}/file.yaml"
+
+    LOG_PATHS=("${test_dir}" "file.yaml" "")
+
+    run main --no-sync -u "testuser@fakehost" -s 260115-0000 -e 260115-2359 \
+        -o "${BATS_TEST_TMPDIR}/nosync_msg_out"
+    assert_success
+    assert_output --partial "no-sync"
+}
+
+@test "main: --no-sync in local mode still archives normally" {
+    local test_dir="${BATS_TEST_TMPDIR}/nosync_local"
+    mkdir -p "${test_dir}"
+    echo "data" > "${test_dir}/file.yaml"
+
+    LOG_PATHS=("${test_dir}" "file.yaml" "")
+
+    run main --no-sync -l -s 260115-0000 -e 260115-2359 \
+        -o "${BATS_TEST_TMPDIR}/nosync_local_out"
+    assert_success
+    # In local mode, --no-sync has no effect; archive should still happen
+    assert_output --partial "archive"
 }

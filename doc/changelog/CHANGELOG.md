@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Features
+- **`--no-sync` option**: Skip the file transfer step (rsync/scp/sftp); files remain in the remote temp folder. Useful when network is slow or files should be retrieved manually later. In local mode (`-l`), this option has no effect. Closes #27.
+
 ### Bug Fixes
 - **`_needs_sudo` HOME prefix collision**: The glob `"${home_dir}"*` matched paths from other users with overlapping prefixes (e.g. `/home/user` matched `/home/username/...`). Switched to `"${home_dir}/"*` for exact directory-boundary comparison. Closes #9.
 - **`get_log_dry_run` now uses `_needs_sudo()` for sudo auto-detection**: Previously dry-run only checked the explicit `<sudo>` flag, while `get_log` also auto-detected paths outside HOME. This could cause dry-run to miss files that the real run would find via sudo. Closes #9.

@@ -215,6 +215,7 @@ declare NUM="" HOST="" GET_LOG_TOOL=""
 declare START_TIME="" END_TIME=""
 declare LANG_CODE=""
 declare DRY_RUN=false
+declare NO_SYNC=false
 declare LOG_FILE="" _LOG_FD=""
 
 declare -a SSH_OPTS=(
@@ -265,6 +266,7 @@ load_lang() {
       MSG_HELP_VERY_VERBOSE='    -vv, --very-verbose           啟用更詳細輸出 (debug)'
       MSG_HELP_EXTRA_VERBOSE='    -vvv, --extra-verbose         啟用最詳細輸出 (set -x)'
       MSG_HELP_DRY_RUN='    --dry-run                     模擬執行，不複製或傳輸檔案'
+      MSG_HELP_NO_SYNC='    --no-sync                     跳過傳輸，檔案保留在遠端暫存資料夾'
       MSG_HELP_BWLIMIT='    --bwlimit <rate>              限制傳輸速度（預設 KB/s，支援 K/M/G[B] 後綴，0 = 不限制）'
       MSG_HELP_HELP='    -h, --help                    顯示此說明訊息並結束'
       MSG_HELP_VERSION='    --version                     顯示版本並結束'
@@ -346,6 +348,7 @@ load_lang() {
       MSG_STEP4='=== 步驟 4/6: 收集 log 檔案 ==='
       MSG_STEP5_TRANSFER='=== 步驟 5/6: 傳輸檔案到本機 (%s) ==='
       MSG_STEP5_LOCAL='=== 步驟 5/6: 檔案已在本機收集完成 ==='
+      MSG_STEP5_NO_SYNC='=== 步驟 5/6: --no-sync 已設定，跳過傳輸。檔案保留在遠端：%s ==='
       MSG_STEP6_ARCHIVE='=== 步驟 6/6: 建立封存檔 ==='
       MSG_ARCHIVING='建立封存檔：%s'
       MSG_ARCHIVE_DONE='封存完成：%s (%s)'
@@ -416,6 +419,7 @@ load_lang() {
       MSG_HELP_VERY_VERBOSE='    -vv, --very-verbose           启用更详细输出 (debug)'
       MSG_HELP_EXTRA_VERBOSE='    -vvv, --extra-verbose         启用最详细输出 (set -x)'
       MSG_HELP_DRY_RUN='    --dry-run                     模拟执行，不复制或传输文件'
+      MSG_HELP_NO_SYNC='    --no-sync                     跳过传输，文件保留在远端暂存文件夹'
       MSG_HELP_BWLIMIT='    --bwlimit <rate>              限制传输速度（默认 KB/s，支持 K/M/G[B] 后缀，0 = 不限制）'
       MSG_HELP_HELP='    -h, --help                    显示此帮助信息并退出'
       MSG_HELP_VERSION='    --version                     显示版本并退出'
@@ -497,6 +501,7 @@ load_lang() {
       MSG_STEP4='=== 步骤 4/6: 收集 log 文件 ==='
       MSG_STEP5_TRANSFER='=== 步骤 5/6: 传输文件到本机 (%s) ==='
       MSG_STEP5_LOCAL='=== 步骤 5/6: 文件已在本机收集完成 ==='
+      MSG_STEP5_NO_SYNC='=== 步骤 5/6: --no-sync 已设定，跳过传输。文件保留在远端：%s ==='
       MSG_STEP6_ARCHIVE='=== 步骤 6/6: 创建归档文件 ==='
       MSG_ARCHIVING='创建归档文件：%s'
       MSG_ARCHIVE_DONE='归档完成：%s (%s)'
@@ -567,6 +572,7 @@ load_lang() {
       MSG_HELP_VERY_VERBOSE='    -vv, --very-verbose           より詳細な出力を有効化 (debug)'
       MSG_HELP_EXTRA_VERBOSE='    -vvv, --extra-verbose         最も詳細な出力を有効化 (set -x)'
       MSG_HELP_DRY_RUN='    --dry-run                     シミュレーション実行（ファイルのコピー・転送なし）'
+      MSG_HELP_NO_SYNC='    --no-sync                     転送をスキップし、ファイルをリモートの一時フォルダに保持'
       MSG_HELP_BWLIMIT='    --bwlimit <rate>              転送速度制限（デフォルト KB/s、K/M/G[B] 接尾辞対応、0 = 無制限）'
       MSG_HELP_HELP='    -h, --help                    このヘルプメッセージを表示して終了'
       MSG_HELP_VERSION='    --version                     バージョンを表示して終了'
@@ -648,6 +654,7 @@ load_lang() {
       MSG_STEP4='=== ステップ 4/6: ログファイルの収集 ==='
       MSG_STEP5_TRANSFER='=== ステップ 5/6: ローカルへファイル転送中 (%s) ==='
       MSG_STEP5_LOCAL='=== ステップ 5/6: ローカルでファイル収集完了 ==='
+      MSG_STEP5_NO_SYNC='=== ステップ 5/6: --no-sync が設定されました。転送をスキップします。リモートのファイル：%s ==='
       MSG_STEP6_ARCHIVE='=== ステップ 6/6: アーカイブ作成中 ==='
       MSG_ARCHIVING='アーカイブ作成中：%s'
       MSG_ARCHIVE_DONE='アーカイブ作成完了：%s (%s)'
@@ -718,6 +725,7 @@ load_lang() {
       MSG_HELP_VERY_VERBOSE='    -vv, --very-verbose           Enable very verbose output (debug)'
       MSG_HELP_EXTRA_VERBOSE='    -vvv, --extra-verbose         Enable extra verbose output (set -x)'
       MSG_HELP_DRY_RUN='    --dry-run                     Simulate without copying or transferring files'
+      MSG_HELP_NO_SYNC='    --no-sync                     Skip transfer; files remain in remote temp folder'
       MSG_HELP_BWLIMIT='    --bwlimit <rate>              Limit transfer bandwidth (default KB/s; K/M/G[B] suffix supported, 0 = unlimited)'
       MSG_HELP_HELP='    -h, --help                    Show this help message and exit'
       MSG_HELP_VERSION='    --version                     Show version and exit'
@@ -799,6 +807,7 @@ load_lang() {
       MSG_STEP4='=== Step 4/6: Collecting log files ==='
       MSG_STEP5_TRANSFER='=== Step 5/6: Transferring files to local (%s) ==='
       MSG_STEP5_LOCAL='=== Step 5/6: Files collected locally ==='
+      MSG_STEP5_NO_SYNC='=== Step 5/6: --no-sync set, skipping transfer. Files remain on remote: %s ==='
       MSG_STEP6_ARCHIVE='=== Step 6/6: Creating archive ==='
       MSG_ARCHIVING='Creating archive: %s'
       MSG_ARCHIVE_DONE='Archive created: %s (%s)'
@@ -1031,6 +1040,7 @@ print_help() {
   echo "${MSG_HELP_OUTPUT}"
   echo "${MSG_HELP_LANG}"
   echo "${MSG_HELP_DRY_RUN}"
+  echo "${MSG_HELP_NO_SYNC}"
   echo "${MSG_HELP_BWLIMIT}"
   echo "${MSG_HELP_VERBOSE}"
   echo "${MSG_HELP_VERY_VERBOSE}"
@@ -1504,7 +1514,7 @@ _parse_bwlimit() {
 #
 # Globals:
 #   NUM, HOST, START_TIME, END_TIME, SAVE_FOLDER, VERBOSE, DRY_RUN,
-#   LANG_CODE, VERSION  Written/Read; populated from matching CLI options.
+#   NO_SYNC, LANG_CODE, VERSION  Written/Read; populated from matching CLI options.
 # Arguments:
 #   $@: The command-line options.
 # Outputs:
@@ -1527,6 +1537,7 @@ option_parser() {
     "verbose" "very-verbose" "extra-verbose"
     "lang:"
     "dry-run"
+    "no-sync"
     "bwlimit:"
     "help" "version"
   )
@@ -1564,6 +1575,8 @@ option_parser() {
         VERBOSE=3; shift ;;
       --dry-run)
         DRY_RUN=true; shift ;;
+      --no-sync)
+        NO_SYNC=true; shift ;;
       --bwlimit)
         local _bw_parsed
         if _bw_parsed=$(_parse_bwlimit "$2"); then
@@ -3094,7 +3107,7 @@ get_log() {
 #
 # Globals:
 #   LANG_CODE, LANG, HOST, NUM, START_TIME, END_TIME, SAVE_FOLDER,
-#   DRY_RUN, GET_LOG_TOOL  Read/written across the pipeline.
+#   DRY_RUN, NO_SYNC, GET_LOG_TOOL  Read/written across the pipeline.
 # Arguments:
 #   $@: Forwarded to option_parser.
 # Outputs:
@@ -3159,7 +3172,9 @@ main() {
     save_script_data
     get_log
 
-    if [[ "${HOST}" != "local" ]]; then
+    if [[ "${HOST}" != "local" && "${NO_SYNC}" == "true" ]]; then
+      log_info "$(printf "${MSG_STEP5_NO_SYNC}" "${SAVE_FOLDER}")"
+    elif [[ "${HOST}" != "local" ]]; then
       log_info "$(printf "${MSG_STEP5_TRANSFER}" "${GET_LOG_TOOL}")"
       while ! file_sender; do
         local choice=""
@@ -3181,24 +3196,28 @@ main() {
       log_info "${MSG_STEP5_LOCAL}"
     fi
 
-    # Step 6: Archive the collected folder
-    log_info "${MSG_STEP6_ARCHIVE}"
-    while ! archive_save_folder; do
-      local choice=""
-      log_warn "${MSG_ARCHIVE_CHOICE}"
-      read -r choice </dev/tty 2>/dev/null || read -r choice
-      case "${choice,,}" in
-        k|keep)
-          log_info "$(printf "${MSG_ARCHIVE_KEEP_FOLDER}" "${SAVE_FOLDER}")"
-          break ;;
-        a|abort)
-          log_info "$(printf "${MSG_ARCHIVE_ABORTED}" "${SAVE_FOLDER}")"
-          close_log_file; exit 1 ;;
-        *)  # retry (default: empty or 'r')
-          log_info "${MSG_RETRY_ARCHIVE}"
-          continue ;;
-      esac
-    done
+    # Step 6: Archive the collected folder (skip when --no-sync in remote mode)
+    if [[ "${HOST}" != "local" && "${NO_SYNC}" == "true" ]]; then
+      : # No local files to archive; skip
+    else
+      log_info "${MSG_STEP6_ARCHIVE}"
+      while ! archive_save_folder; do
+        local choice=""
+        log_warn "${MSG_ARCHIVE_CHOICE}"
+        read -r choice </dev/tty 2>/dev/null || read -r choice
+        case "${choice,,}" in
+          k|keep)
+            log_info "$(printf "${MSG_ARCHIVE_KEEP_FOLDER}" "${SAVE_FOLDER}")"
+            break ;;
+          a|abort)
+            log_info "$(printf "${MSG_ARCHIVE_ABORTED}" "${SAVE_FOLDER}")"
+            close_log_file; exit 1 ;;
+          *)  # retry (default: empty or 'r')
+            log_info "${MSG_RETRY_ARCHIVE}"
+            continue ;;
+        esac
+      done
+    fi
 
     log_info "${MSG_OUTPUT_SECTION}"
     log_info "$(printf "${MSG_OUTPUT_NAME}" "${SAVE_FOLDER}")"

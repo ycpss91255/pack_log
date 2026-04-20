@@ -81,6 +81,7 @@
 | `--very-verbose` | 启用 debug 输出 |
 | `--extra-verbose` | 启用追踪输出（`set -x`） |
 | `--dry-run` | 模拟执行：搜索文件但不复制或传输 |
+| `--no-sync` | 跳过传输，文件保留在远端暂存文件夹 |
 | `--bwlimit <rate>` | 限制传输带宽。纯数值 = KB/s；加 `K`/`M`/`G` 后缀（可加 `B`、不分大小写）依次倍增。`0` = 不限制 |
 | `--lang <code>` | 语言：`en`、`zh-TW`、`zh-CN`、`ja` |
 | `-h, --help` | 显示说明 |

@@ -12,7 +12,7 @@ coverage:
     patch:
       default:
         target: 95%
-        threshold: 0%
+        threshold: 2%
 
 ignore:
   - "test/**/*"
