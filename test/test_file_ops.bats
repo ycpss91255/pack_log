@@ -334,6 +334,28 @@ setup() {
     assert_output --partial "Unsupported file transfer tool"
 }
 
+@test "file_sender: errors when local mkdir fails" {
+    GET_LOG_TOOL="rsync"
+    # Use a real directory as SAVE_FOLDER so the remote check passes,
+    # then override local_save_folder indirectly via an unwritable base path.
+    SAVE_FOLDER="${TEST_DIR}/sender_mkdir_fail"
+    mkdir -p "${SAVE_FOLDER}"
+    HOST="local"
+
+    # Redirect mkdir to always fail by placing a fake mkdir first in PATH
+    local fake_bin="${TEST_DIR}/fake_mkdir_bin"
+    mkdir -p "${fake_bin}"
+    cat > "${fake_bin}/mkdir" <<'SCRIPT'
+#!/usr/bin/env bash
+exit 1
+SCRIPT
+    chmod +x "${fake_bin}/mkdir"
+
+    PATH="${fake_bin}:${PATH}" run file_sender
+    assert_failure
+    assert_output --partial "Failed to create folder"
+}
+
 @test "file_sender: errors when remote folder not found" {
     GET_LOG_TOOL="rsync"
     SAVE_FOLDER="${TEST_DIR}/nonexistent_remote_folder"
@@ -1052,7 +1074,7 @@ FAKE
     assert_output --partial "Failed to remove remote folder"
 }
 
-@test "save_script_data: in-process warns when LOG_PATHS count not multiple of 3" {
+@test "save_script_data: aborts when LOG_PATHS count not multiple of 3" {
     SAVE_FOLDER="${TEST_DIR}/save_bad_count"
     mkdir -p "${SAVE_FOLDER}"
     START_TIME="260115-0000"
@@ -1061,6 +1083,7 @@ FAKE
     HOST="local"
     LOG_PATHS=("a" "b" "" "c")
     run save_script_data
+    assert_failure
     assert_output --partial "LOG_PATHS has 4 elements"
 }
 
@@ -1135,13 +1158,14 @@ FAKE
     assert_output --partial "Failed to copy"
 }
 
-@test "get_log_dry_run: warns when LOG_PATHS element count is not multiple of 3" {
+@test "get_log_dry_run: aborts when LOG_PATHS element count is not multiple of 3" {
     SAVE_FOLDER="${TEST_DIR}/dry_bad"
     mkdir -p "${SAVE_FOLDER}"
     START_TIME="260115-0000"
     END_TIME="260115-2359"
     LOG_PATHS=("${TEST_DIR}" "*.txt" "" "${TEST_DIR}")
     run get_log_dry_run
+    assert_failure
     assert_output --partial "LOG_PATHS"
 }
 
@@ -1335,7 +1359,7 @@ FAKE
     }
 }
 
-@test "get_log: warns when LOG_PATHS element count is not multiple of 3" {
+@test "get_log: aborts when LOG_PATHS element count is not multiple of 3" {
     SAVE_FOLDER="${TEST_DIR}/bad_logpaths"
     mkdir -p "${SAVE_FOLDER}"
     START_TIME="260115-0000"
@@ -1345,6 +1369,7 @@ FAKE
     LOG_PATHS=("${TEST_DIR}" "*.txt" "" "${TEST_DIR}")
 
     run get_log
+    assert_failure
     assert_output --partial "LOG_PATHS"
 }
 
