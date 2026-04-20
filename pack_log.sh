@@ -1536,7 +1536,8 @@ option_parser() {
     "output:"
     "verbose" "very-verbose" "extra-verbose"
     "lang:"
-    "dry-run" "no-sync"
+    "dry-run"
+    "no-sync"
     "bwlimit:"
     "help" "version"
   )
