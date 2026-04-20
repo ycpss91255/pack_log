@@ -81,6 +81,7 @@
 | `--very-verbose` | 啟用 debug 輸出 |
 | `--extra-verbose` | 啟用追蹤輸出（`set -x`） |
 | `--dry-run` | 模擬執行：搜尋檔案但不複製或傳輸 |
+| `--no-sync` | 跳過傳輸，檔案保留在遠端暫存資料夾 |
 | `--bwlimit <rate>` | 限制傳輸頻寬。純數值 = KB/s；加 `K`/`M`/`G` 後綴（可加 `B`、不分大小寫）依序倍增。`0` = 不限制 |
 | `--lang <code>` | 語言：`en`、`zh-TW`、`zh-CN`、`ja` |
 | `-h, --help` | 顯示說明 |

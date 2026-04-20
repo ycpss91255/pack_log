@@ -84,6 +84,7 @@ A single-file log collection tool designed for robotic fleet deployments. It aut
 | `--very-verbose` | Enable debug output |
 | `--extra-verbose` | Enable trace output (`set -x`) |
 | `--dry-run` | Simulate run: find files without copying or transferring |
+| `--no-sync` | Skip transfer; files remain in remote temp folder |
 | `--bwlimit <rate>` | Limit transfer bandwidth. Plain number = KB/s; `K`/`M`/`G` suffix (optionally with `B`, case-insensitive) multiplies accordingly. `0` = unlimited |
 | `--lang <code>` | Language: `en`, `zh-TW`, `zh-CN`, `ja` |
 | `-h, --help` | Show help message |

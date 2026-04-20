@@ -11,6 +11,7 @@ setup() {
   END_TIME=""
   SAVE_FOLDER="pack_log"
   DRY_RUN=false
+  NO_SYNC=false
   BANDWIDTH_LIMIT=0
 }
 
@@ -257,6 +258,18 @@ setup() {
 @test "option_parser: DRY_RUN defaults to false" {
   option_parser -l -s 260101-0000 -e 260101-2359
   [[ "${DRY_RUN}" == "false" ]]
+}
+
+# --- --no-sync ---
+
+@test "option_parser: --no-sync sets NO_SYNC to true" {
+  option_parser --no-sync -l -s 260101-0000 -e 260101-2359
+  [[ "${NO_SYNC}" == "true" ]]
+}
+
+@test "option_parser: NO_SYNC defaults to false" {
+  option_parser -l -s 260101-0000 -e 260101-2359
+  [[ "${NO_SYNC}" == "false" ]]
 }
 
 # --- --bwlimit ---
