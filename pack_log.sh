@@ -81,7 +81,13 @@ declare -a HOSTS=(
 
 # Coretronic path shortcuts (non-Docker)
 # shellcheck disable=SC2034
+# Fork
 declare COREROBOT_CORETRONIC_AMR_NAVI_INSTALL="<env:HOME>/coretronic_amr_navi_install"
+
+# AMR
+# shellcheck disable=SC2034
+declare COREROBOT_CORE_INSTALL="<env:HOME>/core_install"
+
 # shellcheck disable=SC2034
 declare COREROBOT_STORAGE="<env:HOME>/core_storage"
 # shellcheck disable=SC2034
@@ -109,13 +115,13 @@ declare COREROBOT_DOCKER_LOG_DATA="${COREROBOT_DOCKER_HOME}/log_data"
 declare COREROBOT_DOCKER_LOG_SLAM="${COREROBOT_DOCKER_HOME}/log_slam"
 
 declare -a LOG_PATHS=(
-  # # PATH                                                                  FILE_PATTERN                                                      FLAGS
-  # # AvoidStop (pana-04, local test with symlink dirs)
-  # "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default"           "uimap.png"                                                        ""
-  # "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default2"          "uimap.yaml"                                                       ""
-  # "<env:HOME>/Desktop/pack_log/log/avoid/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png"                             ""
-  # "<env:HOME>/Desktop/pack_log/log/avoid/log_core"                       "corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*"      ""
-  # "<env:HOME>/Desktop/pack_log/log/avoid/log_slam/record"                "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                        ""
+  # PATH                                                                  FILE_PATTERN                                                      FLAGS
+  # AvoidStop (pana-04, local test with symlink dirs)
+  "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default"           "uimap.png"                                                        ""
+  "<env:HOME>/Desktop/pack_log/log/avoid/core_storage/default2"          "uimap.yaml"                                                       ""
+  "<env:HOME>/Desktop/pack_log/log/avoid/log/AvoidStop_<date:%Y-%m-%d>"  "<date:%Y-%m-%d-%H.%M.%S>_*_avoid.png"                             ""
+  "<env:HOME>/Desktop/pack_log/log/avoid/log_core"                       "corenavi_auto.pana-04.myuser.log.INFO.<date:%Y%m%d-%H%M%S>*"      ""
+  "<env:HOME>/Desktop/pack_log/log/avoid/log_slam/record"                "coreslam_2D_<date:%Y-%m-%d-%H-%M-%S>*.rec"                        ""
 
   # # Panasonic — LiDAR Detection shelf log path (docker)
   # "${COREROBOT_DOCKER_LOG_CORE}"                      "corenavi_auto.<cmd:hostname>.<env:USER>.log.INFO.<date:%Y%m%d-%H%M%S>*"  ""
@@ -1663,7 +1669,7 @@ host_handler() {
 
   # check number
   if [[ "${NUM}" =~ ^[1-9][0-9]*$ ]]; then
-    if (( "${NUM}" < 1 || "${NUM}" > ${#HOSTS[@]} )); then
+    if (( "${NUM}" > ${#HOSTS[@]} )); then
       log_error "$(printf "${MSG_HOST_NUMBER_RANGE}" "${#HOSTS[@]}")"
     fi
 
@@ -1898,7 +1904,7 @@ get_tools_checker() {
 special_string_parser() {
   local -r input="${1:?"${FUNCNAME[0]} need input string."}"; shift
 
-  if [[ ! "${input}" == *:* ]]; then
+  if [[ "${input}" != *:* ]]; then
     log_error "$(printf "${MSG_INVALID_SPECIAL_STRING}" "${input}")"
   fi
 
@@ -2537,7 +2543,7 @@ save_script_data() {
   remote_cmd+="printf '\nLOG_PATHS:\n' >> ${script_log}; "
 
   if (( ${#LOG_PATHS[@]} % 3 != 0 )); then
-    log_warn "LOG_PATHS has ${#LOG_PATHS[@]} elements (not a multiple of 3). Check configuration."
+    log_error "LOG_PATHS has ${#LOG_PATHS[@]} elements (not a multiple of 3). Check configuration."
   fi
 
   local lp_i
@@ -2755,7 +2761,9 @@ file_sender() {
     log_error "$(printf "${MSG_REMOTE_NOT_FOUND}" "${SAVE_FOLDER}")"
   fi
 
-  mkdir -p "${local_save_folder}"
+  if ! mkdir -p "${local_save_folder}"; then
+    log_error "$(printf "${MSG_FOLDER_CREATE_FAILED}" "${local_save_folder}")"
+  fi
 
   # Single SSH `du -sb` traverses the tree once; format human-readable locally
   # in pure bash. Saves one round-trip on every run (was -sh + -sb).
@@ -2855,7 +2863,7 @@ file_sender() {
 #   0 always.
 get_log_dry_run() {
   if (( ${#LOG_PATHS[@]} % 3 != 0 )); then
-    log_warn "LOG_PATHS has ${#LOG_PATHS[@]} elements (not a multiple of 3). Check configuration."
+    log_error "LOG_PATHS has ${#LOG_PATHS[@]} elements (not a multiple of 3). Check configuration."
   fi
 
   local log_path="" log_pattern="" log_flags=""
@@ -2942,7 +2950,7 @@ get_log_dry_run() {
 #   0 on success.
 get_log() {
   if (( ${#LOG_PATHS[@]} % 3 != 0 )); then
-    log_warn "LOG_PATHS has ${#LOG_PATHS[@]} elements (not a multiple of 3). Check configuration."
+    log_error "LOG_PATHS has ${#LOG_PATHS[@]} elements (not a multiple of 3). Check configuration."
   fi
 
   local total=$(( ${#LOG_PATHS[@]} / 3 ))

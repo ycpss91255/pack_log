@@ -748,3 +748,128 @@ setup() {
     assert_equal "${#REPLY_FILES[@]}" 1
     [[ "${REPLY_FILES[0]}" == *"it's_a_log.txt" ]]
 }
+
+# =============================================================================
+# mtime fallback (line 2357-2417 in pack_log.sh)
+# =============================================================================
+
+@test "file_finder: mtime fallback picks up pre-range file still written during range" {
+    # Scenario: only one file, name timestamp before range, but mtime is within
+    # range. Normal path yields has_exact_match=false, tolerance path with
+    # TOLERANCE=0 yields empty set, then mtime fallback should rescue it.
+    local dir="${BATS_TEST_TMPDIR}/mtime_dir"
+    mkdir -p "${dir}"
+
+    # Range: 260115-1200 to 260115-1800
+    # File with name timestamp 260115-1000 (before range), mtime during range
+    local target="${dir}/app_20260115-100000.log"
+    touch "${target}"
+    touch -t 202601151400.00 "${target}"
+
+    FILE_TIME_TOLERANCE_MIN=0
+
+    file_finder "${dir}" "app_<date:%Y%m%d-%H%M%S>*.log" \
+        "260115-1200" "260115-1800" "false"
+
+    # mtime fallback should rescue this file
+    assert_equal "${#REPLY_FILES[@]}" 1
+    [[ "${REPLY_FILES[0]}" == *"20260115-100000"* ]]
+}
+
+@test "file_finder: mtime fallback skips pre-range file not modified during range" {
+    # File with name timestamp before range AND mtime before range — no rescue.
+    local dir="${BATS_TEST_TMPDIR}/mtime_skip"
+    mkdir -p "${dir}"
+
+    local old="${dir}/app_20260115-080000.log"
+    touch "${old}"
+    touch -t 202601150900.00 "${old}"
+
+    FILE_TIME_TOLERANCE_MIN=0
+
+    file_finder "${dir}" "app_<date:%Y%m%d-%H%M%S>*.log" \
+        "260115-1200" "260115-1800" "false"
+
+    assert_equal "${#REPLY_FILES[@]}" 0
+}
+
+@test "file_finder: mtime fallback does not add post-range files" {
+    # File with name timestamp AFTER range should not be considered by mtime
+    # fallback (it only checks pre-range files).
+    local dir="${BATS_TEST_TMPDIR}/mtime_post"
+    mkdir -p "${dir}"
+
+    local post="${dir}/app_20260115-200000.log"
+    touch "${post}"
+    touch -t 202601151400.00 "${post}"
+
+    FILE_TIME_TOLERANCE_MIN=0
+
+    file_finder "${dir}" "app_<date:%Y%m%d-%H%M%S>*.log" \
+        "260115-1200" "260115-1800" "false"
+
+    # Post-range file excluded: mtime fallback only considers pre-range files
+    assert_equal "${#REPLY_FILES[@]}" 0
+}
+
+@test "file_finder: mtime fallback handles stat failure gracefully" {
+    # When stat fails, mtime fallback should silently skip and not error out.
+    local dir="${BATS_TEST_TMPDIR}/mtime_stat_fail"
+    mkdir -p "${dir}"
+
+    local target="${dir}/app_20260115-100000.log"
+    touch "${target}"
+    touch -t 202601151400.00 "${target}"
+
+    FILE_TIME_TOLERANCE_MIN=0
+
+    # Override execute_cmd so stat calls fail (but find still works)
+    execute_cmd() {
+        if [[ "$1" == *"stat"* ]]; then
+            return 1
+        fi
+        bash -c "$1"
+    }
+
+    file_finder "${dir}" "app_<date:%Y%m%d-%H%M%S>*.log" \
+        "260115-1200" "260115-1800" "false"
+
+    # mtime fallback skipped due to stat failure; no files selected
+    assert_equal "${#REPLY_FILES[@]}" 0
+}
+
+@test "file_finder: mtime fallback coexists with normal-path selected files" {
+    # Two files: one in range by name, one pre-range by name but mtime in range.
+    # Expansion may pull in the pre-range file, but if not, mtime should.
+    local dir="${BATS_TEST_TMPDIR}/mtime_coexist"
+    mkdir -p "${dir}"
+
+    # Pre-range file (far enough to not be pulled by expansion)
+    local pre="${dir}/app_20260115-060000.log"
+    touch "${pre}"
+    touch -t 202601151400.00 "${pre}"
+
+    # In-range file
+    local in_range="${dir}/app_20260115-150000.log"
+    touch "${in_range}"
+    touch -t 202601151500.00 "${in_range}"
+
+    # Post-range file (ensures expansion doesn't absorb pre due to single-step)
+    local post="${dir}/app_20260115-200000.log"
+    touch "${post}"
+    touch -t 202601152000.00 "${post}"
+
+    FILE_TIME_TOLERANCE_MIN=0
+
+    file_finder "${dir}" "app_<date:%Y%m%d-%H%M%S>*.log" \
+        "260115-1200" "260115-1800" "false"
+
+    # in_range selected by normal path (with expansion pulling adjacent),
+    # pre selected by mtime fallback since its name ts is pre-range but
+    # mtime is within range.
+    # Expansion pulls: s_idx-1 → pre, e_idx+1 → post
+    # So normal path yields: pre + in_range + post = 3
+    # mtime fallback has nothing left unselected.
+    # Net: 3 files
+    assert_equal "${#REPLY_FILES[@]}" 3
+}

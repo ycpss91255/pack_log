@@ -436,3 +436,35 @@ setup() {
     assert_success
     assert_output --partial "date"
 }
+
+@test "resolve_path_dates: cross-year boundary expands both years" {
+    START_TIME="251231-2300"
+    END_TIME="260101-0100"
+    REPLY_PATH="/var/log/app_<date:%Y-%m-%d-%H>"
+    resolve_path_dates
+    assert_equal "${#REPLY_PATHS[@]}" 3
+    [[ "${REPLY_PATHS[0]}" == "/var/log/app_2025-12-31-23" ]]
+    [[ "${REPLY_PATHS[1]}" == "/var/log/app_2026-01-01-00" ]]
+    [[ "${REPLY_PATHS[2]}" == "/var/log/app_2026-01-01-01" ]]
+}
+
+@test "resolve_path_dates: cross-month boundary expands both months" {
+    START_TIME="260131-2300"
+    END_TIME="260201-0100"
+    REPLY_PATH="/var/log/app_<date:%Y-%m-%d-%H>"
+    resolve_path_dates
+    assert_equal "${#REPLY_PATHS[@]}" 3
+    [[ "${REPLY_PATHS[0]}" == "/var/log/app_2026-01-31-23" ]]
+    [[ "${REPLY_PATHS[1]}" == "/var/log/app_2026-02-01-00" ]]
+    [[ "${REPLY_PATHS[2]}" == "/var/log/app_2026-02-01-01" ]]
+}
+
+@test "resolve_path_dates: month-level format dedupes across year boundary" {
+    START_TIME="251230-0000"
+    END_TIME="260102-2359"
+    REPLY_PATH="/var/log/<date:%Y%m>"
+    resolve_path_dates
+    assert_equal "${#REPLY_PATHS[@]}" 2
+    [[ "${REPLY_PATHS[0]}" == "/var/log/202512" ]]
+    [[ "${REPLY_PATHS[1]}" == "/var/log/202601" ]]
+}
