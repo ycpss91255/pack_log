@@ -85,6 +85,7 @@ declare -a HOSTS=(
 declare COREROBOT_CORETRONIC_AMR_NAVI_INSTALL="<env:HOME>/coretronic_amr_navi_install"
 
 # AMR
+# shellcheck disable=SC2034
 declare COREROBOT_CORE_INSTALL="<env:HOME>/core_install"
 
 # shellcheck disable=SC2034
